@@ -327,10 +327,18 @@ class H1PacketTests(unittest.TestCase):
         self.assertEqual(value["question_ids"], list(self.semantic_ids))
 
     def test_report_generation_rejects_one_byte_planning_or_predecessor_report_drift_before_write(self) -> None:
+        from specchoice_measurement.final_reports import FinalReportError, validate_final_report_inputs  # noqa: PLC0415
         repository = self.root.parents[1]
         source = repository / ".planning" / "ROADMAP.md"
         self.assertTrue(source.is_file())
         frozen = sha256_bytes(source.read_bytes())
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "input.txt").write_bytes(b"frozen\n")
+            validate_final_report_inputs(root, {"input.txt": sha256_bytes(b"frozen\n")}, {"all": True}, human_disposition="approved")
+            (root / "input.txt").write_bytes(b"drifted\n")
+            with self.assertRaisesRegex(FinalReportError, "FINAL_REPORT_INPUT_DRIFT"):
+                validate_final_report_inputs(root, {"input.txt": sha256_bytes(b"frozen\n")}, {"all": True}, human_disposition="approved")
         self.assertNotEqual(frozen, sha256_bytes(source.read_bytes() + b"\n"))
 
     def _legacy_context(self, directory: Path) -> dict[str, Path | None]:
