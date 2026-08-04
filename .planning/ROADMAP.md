@@ -257,12 +257,12 @@ Plans:
   3. The reviewer can compare rendered A/B/C prompt bytes and verify equal demonstration counts, shared target/rules/decision space/evidence requirements, intended treatment-only differences, and measured natural token differences without padding.
   4. The gate records exactly one approved branch plus `N_strict` and repeats; Red makes production retrieval and the real-model adapter unreachable, while Green/Yellow cannot call a model before the separate H4 approval verifies.
 
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 
 - [x] 04-01-PLAN.md
-- [ ] 04-02-PLAN.md
+- [x] 04-02-PLAN.md
 - [ ] 04-03-PLAN.md
 - [ ] 04-04-PLAN.md
 
@@ -392,7 +392,7 @@ Plans:
 | 1. Isolated Evidence Boundary and Source Integrity | 7/7 | Complete    | 2026-07-31 |
 | 2. Deterministic Measurement Spine | 22/22 | Complete | 2026-08-03 |
 | 3. Human-Reviewed Data Preregistration | 4/4 | Complete   | 2026-08-04 |
-| 4. Offline Treatments, Retrieval, and Branch Freeze | 1/4 | In Progress|  |
+| 4. Offline Treatments, Retrieval, and Branch Freeze | 2/4 | In Progress|  |
 | 5. Authorized Execution and Immutable Evidence | 0/3 | Not started | - |
 | 6. Partition-Aware Ablation and Metamorphic Evaluation | 0/4 | Not started | - |
 | 7. Reproducible Feasibility Conclusion | 0/3 | Not started | - |
