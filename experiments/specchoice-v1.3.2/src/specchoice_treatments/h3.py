@@ -733,3 +733,213 @@ def write_h3_red_authority_v2(
     except (FilesystemPolicyError, OSError) as error:
         raise H3ValidationError("H3_AUTHORITY_WRITE_INVALID") from error
     return authority
+
+
+def _historical_identity(*, path: str, raw: bytes, value: Mapping[str, object], self_hash_field: str) -> dict[str, object]:
+    """Describe one validated immutable predecessor without making it current authority."""
+    self_hash = value.get(self_hash_field)
+    if not isinstance(self_hash, str) or not _self_hash_valid(value, self_hash_field):
+        raise H3ValidationError("H3_CHAIN_INPUT_INVALID")
+    return {
+        "path": path,
+        "raw_sha256": sha256_bytes(raw),
+        "schema_version": value.get("schema_version"),
+        "self_sha256": self_hash,
+    }
+
+
+def _load_h3_v1_historical_predecessor(*, root: Path) -> dict[str, object]:
+    """Revalidate the v1 decision as immutable history for the v3 successor."""
+    decision, decision_raw = _load_canonical(root, "reviews/h3-branch-decision-v1.json")
+    if decision.get("schema_version") != "h3-branch-decision-v1":
+        raise H3ValidationError("H3_CHAIN_INPUT_INVALID")
+    return {
+        "decision": _historical_identity(
+            path="reviews/h3-branch-decision-v1.json",
+            raw=decision_raw,
+            value=decision,
+            self_hash_field="decision_sha256",
+        ),
+        "status": "historical_predecessor_not_current_authority",
+    }
+
+
+def _load_h3_v2_historical_predecessor(*, root: Path) -> dict[str, object]:
+    """Revalidate v2's complete historical chain without reopening it as current authority."""
+    packet, packet_raw = _load_canonical(root, "reports/h3/h3-red-review-v2/review-packet.json")
+    readiness, readiness_raw = _load_canonical(root, "receipts/h3-branch-readiness-v2.json")
+    decision, decision_raw = _load_canonical(root, "reviews/h3-branch-decision-v2.json")
+    authority, authority_raw = _load_canonical(root, "phase4/branch-authority-v2.json")
+    if (
+        packet.get("schema_version") != "h3-red-review-packet-v2"
+        or readiness.get("schema_version") != "h3-branch-readiness-v2"
+        or decision.get("schema_version") != "h3-branch-decision-v2"
+        or authority.get("schema_version") != "phase4-branch-authority-v2"
+    ):
+        raise H3ValidationError("H3_CHAIN_INPUT_INVALID")
+    validate_h3_red_decision_v2(decision=decision, packet=packet, readiness=readiness)
+    validate_h3_red_authority_v2(authority=authority, packet=packet, readiness=readiness, decision=decision)
+    return {
+        "authority": _historical_identity(
+            path="phase4/branch-authority-v2.json",
+            raw=authority_raw,
+            value=authority,
+            self_hash_field="authority_sha256",
+        ),
+        "decision": _historical_identity(
+            path="reviews/h3-branch-decision-v2.json",
+            raw=decision_raw,
+            value=decision,
+            self_hash_field="decision_sha256",
+        ),
+        "packet": _historical_identity(
+            path="reports/h3/h3-red-review-v2/review-packet.json",
+            raw=packet_raw,
+            value=packet,
+            self_hash_field="packet_sha256",
+        ),
+        "readiness": _historical_identity(
+            path="receipts/h3-branch-readiness-v2.json",
+            raw=readiness_raw,
+            value=readiness,
+            self_hash_field="readiness_sha256",
+        ),
+        "status": "historical_predecessor_not_current_authority",
+    }
+
+
+def load_phase4_freeze_inputs_v3(*, experiment_root: Path | None = None) -> dict[str, object]:
+    """Freeze the completed lifecycle fix while retaining v1/v2 only as history."""
+    inputs = load_phase4_freeze_inputs_v1(experiment_root=experiment_root)
+    root = inputs.get("_experiment_root")
+    if not isinstance(root, Path):
+        raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID")
+    return {
+        **inputs,
+        "predecessor_v1": _load_h3_v1_historical_predecessor(root=root),
+        "predecessor_v2": _load_h3_v2_historical_predecessor(root=root),
+    }
+
+
+def audit_no_model_reachability_v3(freeze_inputs: Mapping[str, object]) -> dict[str, object]:
+    """Version the no-model audit for the v3 machine-only successor products."""
+    audit = audit_no_model_reachability_v1(freeze_inputs)
+    payload = {
+        **{key: value for key, value in audit.items() if key != "no_model_reachability_sha256"},
+        "inspected_output_paths": [
+            "reports/h3/h3-red-review-v3/review-packet.json",
+            "reports/h3/h3-red-review-v3/review-packet.md",
+            "receipts/h3-branch-readiness-v3.json",
+        ],
+        "schema_version": "h3-no-model-reachability-v3",
+    }
+    return {**payload, "no_model_reachability_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def build_h3_red_review_packet_v3(freeze_inputs: Mapping[str, object]) -> dict[str, object]:
+    """Build a v3 machine packet that binds v1/v2 history but grants no authority."""
+    predecessor_v1 = freeze_inputs.get("predecessor_v1")
+    predecessor_v2 = freeze_inputs.get("predecessor_v2")
+    if (
+        not isinstance(predecessor_v1, Mapping)
+        or not isinstance(predecessor_v2, Mapping)
+        or predecessor_v1.get("status") != "historical_predecessor_not_current_authority"
+        or predecessor_v2.get("status") != "historical_predecessor_not_current_authority"
+    ):
+        raise H3ValidationError("H3_CHAIN_INPUT_INVALID")
+    v1_packet = build_h3_red_review_packet_v1(freeze_inputs)
+    no_model = audit_no_model_reachability_v3(freeze_inputs)
+    payload = {
+        **{
+            key: value for key, value in v1_packet.items()
+            if key not in {"no_model_reachability", "no_model_reachability_sha256", "packet_sha256", "schema_version"}
+        },
+        "no_model_reachability": no_model,
+        "no_model_reachability_sha256": no_model["no_model_reachability_sha256"],
+        "predecessor_v1": dict(predecessor_v1),
+        "predecessor_v2": dict(predecessor_v2),
+        "schema_version": "h3-red-review-packet-v3",
+        "successor_rationale": (
+            "v3 successor rationale: v2 decision and authority remain historically valid under their bound evidence, "
+            "but the frozen tests rejected the legitimate authority-present lifecycle state and Ruff reported F401, "
+            "so v2 cannot serve as complete Phase 4 closure. v3 fixes only lifecycle tests and static checking; "
+            "it does not change Red semantics, counts, or permission boundaries."
+        ),
+    }
+    return {**payload, "packet_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def render_h3_red_review_markdown_v3(packet: Mapping[str, object]) -> bytes:
+    """Render the v3 review projection exclusively from the canonical packet."""
+    if not _self_hash_valid(packet, "packet_sha256") or packet.get("schema_version") != "h3-red-review-packet-v3":
+        raise H3ValidationError("H3_READINESS_INVALID")
+    return (
+        "# Phase 4 H3 Red Successor Review v3\n\n"
+        "**MACHINE READINESS ONLY; V3 HUMAN DECISION REQUIRED BEFORE ANY AUTHORITY**\n\n"
+        "## Canonical packet\n\n```json\n"
+    ).encode("utf-8") + canonical_json_bytes(dict(packet)) + b"```\n"
+
+
+def build_h3_red_readiness_v3(packet: Mapping[str, object], markdown: bytes | None = None) -> dict[str, object]:
+    """Bind only v3 machine products and immutable predecessor identities."""
+    rendered = render_h3_red_review_markdown_v3(packet)
+    if markdown is None:
+        markdown = rendered
+    predecessor_v1 = packet.get("predecessor_v1")
+    predecessor_v2 = packet.get("predecessor_v2")
+    if (
+        markdown != rendered
+        or any(field in packet for field in _V2_MACHINE_ONLY_FIELDS)
+        or packet.get("branch") != "red"
+        or isinstance(packet.get("N_strict"), bool) or packet.get("N_strict") != 0
+        or isinstance(packet.get("repeat_count"), bool) or packet.get("repeat_count") != 0
+        or packet.get("h4_required") is not False or packet.get("h4_reason") != "not_applicable_red"
+        or any(packet.get(field) is not False for field in (
+            "provider_config_present", "external_calls_authorized", "production_retrieval_authorized", "model_execution_authorized",
+        ))
+        or packet.get("model_snapshot") != "not_applicable_red"
+        or packet.get("credentials_boundary") != "not_applicable_red"
+        or not isinstance(packet.get("phase3_bindings"), Mapping)
+        or not isinstance(predecessor_v1, Mapping)
+        or not isinstance(predecessor_v2, Mapping)
+    ):
+        raise H3ValidationError("H3_READINESS_INVALID")
+    payload = {
+        "N_strict": 0,
+        "branch": "red",
+        "credentials_boundary": "not_applicable_red",
+        "external_calls_authorized": False,
+        "freeze_inventory_sha256": packet["freeze_inventory_sha256"],
+        "h4_reason": "not_applicable_red",
+        "h4_required": False,
+        "historical_predecessors": {"v1": dict(predecessor_v1), "v2": dict(predecessor_v2)},
+        "markdown_sha256": sha256_bytes(markdown),
+        "model_execution_authorized": False,
+        "model_snapshot": "not_applicable_red",
+        "no_model_reachability_sha256": packet["no_model_reachability_sha256"],
+        "packet_sha256": packet["packet_sha256"],
+        "phase3_authority_sha256": packet["phase3_bindings"]["phase3_authority_sha256"],
+        "production_retrieval_authorized": False,
+        "provider_config_present": False,
+        "repeat_count": 0,
+        "schema_version": "h3-branch-readiness-v3",
+        "status": "ready_for_human",
+    }
+    return {**payload, "readiness_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def write_h3_red_readiness_v3(
+    *, experiment_root: Path, packet: Mapping[str, object], markdown: bytes, readiness: Mapping[str, object],
+) -> None:
+    """Publish exact v3 machine evidence and deliberately no decision or authority leaf."""
+    expected = build_h3_red_readiness_v3(packet, markdown)
+    if dict(readiness) != expected or not _self_hash_valid(readiness, "readiness_sha256"):
+        raise H3ValidationError("H3_READINESS_INVALID")
+    try:
+        write_exact_descriptor_files(experiment_root, {
+            "receipts/h3-branch-readiness-v3.json": canonical_json_bytes(readiness),
+            "reports/h3/h3-red-review-v3/review-packet.json": canonical_json_bytes(packet),
+            "reports/h3/h3-red-review-v3/review-packet.md": markdown,
+        })
+    except (FilesystemPolicyError, OSError) as error:
+        raise H3ValidationError("H3_READINESS_INVALID") from error

@@ -16,13 +16,18 @@ from specchoice_treatments.h3 import (
     build_h3_red_readiness_v1,
     build_h3_red_review_packet_v1,
     build_h3_red_readiness_v2,
+    build_h3_red_readiness_v3,
     build_h3_red_review_packet_v2,
+    build_h3_red_review_packet_v3,
     load_phase4_freeze_inputs_v1,
     load_phase4_freeze_inputs_v2,
+    load_phase4_freeze_inputs_v3,
     render_h3_red_review_markdown_v2,
+    render_h3_red_review_markdown_v3,
     validate_h3_red_authority_v2,
     validate_h3_red_decision_v2,
     write_h3_red_readiness_v2,
+    write_h3_red_readiness_v3,
 )
 
 
@@ -147,7 +152,7 @@ class H3ContractTests(unittest.TestCase):
                 freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=v1_decision,
             )
 
-    def test_v2_authority_requires_exact_fresh_approved_red_and_never_writes(self) -> None:
+    def test_v2_authority_requires_exact_fresh_approved_red_before_publication(self) -> None:
         """Construction is authorization-gated, content-bound, and has no publication side effect."""
         freeze_inputs, packet, readiness = self._v2_packet_readiness()
         decision = self._v2_decision(packet, readiness)
@@ -160,7 +165,6 @@ class H3ContractTests(unittest.TestCase):
         ))
         self.assertEqual("red", authority["branch"])
         self.assertEqual(0, authority["N_strict"])
-        self.assertFalse((self.experiment / "phase4/branch-authority-v2.json").exists())
         rejected = self._v2_decision(packet, readiness, aggregate="incomplete")
         with self.assertRaisesRegex(Exception, "H3_APPROVED_RED_REQUIRED"):
             build_h3_red_authority_v2(
@@ -178,7 +182,58 @@ class H3ContractTests(unittest.TestCase):
             build_h3_red_authority_v2(
                 freeze_inputs=tampered, packet=packet, readiness=readiness, decision=decision,
             )
-        self.assertFalse((self.experiment / "phase4/branch-authority-v2.json").exists())
+
+    def test_v2_published_authority_is_present_self_validating_and_content_bound(self) -> None:
+        """The post-publication state is valid evidence, not a stale pre-publication fixture."""
+        packet = json.loads((self.experiment / "reports/h3/h3-red-review-v2/review-packet.json").read_text())
+        readiness = json.loads((self.experiment / "receipts/h3-branch-readiness-v2.json").read_text())
+        decision_path = self.experiment / "reviews/h3-branch-decision-v2.json"
+        authority_path = self.experiment / "phase4/branch-authority-v2.json"
+        decision = json.loads(decision_path.read_text())
+        authority = json.loads(authority_path.read_text())
+
+        self.assertTrue(decision_path.is_file())
+        self.assertTrue(authority_path.is_file())
+        self.assertEqual(canonical_json_bytes(decision), decision_path.read_bytes())
+        self.assertEqual(canonical_json_bytes(authority), authority_path.read_bytes())
+        self.assertEqual(decision, validate_h3_red_decision_v2(decision=decision, packet=packet, readiness=readiness))
+        self.assertEqual(
+            authority,
+            validate_h3_red_authority_v2(authority=authority, packet=packet, readiness=readiness, decision=decision),
+        )
+        self.assertEqual(decision["packet_sha256"], authority["packet_sha256"])
+        self.assertEqual(decision["readiness_sha256"], authority["readiness_sha256"])
+        self.assertEqual(decision["decision_sha256"], authority["decision_sha256"])
+
+    def test_v3_binds_v1_v2_history_and_publishes_no_decision_or_authority(self) -> None:
+        """v3 freezes the lifecycle fix and must await a new human decision before any authority."""
+        freeze_inputs = load_phase4_freeze_inputs_v3(experiment_root=self.experiment)
+        packet = build_h3_red_review_packet_v3(freeze_inputs)
+        readiness = build_h3_red_readiness_v3(packet)
+        markdown = render_h3_red_review_markdown_v3(packet)
+
+        self.assertEqual("historical_predecessor_not_current_authority", packet["predecessor_v1"]["status"])
+        self.assertEqual("historical_predecessor_not_current_authority", packet["predecessor_v2"]["status"])
+        self.assertEqual(
+            sha256_bytes((self.experiment / "reviews/h3-branch-decision-v1.json").read_bytes()),
+            packet["predecessor_v1"]["decision"]["raw_sha256"],
+        )
+        self.assertEqual(
+            sha256_bytes((self.experiment / "reviews/h3-branch-decision-v2.json").read_bytes()),
+            packet["predecessor_v2"]["decision"]["raw_sha256"],
+        )
+        self.assertEqual(
+            sha256_bytes((self.experiment / "phase4/branch-authority-v2.json").read_bytes()),
+            packet["predecessor_v2"]["authority"]["raw_sha256"],
+        )
+        self.assertIn("lifecycle tests and static checking", packet["successor_rationale"])
+        self.assertEqual(packet["predecessor_v2"], readiness["historical_predecessors"]["v2"])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_h3_red_readiness_v3(experiment_root=root, packet=packet, markdown=markdown, readiness=readiness)
+            self.assertTrue((root / "receipts/h3-branch-readiness-v3.json").is_file())
+            self.assertFalse((root / "reviews/h3-branch-decision-v3.json").exists())
+            self.assertFalse((root / "phase4/branch-authority-v3.json").exists())
 
 
 if __name__ == "__main__":
