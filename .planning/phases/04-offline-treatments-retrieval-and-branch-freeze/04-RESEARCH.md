@@ -383,17 +383,19 @@ The current predecessor command passed with 72 tests and Ruff during this resear
 | A2 | `specchoice_treatments` and its named test/config/fixture paths are recommended new paths rather than present repository paths. | Recommended Project Structure / Validation | Planner must create only the minimal paths it needs and avoid collision with an existing package added before execution. |
 | A3 | Ruff fallback to `py_compile` is only a contingency; Ruff is currently available and remains the required static check while present. | Environment Availability | Reduced lint coverage if environment changes. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Which exact standard-library lexical specification will be frozen?**
    - What we know: TF-IDF/cosine, target-only input, complete pairs, and deterministic ordering are locked; the planner may choose lexical-token details. [VERIFIED: .planning/phases/04-offline-treatments-retrieval-and-branch-freeze/04-CONTEXT.md:25-28; 45-47]
    - What's unclear: token regex/case normalization, pair text composition, TF/IDF formula, score serialization, and zero-vector result are not yet a named closed artifact.
    - Recommendation: Decide all five in 04-03 before any generated retrieval report; hash the config and assert exact fixtures. This is a planner-owned discretionary technical choice, not a reason to request a new product decision. [ASSUMED]
+   - **RESOLVED:** Wave 3 plan 04-03, Task 04-03-01 freezes the complete lexical contract in canonical hashed `experiments/specchoice-v1.3.2/config/treatments/lexical-retrieval-contract-v1.json` before the canonical retrieval report or any generated retrieval fixture/report is frozen. The decision is NFC then casefold normalization, regex `(?u)\\b\\w+\\b`, one LF-joined pair document in configured field order with sorted `discriminating_axes`, raw-count TF, `ln((1+N)/(1+df))+1` IDF, L2 cosine with a zero-vector score of `0`, full-precision ranking followed by `.17g` score serialization, and `contract_sha256` over the canonical config. [RESOLVED: `04-03-PLAN.md`, lexical-config artifact contract and Task 04-03-01 actions 2-3]
 
 2. **How will the human H3 decision be entered without adding a broad CLI?**
    - What we know: H3 must use the existing machine-readiness + separate human-decision pattern, and Phase 4's only retrieval CLI is fixed. [VERIFIED: .planning/phases/04-offline-treatments-retrieval-and-branch-freeze/04-CONTEXT.md:18-21; 42-42]
    - What's unclear: whether the planner needs a small dedicated read-only H3 validator command or should reuse a library/test checkpoint while a human supplies canonical JSON.
    - Recommendation: Default to a library-only H3 validator/publisher and human-supplied canonical decision artifact; add an H3 CLI only if the planner can demonstrate it does not expand the allowed command surface. [ASSUMED]
+   - **RESOLVED:** Plan 04-04 selects library-first H3 validation and publication through `specchoice_treatments.h3`, with the human supplying the canonical `experiments/specchoice-v1.3.2/reviews/h3-branch-decision-v1.json` artifact at checkpoint 04-04-02. H3 adds no CLI command or flag; `specchoice_treatments.cli.build_parser()` remains unchanged, and the sole Phase 4 CLI is `verify-retrieval-contract`. [RESOLVED: `04-04-PLAN.md`, `<interfaces>`, H3 artifacts/CLI contract, and Task 04-04-02]
 
 ## Sources
 

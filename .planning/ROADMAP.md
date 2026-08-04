@@ -260,10 +260,20 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 04-01: Freeze the three-axis frame schema, advisory patterns, and strict B/C output contract.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 04-02: Assemble treatment-controlled A/B/C prompts, serializers, structural diffs, and budget accounting.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 04-03: Implement deterministic complete-pair retrieval and validate it offline with target-only inputs.
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 04-04: Hash every treatment-affecting artifact and implement H3/H4 branch authorization with Red fail-closed enforcement.
 
 ### Phase 5: Authorized Execution and Immutable Evidence
