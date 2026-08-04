@@ -563,6 +563,23 @@ def build_h3_red_readiness_v2(packet: Mapping[str, object], markdown: bytes | No
     return {**payload, "readiness_sha256": sha256_bytes(canonical_json_bytes(payload))}
 
 
+def write_h3_red_readiness_v2(
+    *, experiment_root: Path, packet: Mapping[str, object], markdown: bytes, readiness: Mapping[str, object],
+) -> None:
+    """Publish only the exact-resume, decision-free v2 machine review products."""
+    expected = build_h3_red_readiness_v2(packet, markdown)
+    if dict(readiness) != expected or not _self_hash_valid(readiness, "readiness_sha256"):
+        raise H3ValidationError("H3_READINESS_INVALID")
+    try:
+        write_exact_descriptor_files(experiment_root, {
+            "receipts/h3-branch-readiness-v2.json": canonical_json_bytes(readiness),
+            "reports/h3/h3-red-review-v2/review-packet.json": canonical_json_bytes(packet),
+            "reports/h3/h3-red-review-v2/review-packet.md": markdown,
+        })
+    except (FilesystemPolicyError, OSError) as error:
+        raise H3ValidationError("H3_READINESS_INVALID") from error
+
+
 def validate_h3_red_decision_v2(
     *, decision: object, packet: Mapping[str, object], readiness: Mapping[str, object],
 ) -> dict[str, object]:

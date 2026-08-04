@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
 from copy import deepcopy
 from pathlib import Path
@@ -18,8 +19,10 @@ from specchoice_treatments.h3 import (
     build_h3_red_review_packet_v2,
     load_phase4_freeze_inputs_v1,
     load_phase4_freeze_inputs_v2,
+    render_h3_red_review_markdown_v2,
     validate_h3_red_authority_v2,
     validate_h3_red_decision_v2,
+    write_h3_red_readiness_v2,
 )
 
 
@@ -118,6 +121,19 @@ class H3ContractTests(unittest.TestCase):
             {"aggregate_disposition", "reviewer_id", "attestation", "signature", "rationale", "timestamp_utc"}
             & readiness.keys()
         )
+
+    def test_v2_machine_products_publish_only_exact_packet_and_readiness(self) -> None:
+        """The successor packet writer has no decision or authority output path."""
+        _, packet, readiness = self._v2_packet_readiness()
+        markdown = render_h3_red_review_markdown_v2(packet)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_h3_red_readiness_v2(experiment_root=root, packet=packet, markdown=markdown, readiness=readiness)
+            write_h3_red_readiness_v2(experiment_root=root, packet=packet, markdown=markdown, readiness=readiness)
+            self.assertEqual(canonical_json_bytes(packet), (root / "reports/h3/h3-red-review-v2/review-packet.json").read_bytes())
+            self.assertEqual(canonical_json_bytes(readiness), (root / "receipts/h3-branch-readiness-v2.json").read_bytes())
+            self.assertFalse((root / "reviews/h3-branch-decision-v2.json").exists())
+            self.assertFalse((root / "phase4/branch-authority-v2.json").exists())
 
     def test_v1_decision_cannot_authorize_v2_authority(self) -> None:
         """A valid v1 human decision cannot cross the v2 successor boundary."""

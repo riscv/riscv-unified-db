@@ -46,6 +46,7 @@ from .h3 import (
     validate_h3_red_authority_v2,
     validate_h3_red_decision_v2,
     write_h3_red_authority_v2,
+    write_h3_red_readiness_v2,
 )
 
 FRAME_COMBINATION_REQUIRES_REVIEW = "FRAME_COMBINATION_REQUIRES_REVIEW"
@@ -88,5 +89,6 @@ __all__ = [
     "validate_h3_red_decision_v2",
     "write_offline_prompt_bundle_v1",
     "write_h3_red_authority_v2",
+    "write_h3_red_readiness_v2",
     "verify_retrieval_contract_v1",
 ]
