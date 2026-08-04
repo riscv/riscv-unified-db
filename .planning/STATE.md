@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.3.2
 milestone_name: milestone
-current_phase: 4
-current_phase_name: Offline Treatments, Retrieval, and Branch Freeze
+current_phase: 04
+current_phase_name: offline-treatments-retrieval-and-branch-freeze
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-08-04T10:21:55.988Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-08-04T11:47:51.719Z"
 last_activity: 2026-08-04
-last_activity_desc: Phase 03 complete, transitioned to Phase 4
+last_activity_desc: Phase 04 execution started
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 2
   total_plans: 37
-  completed_plans: 28
-  percent: 85
+  completed_plans: 29
+  percent: 29
 ---
 
 # Project State
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-07-30)
 
 ## Current Position
 
-Phase: 4 — Offline Treatments, Retrieval, and Branch Freeze
-Plan: Not started
+Phase: 04 (offline-treatments-retrieval-and-branch-freeze) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-08-04 — Phase 03 complete, transitioned to Phase 4
+Last activity: 2026-08-04 — Phase 04 execution started
 
-Progress: [█████████░] 85%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -86,6 +86,7 @@ Progress: [█████████░] 85%
 | Phase 03 P02 | multi-session | 3 tasks | 9 files |
 | Phase 03 P03 | multi-session | 3 tasks | 8 files |
 | Phase 03 P04 | multi-session | 3 tasks | 9 files |
+| Phase 04 P01 | 1h 15m | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -155,6 +156,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Family registry and split freeze one warl_legal_set prototype pair with empty strict and auxiliary sets; membership is deterministic and no case may be moved or fabricated. — The approved registry and assignment derive prototype=1, strict=0, auxiliary=0 without diagnostics. Insufficient natural coverage remains red_required and model execution stays unauthorized.
 - [Phase 03]: The frozen inventory contains no metamorphic candidates; all four required directions are explicit unavailable, human-excluded, and non-counting records. — Post-freeze candidate addition or synthetic semantic completion is prohibited. Empty strict and auxiliary relevance remains exact, and the audit continues to red_required without model authorization.
 - [Phase 03]: Approved H2 data authority deterministically selects red_required from one qualifying natural pair, zero strict cases, and four unavailable metamorphic directions. — Yellow and Green count thresholds are unmet; pair failure analysis preserves CHOICE_OBJECT_MISMATCH and H1_STATUS_CONFLICT without replacement. Retrieval, model execution, external publication, and final Phase 4 branch authority remain false.
+- [Phase ?]: B and C use the same closed parser/output schema; only A is frame-free.
+- [Phase ?]: Advisory patterns are canonical config validated at import and return only ordered warning Diagnostics.
+- [Phase ?]: No provider, model, retrieval, CLI, dependency, or external-action surface is introduced in Wave 1.
 
 ### Pending Todos
 
@@ -173,6 +177,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-04T08:36:26.249Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-offline-treatments-retrieval-and-branch-freeze/04-CONTEXT.md
+Last session: 2026-08-04T11:47:51.706Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None

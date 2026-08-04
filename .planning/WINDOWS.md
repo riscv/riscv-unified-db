@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 0
+open_count: 1
 waived_count: 0
 fixed_count: 2
-total_count: 2
-last_updated: 2026-07-31T18:04:08.419Z
+total_count: 3
+last_updated: 2026-08-04T11:47:50.768Z
 ---
 
 # Broken Windows Ledger
@@ -17,6 +17,7 @@ last_updated: 2026-07-31T18:04:08.419Z
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
 | 1 | 02 | deviation | experiments/specchoice-v1.3.2/config/measurement/canonical-adjudication-schema-v1.json |  | Canonical schema bytes and accepted-path validation were corrected during 02-02 verification. | fixed |  | 2026-07-31T15:18:50.933Z | 2026-07-31T15:20:40.686Z |
 | 2 | 02 | deviation | experiments/specchoice-v1.3.2/src/specchoice_measurement/cli.py |  | Adversarial report publication uses exclusive create and directory fsync to preserve existing targets. | fixed |  | 2026-07-31T18:03:49.941Z | 2026-07-31T18:04:08.419Z |
+| 3 | 04 | unrun-verify | experiments/specchoice-v1.3.2 |  | Ruff verification was not run because ruff and mise are unavailable in the execution environment. | open |  | 2026-08-04T11:47:50.768Z |  |
 
 ````json
 [
@@ -43,6 +44,18 @@ last_updated: 2026-07-31T18:04:08.419Z
     "reason": "",
     "recorded_at": "2026-07-31T18:03:49.941Z",
     "resolved_at": "2026-07-31T18:04:08.419Z"
+  },
+  {
+    "id": 3,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": "experiments/specchoice-v1.3.2",
+    "line": null,
+    "description": "Ruff verification was not run because ruff and mise are unavailable in the execution environment.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-04T11:47:50.768Z",
+    "resolved_at": null
   }
 ]
 ````

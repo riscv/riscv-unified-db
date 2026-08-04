@@ -42,7 +42,7 @@ Requirements for the frozen SpecChoice v1.3.2 execution baseline. Each maps to e
 
 ### H1 — DelegationFrame Effect
 
-- [ ] **H1-01** `[G/Y]`: For systems B and C, the reviewer receives exactly the three required DelegationFrame axes—`authority`, `choice_object`, and `choice_space_origin`—using frozen enums, permitting `unknown`, and carrying a verbatim evidence span for each axis.
+- [x] **H1-01** `[G/Y]`: For systems B and C, the reviewer receives exactly the three required DelegationFrame axes—`authority`, `choice_object`, and `choice_space_origin`—using frozen enums, permitting `unknown`, and carrying a verbatim evidence span for each axis.
 - [ ] **H1-02** `[G/Y]`: The reviewer can compare paired B-minus-A case outcomes where A and B use the same two fixed complete contrastive pairs and all shared controls, with the DelegationFrame as the intended intervention.
 - [ ] **H1-03** `[G/Y]`: The reviewer receives separate accuracy for all three frame axes and frozen `FRAME_COMBINATION_REQUIRES_REVIEW` warnings that remain non-blocking and cannot alter axis or disposition correctness.
 - [ ] **H1-04** `[G/Y]`: The reviewer can determine whether the frame changes shortcut-family errors and required metamorphic directions without post-hoc prompt, label, family, or threshold changes.
@@ -145,7 +145,7 @@ Roadmap creation maps every v1 requirement to exactly one phase.
 | TS-13 | Phase 6 | Pending |
 | TS-14 | Phase 7 | Pending |
 | TS-15 | Phase 7 | Pending |
-| H1-01 | Phase 4 | Pending |
+| H1-01 | Phase 4 | Complete |
 | H1-02 | Phase 6 | Pending |
 | H1-03 | Phase 6 | Pending |
 | H1-04 | Phase 6 | Pending |
