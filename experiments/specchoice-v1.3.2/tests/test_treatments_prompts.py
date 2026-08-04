@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_treatments.schema import TreatmentContractError, parse_treatment_response_v1
 from specchoice_treatments.prompts import (
     PromptBundleError,
     PROMPT_SECTION_ORDER,
@@ -61,6 +62,23 @@ class PromptBundleTests(unittest.TestCase):
         }
 
         self.assertEqual(self.config["demonstration_count"], 2)
+        self.assertEqual(
+            self.config["fixed_pair_selection"]["corpus_sha256"],
+            self.corpus["corpus_sha256"],
+        )
+        self.assertEqual(
+            self.receipt["ranking"],
+            [
+                {"cosine_score": 0.125, "pair_id": "SYNTH_PAIR_ALPHA", "rank": 1},
+                {"cosine_score": 0.0, "pair_id": "SYNTH_PAIR_GAMMA", "rank": 2},
+            ],
+        )
+        self.assertNotIn("ordered_pair_ids", self.receipt)
+        self.assertEqual(self.receipt["ordering_rule"], "score_desc_pair_id_asc")
+        self.assertEqual(self.receipt["query_rule"], "source_text_only")
+        self.assertEqual(
+            self.receipt["lexical_rule"], "python_re_findall_unicode_word_boundaries_v1"
+        )
         for system in sections:
             self.assertEqual(sections[system]["demonstrations"].count(b"Demonstration "), 2)
         self.assertEqual(sections["A"]["frame_instructions"], b"")
@@ -82,6 +100,14 @@ class PromptBundleTests(unittest.TestCase):
             self.assertIn(b'"contrast"', sections[system]["demonstrations"])
             self.assertIn(b'"shared_structure"', sections[system]["demonstrations"])
             self.assertIn(b'"discriminating_axes"', sections[system]["demonstrations"])
+            self.assertIn(b'"final_status":"accept"', sections[system]["demonstrations"])
+            self.assertIn(b'"final_status":"classify_out"', sections[system]["demonstrations"])
+            self.assertIn(b"Encode not_surfaced only as:", sections[system]["adjudication_instructions"])
+            self.assertIn(b"- parameter_status: null", sections[system]["adjudication_instructions"])
+            self.assertIn(
+                b"Do not use not_surfaced as a parameter_status value.",
+                sections[system]["adjudication_instructions"],
+            )
         self.assertIn(b"SYNTH_PAIR_BETA", sections["B"]["demonstrations"])
         self.assertNotIn(b"SYNTH_PAIR_BETA", sections["C"]["demonstrations"])
         self.assertIn(b"SYNTH_PAIR_GAMMA", sections["C"]["demonstrations"])
@@ -136,6 +162,8 @@ class PromptBundleTests(unittest.TestCase):
                 lambda corpus: corpus["pairs"].__setitem__(1, deepcopy(corpus["pairs"][0])),
                 lambda corpus: corpus["pairs"][0].__setitem__("test_only", False),
                 lambda corpus: corpus["pairs"][0].__setitem__("count_eligible", True),
+                lambda corpus: corpus["pairs"][0]["positive"].pop("final_status"),
+                lambda corpus: corpus["pairs"][0]["contrast"].__setitem__("final_status", "accept"),
             ):
                 invalid_corpus = deepcopy(self.corpus)
                 mutate(invalid_corpus)
@@ -146,22 +174,89 @@ class PromptBundleTests(unittest.TestCase):
                     with self.assertRaisesRegex(PromptBundleError, "^PROMPT_PAIR_(CORPUS_INVALID|ID_DUPLICATE)$"):
                         render_treatment_prompt_v1(self.config, self.target)
 
+            drifted_corpus = deepcopy(self.corpus)
+            drifted_corpus["pairs"][0]["shared_structure"].append("changed fixture body")
+            seal_corpus(drifted_corpus)
+            corpus_path = root / "corpus-drift.json"
+            corpus_path.write_bytes(canonical_json_bytes(drifted_corpus))
+            with patch("specchoice_treatments.prompts._SYNTHETIC_PAIR_CORPUS_PATH", corpus_path):
+                with self.assertRaisesRegex(PromptBundleError, "^PROMPT_CONTRACT_INVALID$"):
+                    render_treatment_prompt_v1(self.config, self.target)
+
             def seal_receipt(value: dict[str, object]) -> None:
                 value["receipt_sha256"] = sha256_bytes(canonical_json_bytes({key: item for key, item in value.items() if key != "receipt_sha256"}))
+
+            def render_with_receipt(value: dict[str, object]) -> None:
+                seal_receipt(value)
+                contract = deepcopy(self.config)
+                contract["retrieval_receipt_sha256"] = value["receipt_sha256"]
+                contract_path = root / "contract.json"
+                receipt_path = root / "receipt.json"
+                contract_path.write_bytes(canonical_json_bytes(contract))
+                receipt_path.write_bytes(canonical_json_bytes(value))
+                with patch("specchoice_treatments.prompts._PROMPT_CONTRACT_PATH", contract_path):
+                    with patch("specchoice_treatments.prompts._SYNTHETIC_RETRIEVAL_RECEIPT_PATH", receipt_path):
+                        render_prompt_sections_v1(contract, self.target, "C")
 
             for mutate in (
                 lambda receipt: receipt.__setitem__("target_source_sha256", self.target["record_sha256"]),
                 lambda receipt: receipt.__setitem__("corpus_sha256", "0" * 64),
-                lambda receipt: receipt.__setitem__("ordered_pair_ids", ["SYNTH_PAIR_GAMMA", "SYNTH_PAIR_ALPHA"]),
+                lambda receipt: receipt.__setitem__("ranking", receipt["ranking"][:1]),
+                lambda receipt: receipt["ranking"][0].__setitem__("rank", 2),
+                lambda receipt: receipt["ranking"][0].__setitem__("cosine_score", -1.0),
+                lambda receipt: receipt["ranking"][0].__setitem__("cosine_score", 0.0)
+                or receipt["ranking"][1].__setitem__("cosine_score", 0.125),
+                lambda receipt: receipt["ranking"].__setitem__(
+                    0,
+                    {"rank": 1, "pair_id": "SYNTH_PAIR_GAMMA", "cosine_score": 0.0},
+                ) or receipt["ranking"].__setitem__(
+                    1,
+                    {"rank": 2, "pair_id": "SYNTH_PAIR_ALPHA", "cosine_score": 0.0},
+                ),
+                lambda receipt: receipt.__setitem__("ordered_pair_ids", ["SYNTH_PAIR_ALPHA", "SYNTH_PAIR_GAMMA"]),
+                lambda receipt: receipt.__setitem__("ordering_rule", "score_asc_pair_id_asc"),
+                lambda receipt: receipt.pop("query_rule"),
             ):
                 invalid_receipt = deepcopy(self.receipt)
                 mutate(invalid_receipt)
-                seal_receipt(invalid_receipt)
-                receipt_path = root / "receipt.json"
-                receipt_path.write_bytes(canonical_json_bytes(invalid_receipt))
-                with patch("specchoice_treatments.prompts._SYNTHETIC_RETRIEVAL_RECEIPT_PATH", receipt_path):
-                    with self.assertRaisesRegex(PromptBundleError, "^PROMPT_PAIR_CORPUS_INVALID$"):
-                        render_prompt_sections_v1(self.config, self.target, "C")
+                with self.assertRaisesRegex(PromptBundleError, "^PROMPT_PAIR_CORPUS_INVALID$"):
+                    render_with_receipt(invalid_receipt)
+
+            canonical_unsurfaced = {
+                "schema_version": "delegation-frame-response-v1",
+                "system": "A",
+                "origin": "contract_fixture",
+                "model_generated": False,
+                "target_sha256": self.target["source_sha256"],
+                "adjudication": {
+                    "surfaced": False,
+                    "parameter_status": None,
+                    "proposed_name": None,
+                    "evidence_spans": [],
+                    "rationale": "No candidate finding is present.",
+                },
+            }
+            self.assertFalse(
+                parse_treatment_response_v1(
+                    canonical_json_bytes(canonical_unsurfaced),
+                    self.target["source_text"].encode("utf-8"),
+                ).adjudication["surfaced"]
+            )
+            invalid_unsurfaced = deepcopy(canonical_unsurfaced)
+            invalid_unsurfaced["adjudication"]["parameter_status"] = "not_surfaced"
+            with self.assertRaisesRegex(TreatmentContractError, "^ADJUDICATION_INVALID$"):
+                parse_treatment_response_v1(
+                    canonical_json_bytes(invalid_unsurfaced),
+                    self.target["source_text"].encode("utf-8"),
+                )
+            surfaced_without_evidence = deepcopy(canonical_unsurfaced)
+            surfaced_without_evidence["adjudication"]["surfaced"] = True
+            surfaced_without_evidence["adjudication"]["parameter_status"] = "accept"
+            with self.assertRaisesRegex(TreatmentContractError, "^ADJUDICATION_INVALID$"):
+                parse_treatment_response_v1(
+                    canonical_json_bytes(surfaced_without_evidence),
+                    self.target["source_text"].encode("utf-8"),
+                )
 
 
 if __name__ == "__main__":

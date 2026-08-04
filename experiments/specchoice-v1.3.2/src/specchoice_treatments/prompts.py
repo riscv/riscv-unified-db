@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+import math
 from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
@@ -36,20 +37,21 @@ _TARGET_KEYS = frozenset({
     "test_only", "count_eligible",
 })
 _FIXED_SELECTION_KEYS = frozenset({
-    "selection_id", "target_source_sha256", "ordered_pair_ids", "test_only", "count_eligible",
+    "selection_id", "target_source_sha256", "corpus_sha256", "ordered_pair_ids", "test_only", "count_eligible",
 })
 _CORPUS_KEYS = frozenset({"schema_version", "test_only", "count_eligible", "pairs", "corpus_sha256"})
 _PAIR_KEYS = frozenset({
     "pair_id", "positive", "contrast", "shared_structure", "discriminating_axes",
     "test_only", "count_eligible",
 })
-_PAIR_SIDE_KEYS = frozenset({"source_text", "source_sha256", "frame", "evidence_spans"})
+_PAIR_SIDE_KEYS = frozenset({"source_text", "source_sha256", "frame", "evidence_spans", "final_status"})
 _PAIR_FRAME_AXIS_KEYS = frozenset({"value", "evidence_span"})
 _SPAN_KEYS = frozenset({"source_sha256", "start_byte", "end_byte", "text"})
 _RETRIEVAL_RECEIPT_KEYS = frozenset({
     "schema_version", "test_only", "count_eligible", "target_source_sha256", "corpus_sha256",
-    "ordered_pair_ids", "retrieval_contract_id", "receipt_sha256",
+    "ranking", "ordering_rule", "query_rule", "lexical_rule", "retrieval_contract_id", "receipt_sha256",
 })
+_RANKING_ITEM_KEYS = frozenset({"rank", "pair_id", "cosine_score"})
 
 
 class PromptBundleError(ValueError):
@@ -112,6 +114,7 @@ def _validate_prompt_contract_v1(value: object) -> dict[str, object]:
     if selection.get("selection_id") != "fixed-synthetic-pairs-v1" or selection.get("test_only") is not True or selection.get("count_eligible") is not False:
         raise PromptBundleError("PROMPT_CONTRACT_INVALID")
     _require_text(selection.get("target_source_sha256"), "PROMPT_CONTRACT_INVALID")
+    _require_text(selection.get("corpus_sha256"), "PROMPT_CONTRACT_INVALID")
     _require_pair_ids(selection.get("ordered_pair_ids"), "PROMPT_CONTRACT_INVALID")
     allowed = value.get("allowed_differences")
     if allowed != {"A_B": ["frame_instructions", "output_schema"], "B_C": ["demonstrations"]}:
@@ -174,10 +177,12 @@ def _validate_pair_span(value: object, source_raw: bytes) -> None:
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
 
 
-def _validate_pair_side(value: object) -> None:
+def _validate_pair_side(value: object, expected_final_status: str) -> None:
     if not isinstance(value, dict) or set(value) != _PAIR_SIDE_KEYS:
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     source_text = _require_text(value.get("source_text"), "PROMPT_PAIR_CORPUS_INVALID")
+    if value.get("final_status") != expected_final_status:
+        raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     if not source_text.endswith("\n") or source_text.endswith("\n\n"):
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     source_raw = source_text.encode("utf-8")
@@ -232,8 +237,8 @@ def _load_complete_pair_corpus_v1() -> dict[str, object]:
             or any(axis not in REQUIRED_FRAME_AXES for axis in axes)
         ):
             raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
-        _validate_pair_side(pair.get("positive"))
-        _validate_pair_side(pair.get("contrast"))
+        _validate_pair_side(pair.get("positive"), "accept")
+        _validate_pair_side(pair.get("contrast"), "classify_out")
     if len(pair_ids) != len(set(pair_ids)):
         raise PromptBundleError("PROMPT_PAIR_ID_DUPLICATE")
     return corpus
@@ -265,9 +270,35 @@ def _load_retrieval_receipt_v1(contract: Mapping[str, object], target: Mapping[s
         or receipt.get("target_source_sha256") != target["source_sha256"]
         or receipt.get("corpus_sha256") != corpus["corpus_sha256"]
         or receipt.get("retrieval_contract_id") != contract["retrieval_contract_id"]
+        or receipt.get("ordering_rule") != "score_desc_pair_id_asc"
+        or receipt.get("query_rule") != "source_text_only"
+        or receipt.get("lexical_rule") != "python_re_findall_unicode_word_boundaries_v1"
     ):
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
-    return _require_pair_ids(receipt.get("ordered_pair_ids"), "PROMPT_PAIR_CORPUS_INVALID")
+    ranking = receipt.get("ranking")
+    if not isinstance(ranking, list) or len(ranking) != 2:
+        raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
+    pair_ids: list[str] = []
+    scores: list[float] = []
+    for expected_rank, item in enumerate(ranking, start=1):
+        if not isinstance(item, dict) or set(item) != _RANKING_ITEM_KEYS or item.get("rank") != expected_rank:
+            raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
+        pair_id = item.get("pair_id")
+        score = item.get("cosine_score")
+        if (
+            not isinstance(pair_id, str)
+            or not pair_id
+            or isinstance(score, bool)
+            or not isinstance(score, (int, float))
+            or not math.isfinite(score)
+            or score < 0
+        ):
+            raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
+        pair_ids.append(pair_id)
+        scores.append(float(score))
+    if len(set(pair_ids)) != 2 or scores[0] < scores[1] or (scores[0] == scores[1] and pair_ids[0] >= pair_ids[1]):
+        raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
+    return tuple(pair_ids)  # type: ignore[return-value]
 
 
 def _raw_section(text: str, *, allow_empty: bool = False) -> bytes:
@@ -286,6 +317,8 @@ def render_prompt_sections_v1(config: object, target: object, system: str) -> di
     corpus = _load_complete_pair_corpus_v1()
     selection = contract["fixed_pair_selection"]
     assert isinstance(selection, dict)
+    if selection["corpus_sha256"] != corpus["corpus_sha256"]:
+        raise PromptBundleError("PROMPT_CONTRACT_INVALID")
     pair_ids = _load_retrieval_receipt_v1(contract, closed_target, corpus) if system == "C" else _require_pair_ids(selection["ordered_pair_ids"], "PROMPT_CONTRACT_INVALID")
     pairs = _resolve_pairs(pair_ids, corpus)
     selection_label = "retrieved contract pair" if system == "C" else "fixed synthetic pair"
