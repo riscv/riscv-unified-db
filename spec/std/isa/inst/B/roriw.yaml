@@ -41,5 +41,5 @@ operation(): |
 
   XReg xs1_word = X[xs1][31:0];
 
-  XReg unextended_result = (X[xs1] >> shamt) | (X[xs1] << (32 - shamt));
+  XReg unextended_result = (xs1_word >> shamt) | (xs1_word << (32 - shamt));
   X[xd] = {{32{unextended_result[31]}}, unextended_result};

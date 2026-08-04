@@ -51,7 +51,7 @@ operation(): |
   XReg virtual_address = X[xs1] + $signed(imm);
 
   if (xlen() == 32) {
-    if (implemented?(ExtensionName::Zclsd)) {
+    if (implemented?(ExtensionName::Zilsd)) {
       data = {X[xs2 + 1], X[xs2]};
     } else {
       raise(ExceptionCode::IllegalInstruction, mode(), $encoding);

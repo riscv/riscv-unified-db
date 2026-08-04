@@ -13,7 +13,6 @@ description: |
   If both inputs are _NaN_s, the result is the canonical _NaN_.
   If either input is _NaN_, the result is the canonical _NaN_.
   Signaling _NaN_ inputs set the invalid operation exception flag, even when the result is not _NaN_.
-  This instruction is encoded like its `fminm.q` counterpart, but with instruction bit 14 set to 1.
 definedBy:
   extension:
     allOf:

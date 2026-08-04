@@ -4799,27 +4799,12 @@ module Idl
     # @return [Integer] the number of bits needed to represent value in two's complement
     def bits_needed(value, signed)
       if signed
-        case value
-        when 0
-          1
-        when 1
-          2
-        else
-          if value > 0
-            # need bit_legnth plus a sign bit
-            bits = value.bit_length + 1
-          else
-            # need bit_length plus a sign bit, unless value is a power of 2
-            if (value.abs & (value.abs - 1)) == 0
-              value.bit_length
-            else
-              value.bit_length + 1
-            end
-          end
-        end
+        # add sign bit
+        value.bit_length + 1
       else
         internal_error "unsigned value is negative" if value < 0
 
+        # 0 needs a single bit; `0.bit_length` returns 0.
         value == 0 ? 1 : value.bit_length
       end
     end
