@@ -59,8 +59,12 @@ class PromptBundleTests(unittest.TestCase):
     def test_target_and_raw_text_boundaries_fail_closed(self) -> None:
         invalid_target = deepcopy(self.target)
         invalid_target["source_text"] = ""
+        missing_final_lf = deepcopy(self.target)
+        missing_final_lf["source_text"] = "synthetic target without its final LF"
         for invalid_config, target in (
             (self.config, invalid_target),
+            (self.config, missing_final_lf),
+            (self.config, {**self.target, "source_text": None}),
             ({**self.config, "extra": True}, self.target),
             ({**self.config, "shared_guidance": "line\r\n"}, self.target),
         ):
