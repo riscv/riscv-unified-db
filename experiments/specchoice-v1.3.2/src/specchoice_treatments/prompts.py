@@ -206,7 +206,8 @@ def _validate_pair_span(value: object, source_raw: bytes) -> None:
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
 
 
-def _validate_pair_side(value: object, expected_final_status: str) -> None:
+def validate_complete_pair_side_v1(value: object, expected_final_status: str) -> None:
+    """Validate one atomic synthetic pair side against the Wave 2 contract."""
     if not isinstance(value, dict) or set(value) != _PAIR_SIDE_KEYS:
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     source_text = _require_text(value.get("source_text"), "PROMPT_PAIR_CORPUS_INVALID")
@@ -270,8 +271,8 @@ def _load_complete_pair_corpus_v1() -> dict[str, object]:
             or any(axis not in REQUIRED_FRAME_AXES for axis in axes)
         ):
             raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
-        _validate_pair_side(pair.get("positive"), "accept")
-        _validate_pair_side(pair.get("contrast"), "classify_out")
+        validate_complete_pair_side_v1(pair.get("positive"), "accept")
+        validate_complete_pair_side_v1(pair.get("contrast"), "classify_out")
     if len(pair_ids) != len(set(pair_ids)):
         raise PromptBundleError("PROMPT_PAIR_ID_DUPLICATE")
     return corpus

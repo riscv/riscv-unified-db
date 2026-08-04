@@ -60,6 +60,12 @@ class RetrievalContractTests(unittest.TestCase):
             key: value for key, value in target.items() if key != "record_sha256"
         }))
 
+    @staticmethod
+    def _seal_corpus(corpus: dict[str, object]) -> None:
+        corpus["corpus_sha256"] = sha256_bytes(canonical_json_bytes({
+            key: value for key, value in corpus.items() if key != "corpus_sha256"
+        }))
+
     def test_cli_tracer_returns_exact_two_complete_pairs(self) -> None:
         exit_code, stdout = self._run_cli()
         report = build_retrieval_report_v1(
@@ -115,6 +121,30 @@ class RetrievalContractTests(unittest.TestCase):
             [item.pair_id for item in changed],
         )
         self.assertEqual([item.pair_id for item in changed], ["SYNTH_PAIR_BETA", "SYNTH_PAIR_ALPHA"])
+
+    def test_null_pair_frame_is_incomplete_even_after_corpus_rehash(self) -> None:
+        corpus = deepcopy(self.corpus)
+        corpus["pairs"][0]["positive"]["frame"] = None
+        self._seal_corpus(corpus)
+
+        with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_PAIR_INCOMPLETE$"):
+            rank_complete_pairs_v1(target=self.target, corpus=corpus, config=self.config)
+
+    def test_empty_pair_evidence_is_incomplete_even_after_corpus_rehash(self) -> None:
+        corpus = deepcopy(self.corpus)
+        corpus["pairs"][0]["positive"]["evidence_spans"] = []
+        self._seal_corpus(corpus)
+
+        with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_PAIR_INCOMPLETE$"):
+            rank_complete_pairs_v1(target=self.target, corpus=corpus, config=self.config)
+
+    def test_axis_span_mismatch_is_incomplete_even_after_corpus_rehash(self) -> None:
+        corpus = deepcopy(self.corpus)
+        corpus["pairs"][0]["positive"]["frame"]["authority"]["evidence_span"]["start_byte"] = 1
+        self._seal_corpus(corpus)
+
+        with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_PAIR_INCOMPLETE$"):
+            rank_complete_pairs_v1(target=self.target, corpus=corpus, config=self.config)
 
     def test_report_binds_explicit_prompt_manifest_and_distinct_identities(self) -> None:
         parser = build_parser()

@@ -14,6 +14,7 @@ import unicodedata
 from specchoice_evidence.canonical import canonical_json_bytes, require_sha256, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, read_authoritative_file, require_relative_posix_path
 from specchoice_measurement.strict_json import decode_strict_json
+from specchoice_treatments.prompts import PromptBundleError, validate_complete_pair_side_v1
 
 
 FORBIDDEN_QUERY_FIELDS = frozenset({
@@ -35,7 +36,6 @@ _PAIR_KEYS = frozenset({
     "pair_id", "positive", "contrast", "shared_structure", "discriminating_axes", "test_only",
     "count_eligible",
 })
-_SIDE_KEYS = frozenset({"source_text", "source_sha256", "frame", "evidence_spans", "final_status"})
 _PROMPT_MANIFEST_KEYS = frozenset({
     "schema_version", "contract_sha256", "target_sha256", "corpus_sha256", "prompt_records",
     "response_records", "section_hashes", "pair_selection", "structural_comparison",
@@ -142,17 +142,11 @@ def validate_test_only_target_v1(target: object) -> dict[str, object]:
 
 
 def _validate_side(value: object, status: str) -> dict[str, object]:
-    if not isinstance(value, dict) or set(value) != _SIDE_KEYS or value.get("final_status") != status:
-        raise RetrievalContractError("RETRIEVAL_PAIR_INCOMPLETE")
-    source_text = value.get("source_text")
-    if not _non_empty_text(source_text):
-        raise RetrievalContractError("RETRIEVAL_PAIR_INCOMPLETE")
     try:
-        require_sha256(value.get("source_sha256"))
-    except (TypeError, ValueError) as error:
+        validate_complete_pair_side_v1(value, status)
+    except PromptBundleError as error:
         raise RetrievalContractError("RETRIEVAL_PAIR_INCOMPLETE") from error
-    assert isinstance(source_text, str)
-    if value.get("source_sha256") != sha256_bytes(source_text.encode("utf-8")):
+    if not isinstance(value, dict):
         raise RetrievalContractError("RETRIEVAL_PAIR_INCOMPLETE")
     return value
 
