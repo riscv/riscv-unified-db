@@ -73,9 +73,9 @@ function highest_set_bit {
     or -1 if value is zero.
   }
   body {
-    for (Bits<8> i=xlen()-1; i >= 0; i--) {
-      if (value[i] == 1) {
-        return i;
+    for (Bits<8> i=xlen(); i > 0; i--) {
+      if (value[i-1] == 1) {
+        return i-1;
       }
     }
 
