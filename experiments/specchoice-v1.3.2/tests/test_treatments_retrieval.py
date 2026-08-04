@@ -10,12 +10,12 @@ from copy import deepcopy
 from pathlib import Path
 import unittest
 
-from specchoice_evidence.canonical import canonical_json_bytes
+from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_treatments.cli import build_parser, main
 from specchoice_treatments.retrieval import (
     build_retrieval_report_v1,
     load_retrieval_contract_v1,
-    verify_retrieval_contract_v1,
+    rank_complete_pairs_v1,
 )
 
 
@@ -44,6 +44,15 @@ class RetrievalContractTests(unittest.TestCase):
         output.flush()
         return exit_code, output.buffer.getvalue()
 
+    @staticmethod
+    def _seal_target(target: dict[str, object]) -> None:
+        source_text = target["source_text"]
+        assert isinstance(source_text, str)
+        target["source_sha256"] = sha256_bytes(source_text.encode("utf-8"))
+        target["record_sha256"] = sha256_bytes(canonical_json_bytes({
+            key: value for key, value in target.items() if key != "record_sha256"
+        }))
+
     def test_cli_tracer_returns_exact_two_complete_pairs(self) -> None:
         exit_code, stdout = self._run_cli()
         report = build_retrieval_report_v1(
@@ -55,6 +64,10 @@ class RetrievalContractTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         self.assertEqual(stdout, canonical_json_bytes(report))
+        self.assertEqual(
+            stdout,
+            (self.root / "reports/h3/test-only-retrieval-contract-v1.json").read_bytes(),
+        )
         self.assertEqual([item["pair_id"] for item in report["results"]], [
             "SYNTH_PAIR_ALPHA", "SYNTH_PAIR_GAMMA",
         ])
@@ -78,19 +91,16 @@ class RetrievalContractTests(unittest.TestCase):
     def test_target_text_changes_rank(self) -> None:
         changed_target = deepcopy(self.target)
         changed_target["source_text"] = "Beta platform software access.\n"
-        changed_target["source_sha256"] = ""
-        changed_target["record_sha256"] = ""
-        changed = verify_retrieval_contract_v1(
+        self._seal_target(changed_target)
+        changed = rank_complete_pairs_v1(
             target=changed_target,
             corpus=self.corpus,
             config=self.config,
-            experiment_root=self.root,
         )
-        baseline = verify_retrieval_contract_v1(
+        baseline = rank_complete_pairs_v1(
             target=self.target,
             corpus=self.corpus,
             config=self.config,
-            experiment_root=self.root,
         )
 
         self.assertNotEqual(
