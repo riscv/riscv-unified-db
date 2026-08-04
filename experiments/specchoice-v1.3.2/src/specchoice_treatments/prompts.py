@@ -9,7 +9,13 @@ from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_measurement.strict_json import decode_strict_json
-from specchoice_treatments.schema import FRAME_ENUMS, REQUIRED_FRAME_AXES
+from specchoice_treatments.schema import (
+    FRAME_ENUMS,
+    REQUIRED_FRAME_AXES,
+    ParsedTreatmentResponse,
+    TreatmentContractError,
+    parse_treatment_response_v1,
+)
 
 
 PROMPT_SECTION_ORDER = (
@@ -52,10 +58,27 @@ _RETRIEVAL_RECEIPT_KEYS = frozenset({
     "ranking", "ordering_rule", "query_rule", "lexical_rule", "retrieval_contract_id", "receipt_sha256",
 })
 _RANKING_ITEM_KEYS = frozenset({"rank", "pair_id", "cosine_score"})
+_CONTRACT_RESPONSE_ISOLATION_KEYS = frozenset({"test_only", "count_eligible"})
+_CONTRACT_RESPONSE_BASE_KEYS = frozenset({
+    "schema_version", "system", "origin", "model_generated", "target_sha256", "adjudication",
+})
+_FORBIDDEN_CORPUS_FIELD_NAMES = frozenset({
+    "accepted_path", "candidate_inventory", "final_disposition", "gold", "primary_family", "relevance",
+})
 
 
 class PromptBundleError(ValueError):
     """Stable failure emitted before an offline prompt bundle can be trusted."""
+
+
+def _contains_forbidden_corpus_field(value: object) -> bool:
+    if isinstance(value, Mapping):
+        return bool(_FORBIDDEN_CORPUS_FIELD_NAMES & set(value)) or any(
+            _contains_forbidden_corpus_field(item) for item in value.values()
+        )
+    if isinstance(value, list):
+        return any(_contains_forbidden_corpus_field(item) for item in value)
+    return False
 
 
 def _load_canonical_json(path: Path, code: str) -> object:
@@ -205,7 +228,11 @@ def _validate_pair_side(value: object, expected_final_status: str) -> None:
 
 def _load_complete_pair_corpus_v1() -> dict[str, object]:
     corpus = _load_canonical_json(_SYNTHETIC_PAIR_CORPUS_PATH, "PROMPT_PAIR_CORPUS_INVALID")
-    if not isinstance(corpus, dict) or set(corpus) != _CORPUS_KEYS:
+    if (
+        not isinstance(corpus, dict)
+        or set(corpus) != _CORPUS_KEYS
+        or _contains_forbidden_corpus_field(corpus)
+    ):
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     if corpus.get("schema_version") != "synthetic-complete-pair-corpus-v1" or corpus.get("test_only") is not True or corpus.get("count_eligible") is not False:
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
@@ -220,7 +247,7 @@ def _load_complete_pair_corpus_v1() -> dict[str, object]:
         if not isinstance(pair, dict) or set(pair) != _PAIR_KEYS:
             raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
         pair_id = pair.get("pair_id")
-        if not isinstance(pair_id, str) or not pair_id:
+        if not isinstance(pair_id, str) or not pair_id.startswith("SYNTH_PAIR_"):
             raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
         pair_ids.append(pair_id)
         if pair.get("test_only") is not True or pair.get("count_eligible") is not False:
@@ -242,6 +269,41 @@ def _load_complete_pair_corpus_v1() -> dict[str, object]:
     if len(pair_ids) != len(set(pair_ids)):
         raise PromptBundleError("PROMPT_PAIR_ID_DUPLICATE")
     return corpus
+
+
+def validate_contract_response_origin_v1(
+    raw: bytes,
+    target_raw: bytes,
+    *,
+    evidence_kind: str = "contract_fixture",
+) -> ParsedTreatmentResponse:
+    """Validate one canonical human fixture without creating evidence usable by a run."""
+    if evidence_kind != "contract_fixture":
+        raise PromptBundleError("CONTRACT_FIXTURE_EVIDENCE_FORBIDDEN")
+    try:
+        envelope = decode_strict_json(raw)
+    except (UnicodeDecodeError, ValueError) as error:
+        raise PromptBundleError("PROMPT_RESPONSE_INVALID") from error
+    if canonical_json_bytes(envelope) != raw or not isinstance(envelope, dict):
+        raise PromptBundleError("PROMPT_RESPONSE_INVALID")
+    system = envelope.get("system")
+    expected = _CONTRACT_RESPONSE_BASE_KEYS | _CONTRACT_RESPONSE_ISOLATION_KEYS
+    if system in {"B", "C"}:
+        expected |= {"delegation_frame"}
+    if set(envelope) != expected:
+        raise PromptBundleError("PROMPT_RESPONSE_INVALID")
+    if (
+        envelope.get("origin") != "contract_fixture"
+        or envelope.get("model_generated") is not False
+        or envelope.get("test_only") is not True
+        or envelope.get("count_eligible") is not False
+    ):
+        raise PromptBundleError("PROMPT_RESPONSE_INVALID")
+    projection = {key: value for key, value in envelope.items() if key not in _CONTRACT_RESPONSE_ISOLATION_KEYS}
+    try:
+        return parse_treatment_response_v1(canonical_json_bytes(projection), target_raw)
+    except TreatmentContractError as error:
+        raise PromptBundleError("PROMPT_RESPONSE_INVALID") from error
 
 
 def _resolve_pairs(pair_ids: tuple[str, str], corpus: Mapping[str, object]) -> tuple[dict[str, object], dict[str, object]]:

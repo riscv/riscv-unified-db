@@ -15,6 +15,7 @@ from specchoice_treatments.prompts import (
     PROMPT_SECTION_ORDER,
     render_prompt_sections_v1,
     render_treatment_prompt_v1,
+    validate_contract_response_origin_v1,
 )
 
 
@@ -25,6 +26,10 @@ class PromptBundleTests(unittest.TestCase):
         self.target_path = experiment / "fixtures/treatments/synthetic-target-v1.json"
         self.corpus_path = experiment / "fixtures/treatments/synthetic-complete-pairs-v1.json"
         self.receipt_path = experiment / "fixtures/treatments/synthetic-retrieval-receipt-v1.json"
+        self.response_paths = {
+            system: experiment / f"fixtures/treatments/contract-response-{system.lower()}-v1.json"
+            for system in ("A", "B", "C")
+        }
         self.config = json.loads(self.config_path.read_text(encoding="utf-8"))
         self.target = json.loads(self.target_path.read_text(encoding="utf-8"))
         self.corpus = json.loads(self.corpus_path.read_text(encoding="utf-8"))
@@ -257,6 +262,90 @@ class PromptBundleTests(unittest.TestCase):
                     canonical_json_bytes(surfaced_without_evidence),
                     self.target["source_text"].encode("utf-8"),
                 )
+
+    def test_three_complete_pairs_and_two_pair_selections(self) -> None:
+        rendered = {
+            system: render_prompt_sections_v1(self.config, self.target, system)
+            for system in ("A", "B", "C")
+        }
+        pair_ids = [pair["pair_id"] for pair in self.corpus["pairs"]]
+
+        self.assertGreaterEqual(len(pair_ids), 3)
+        self.assertEqual(pair_ids, sorted(pair_ids))
+        self.assertEqual(len(pair_ids), len(set(pair_ids)))
+        self.assertTrue(self.corpus["test_only"])
+        self.assertFalse(self.corpus["count_eligible"])
+        for pair in self.corpus["pairs"]:
+            self.assertTrue(pair["test_only"])
+            self.assertFalse(pair["count_eligible"])
+            self.assertEqual(set(pair), {
+                "pair_id", "shared_structure", "positive", "contrast",
+                "discriminating_axes", "test_only", "count_eligible",
+            })
+            self.assertEqual(pair["positive"]["final_status"], "accept")
+            self.assertEqual(pair["contrast"]["final_status"], "classify_out")
+        fixed = self.config["fixed_pair_selection"]["ordered_pair_ids"]
+        retrieved = [item["pair_id"] for item in self.receipt["ranking"]]
+        self.assertEqual(len(fixed), len(set(fixed)))
+        self.assertEqual(len(retrieved), len(set(retrieved)))
+        self.assertEqual(fixed, ["SYNTH_PAIR_ALPHA", "SYNTH_PAIR_BETA"])
+        self.assertEqual(retrieved, ["SYNTH_PAIR_ALPHA", "SYNTH_PAIR_GAMMA"])
+        self.assertIn(b"SYNTH_PAIR_BETA", rendered["A"]["demonstrations"])
+        self.assertIn(b"SYNTH_PAIR_GAMMA", rendered["C"]["demonstrations"])
+
+    def test_contract_responses_parse_and_remain_human_authored(self) -> None:
+        target_raw = self.target["source_text"].encode("utf-8")
+
+        for system, path in self.response_paths.items():
+            raw = path.read_bytes()
+            envelope = json.loads(raw)
+            self.assertEqual(canonical_json_bytes(envelope), raw)
+            self.assertEqual(envelope["system"], system)
+            self.assertEqual(envelope["origin"], "contract_fixture")
+            self.assertIs(envelope["model_generated"], False)
+            self.assertIs(envelope["test_only"], True)
+            self.assertIs(envelope["count_eligible"], False)
+            parsed = validate_contract_response_origin_v1(raw, target_raw)
+            self.assertEqual(parsed.system, system)
+            self.assertEqual(parsed.origin, "contract_fixture")
+            self.assertFalse(parsed.model_generated)
+            self.assertNotIn("test_only", parsed.as_dict())
+            self.assertNotIn("count_eligible", parsed.as_dict())
+        self.assertIsNone(
+            validate_contract_response_origin_v1(
+                self.response_paths["A"].read_bytes(), target_raw
+            ).delegation_frame
+        )
+
+    def test_fixture_or_response_authority_escalation_is_rejected(self) -> None:
+        target_raw = self.target["source_text"].encode("utf-8")
+        valid_raw = self.response_paths["B"].read_bytes()
+        valid = json.loads(valid_raw)
+
+        for field, value in (
+            ("origin", "raw_model_output"),
+            ("model_generated", True),
+            ("test_only", False),
+            ("count_eligible", True),
+        ):
+            mutated = deepcopy(valid)
+            mutated[field] = value
+            with self.assertRaisesRegex(PromptBundleError, "^PROMPT_RESPONSE_INVALID$"):
+                validate_contract_response_origin_v1(canonical_json_bytes(mutated), target_raw)
+        for evidence_kind in ("raw_model_output", "model_run", "h1", "h2"):
+            with self.assertRaisesRegex(PromptBundleError, "^CONTRACT_FIXTURE_EVIDENCE_FORBIDDEN$"):
+                validate_contract_response_origin_v1(valid_raw, target_raw, evidence_kind=evidence_kind)
+        invalid_corpus = deepcopy(self.corpus)
+        invalid_corpus["pairs"][0]["pair_id"] = "warl-implementation-selected-vs-isa-fixed"
+        invalid_corpus["corpus_sha256"] = sha256_bytes(
+            canonical_json_bytes({key: value for key, value in invalid_corpus.items() if key != "corpus_sha256"})
+        )
+        with TemporaryDirectory() as directory:
+            corpus_path = Path(directory) / "corpus.json"
+            corpus_path.write_bytes(canonical_json_bytes(invalid_corpus))
+            with patch("specchoice_treatments.prompts._SYNTHETIC_PAIR_CORPUS_PATH", corpus_path):
+                with self.assertRaisesRegex(PromptBundleError, "^PROMPT_PAIR_CORPUS_INVALID$"):
+                    render_treatment_prompt_v1(self.config, self.target)
 
 
 if __name__ == "__main__":
