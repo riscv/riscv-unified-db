@@ -18,8 +18,10 @@ from specchoice_treatments.prompts import PromptBundleError, validate_complete_p
 
 
 FORBIDDEN_QUERY_FIELDS = frozenset({
-    "case_id", "case_identity", "gold", "frame", "delegation_frame", "primary_family",
-    "family", "decisive_axes", "relevance", "final_disposition", "final_status", "authority",
+    "case_id", "fixture_id", "gold", "gold_label", "delegation_frame", "frame",
+    "primary_family", "decisive_axes", "relevance", "relevant_pair_ids", "final_disposition",
+    "final_status", "parameter_status", "rank", "score", "similarity", "top_k",
+    "case_identity", "family", "authority",
 })
 _CONFIG_KEYS = frozenset({
     "schema_version", "unicode_normalization", "case_normalization", "token_pattern",
@@ -121,14 +123,16 @@ def load_retrieval_contract_v1(root: Path, relative_path: str) -> dict[str, obje
 
 def validate_test_only_target_v1(target: object) -> dict[str, object]:
     """Reject non-isolated or authority-bearing target material before tokenization."""
-    if not isinstance(target, dict) or set(target) != _TARGET_KEYS:
+    if not isinstance(target, dict):
+        raise RetrievalContractError("RETRIEVAL_TARGET_INVALID")
+    if _contains_forbidden_query_field(target):
+        raise RetrievalContractError("RETRIEVAL_QUERY_FIELD_FORBIDDEN")
+    if set(target) != _TARGET_KEYS:
         raise RetrievalContractError("RETRIEVAL_TARGET_INVALID")
     if target.get("schema_version") != "synthetic-treatment-target-v1" or target.get("test_only") is not True or target.get("count_eligible") is not False:
         raise RetrievalContractError("RETRIEVAL_TEST_ONLY_REQUIRED")
     if not _non_empty_text(target.get("target_id")) or not _non_empty_text(target.get("source_text")):
         raise RetrievalContractError("RETRIEVAL_TARGET_INVALID")
-    if _contains_forbidden_query_field({key: value for key, value in target.items() if key != "target_id"}):
-        raise RetrievalContractError("RETRIEVAL_QUERY_FIELD_FORBIDDEN")
     try:
         require_sha256(target.get("source_sha256"))
         require_sha256(target.get("record_sha256"))
@@ -193,8 +197,6 @@ def validate_test_only_corpus_v1(corpus: object) -> tuple[dict[str, object], ...
         assert isinstance(pair_id, str)
         pair_ids.append(pair_id)
         complete.append(pair)
-    if pair_ids != sorted(pair_ids):
-        raise RetrievalContractError("RETRIEVAL_CORPUS_INVALID")
     if len(pair_ids) != len(set(pair_ids)):
         raise RetrievalContractError("RETRIEVAL_PAIR_ID_DUPLICATE")
     if len(complete) < 2:

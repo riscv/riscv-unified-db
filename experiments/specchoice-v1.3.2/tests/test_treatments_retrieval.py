@@ -3,8 +3,10 @@
 
 from __future__ import annotations
 
+import ast
 import io
 import json
+import socket
 from contextlib import redirect_stderr, redirect_stdout
 from copy import deepcopy
 from pathlib import Path
@@ -14,12 +16,15 @@ import unittest
 from unittest.mock import patch
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+import specchoice_treatments.cli as treatments_cli
+import specchoice_treatments.retrieval as treatments_retrieval
 from specchoice_treatments.cli import build_parser, main
 from specchoice_treatments.retrieval import (
     RetrievalContractError,
     build_retrieval_report_v1,
     load_retrieval_contract_v1,
     rank_complete_pairs_v1,
+    validate_test_only_target_v1,
 )
 
 
@@ -201,14 +206,15 @@ class RetrievalContractTests(unittest.TestCase):
         )
 
     def test_prompt_manifest_is_required_and_no_ambient_default_path_is_read(self) -> None:
-        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as missing_manifest:
-            main([
+        with redirect_stderr(io.StringIO()) as stderr:
+            exit_code = main([
                 "verify-retrieval-contract",
                 "--target", self.target_path,
                 "--corpus", self.corpus_path,
                 "--config", self.config_path,
             ])
-        self.assertEqual(missing_manifest.exception.code, 2)
+        self.assertEqual(exit_code, 2)
+        self.assertIn("--prompt-manifest", stderr.getvalue())
 
         with tempfile.TemporaryDirectory() as temporary:
             sandbox = Path(temporary)
@@ -297,6 +303,153 @@ class RetrievalContractTests(unittest.TestCase):
                     "--prompt-manifest", malformed_manifest_path,
                 ])
             self.assertEqual(exit_code, 2)
+
+    def test_zero_scores_and_exact_ties_return_two_by_pair_id_independent_of_input_order(self) -> None:
+        zero_target = deepcopy(self.target)
+        zero_target["source_text"] = "unshared lexical material only\n"
+        self._seal_target(zero_target)
+        reversed_corpus = deepcopy(self.corpus)
+        reversed_corpus["pairs"].reverse()
+        self._seal_corpus(reversed_corpus)
+
+        baseline = rank_complete_pairs_v1(target=zero_target, corpus=self.corpus, config=self.config)
+        reversed_results = rank_complete_pairs_v1(
+            target=zero_target, corpus=reversed_corpus, config=self.config,
+        )
+
+        self.assertEqual([item.pair_id for item in baseline], ["SYNTH_PAIR_ALPHA", "SYNTH_PAIR_BETA"])
+        self.assertEqual([item.cosine_score for item in baseline], [0.0, 0.0])
+        self.assertEqual(reversed_results, baseline)
+
+    def test_insufficient_duplicate_and_incomplete_corpora_fail_without_partial_ranking(self) -> None:
+        for pair_count in (0, 1):
+            with self.subTest(pair_count=pair_count):
+                corpus = deepcopy(self.corpus)
+                corpus["pairs"] = corpus["pairs"][:pair_count]
+                self._seal_corpus(corpus)
+                with self.assertRaisesRegex(RetrievalContractError, "^INSUFFICIENT_RETRIEVAL_PAIRS$"):
+                    rank_complete_pairs_v1(target=self.target, corpus=corpus, config=self.config)
+
+        duplicate = deepcopy(self.corpus)
+        duplicate["pairs"][1]["pair_id"] = duplicate["pairs"][0]["pair_id"]
+        self._seal_corpus(duplicate)
+        with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_PAIR_ID_DUPLICATE$"):
+            rank_complete_pairs_v1(target=self.target, corpus=duplicate, config=self.config)
+
+        incomplete = deepcopy(self.corpus)
+        incomplete["pairs"][0]["contrast"] = None
+        self._seal_corpus(incomplete)
+        with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_PAIR_INCOMPLETE$"):
+            rank_complete_pairs_v1(target=self.target, corpus=incomplete, config=self.config)
+
+    def test_empty_and_recursive_forbidden_target_fields_fail_before_tokenization(self) -> None:
+        for source_text in ("", None):
+            with self.subTest(source_text=source_text):
+                empty = deepcopy(self.target)
+                empty["source_text"] = source_text
+                if isinstance(source_text, str):
+                    self._seal_target(empty)
+                with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_TARGET_INVALID$"):
+                    validate_test_only_target_v1(empty)
+
+        forbidden_fields = (
+            "case_id", "fixture_id", "gold", "gold_label", "delegation_frame", "frame",
+            "primary_family", "decisive_axes", "relevance", "relevant_pair_ids", "final_disposition",
+            "final_status", "parameter_status", "rank", "score", "similarity", "top_k",
+            "case_identity", "family", "authority",
+        )
+        for field in forbidden_fields:
+            with self.subTest(field=field):
+                target = deepcopy(self.target)
+                target["unrelated"] = {"nested": {field: "forbidden"}}
+                self._seal_target(target)
+                with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_QUERY_FIELD_FORBIDDEN$"):
+                    validate_test_only_target_v1(target)
+
+    def test_isolation_and_phase_three_paths_fail_closed_before_ranking(self) -> None:
+        for root_name, value in (("target", self.target), ("corpus", self.corpus)):
+            for isolation_field, invalid_value in (("test_only", False), ("count_eligible", True)):
+                with self.subTest(root=root_name, field=isolation_field):
+                    isolated = deepcopy(value)
+                    isolated[isolation_field] = invalid_value
+                    if root_name == "target":
+                        self._seal_target(isolated)
+                        with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_TEST_ONLY_REQUIRED$"):
+                            rank_complete_pairs_v1(target=isolated, corpus=self.corpus, config=self.config)
+                    else:
+                        self._seal_corpus(isolated)
+                        with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_TEST_ONLY_REQUIRED$"):
+                            rank_complete_pairs_v1(target=self.target, corpus=isolated, config=self.config)
+
+        for isolation_field, invalid_value in (("test_only", False), ("count_eligible", True)):
+            with self.subTest(pair_field=isolation_field):
+                isolated = deepcopy(self.corpus)
+                isolated["pairs"][0][isolation_field] = invalid_value
+                self._seal_corpus(isolated)
+                with self.assertRaisesRegex(RetrievalContractError, "^RETRIEVAL_TEST_ONLY_REQUIRED$"):
+                    rank_complete_pairs_v1(target=self.target, corpus=isolated, config=self.config)
+
+        for forbidden_path, expected in (
+            ("phase3/data-authority-v1.json", "RETRIEVAL_TARGET_INVALID"),
+            ("data/preregistration/candidates-v1/candidate-inventory.json", "RETRIEVAL_TARGET_INVALID"),
+            ("/tmp/input.json", "RETRIEVAL_CLI_INPUT_INVALID"),
+            ("../fixtures/treatments/synthetic-target-v1.json", "RETRIEVAL_CLI_INPUT_INVALID"),
+        ):
+            with self.subTest(path=forbidden_path), redirect_stderr(io.StringIO()) as stderr:
+                exit_code = main([
+                    "verify-retrieval-contract", "--target", forbidden_path,
+                    "--corpus", self.corpus_path, "--config", self.config_path,
+                    "--prompt-manifest", self.prompt_manifest_path,
+                ])
+            self.assertEqual(exit_code, 2)
+            self.assertEqual(stderr.getvalue(), f"{expected}\n")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            sandbox = Path(temporary)
+            for relative_path in (self.corpus_path, self.config_path, self.prompt_manifest_path):
+                destination = sandbox / relative_path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(self.root / relative_path, destination)
+            target_link = sandbox / "inputs/target-link.json"
+            target_link.parent.mkdir(parents=True, exist_ok=True)
+            target_link.symlink_to(self.root / self.target_path)
+            with patch("specchoice_treatments.cli._EXPERIMENT_ROOT", sandbox), redirect_stderr(io.StringIO()) as stderr:
+                exit_code = main([
+                    "verify-retrieval-contract", "--target", "inputs/target-link.json",
+                    "--corpus", self.corpus_path, "--config", self.config_path,
+                    "--prompt-manifest", self.prompt_manifest_path,
+                ])
+            self.assertEqual(exit_code, 2)
+            self.assertEqual(stderr.getvalue(), "RETRIEVAL_CLI_INPUT_INVALID\n")
+
+    def test_cli_has_no_production_or_network_reachability(self) -> None:
+        parser = build_parser()
+        subparsers = next(action for action in parser._actions if action.dest == "command")
+        self.assertEqual(set(subparsers.choices), {"verify-retrieval-contract"})
+
+        observed: list[object] = []
+        def blocked(*args: object, **kwargs: object) -> object:
+            observed.append((args, kwargs))
+            raise AssertionError("network must not be reached")
+
+        with patch.object(socket, "create_connection", side_effect=blocked), patch.object(
+            socket.socket, "connect", side_effect=blocked,
+        ), redirect_stderr(io.StringIO()):
+            self.assertEqual(self._run_cli()[0], 0)
+            self.assertEqual(main(["model-run"]), 2)
+        self.assertEqual(observed, [])
+
+        imports: set[str] = set()
+        for module in (treatments_cli, treatments_retrieval):
+            tree = ast.parse(Path(module.__file__).read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imports.update(alias.name.split(".", 1)[0] for alias in node.names)
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    imports.add(node.module.split(".", 1)[0])
+        self.assertFalse(imports & {
+            "socket", "http", "urllib", "requests", "openai", "anthropic", "boto3", "keyring",
+        })
 
 
 if __name__ == "__main__":

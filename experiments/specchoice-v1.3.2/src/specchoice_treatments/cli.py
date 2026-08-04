@@ -15,6 +15,8 @@ from .retrieval import (
     build_retrieval_report_v1,
     load_prompt_manifest_v1,
     load_retrieval_contract_v1,
+    validate_test_only_corpus_v1,
+    validate_test_only_target_v1,
 )
 
 
@@ -25,6 +27,8 @@ def _verify_retrieval_contract(args: argparse.Namespace) -> int:
     target, _ = _canonical_read(_EXPERIMENT_ROOT, args.target, "RETRIEVAL_CLI_INPUT_INVALID")
     corpus, _ = _canonical_read(_EXPERIMENT_ROOT, args.corpus, "RETRIEVAL_CLI_INPUT_INVALID")
     config = load_retrieval_contract_v1(_EXPERIMENT_ROOT, args.config)
+    validate_test_only_target_v1(target)
+    validate_test_only_corpus_v1(corpus)
     prompt_manifest = load_prompt_manifest_v1(
         _EXPERIMENT_ROOT, args.prompt_manifest, target=target, corpus=corpus,
     )
@@ -55,6 +59,8 @@ def main(argv: list[str] | None = None) -> int:
     except (RetrievalContractError, ValueError) as error:
         print(str(error), file=sys.stderr)
         return 2
+    except SystemExit as error:
+        return int(error.code)
 
 
 if __name__ == "__main__":
