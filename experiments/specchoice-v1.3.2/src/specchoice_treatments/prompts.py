@@ -6,8 +6,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 import math
 from pathlib import Path
+import re
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
+from specchoice_evidence.filesystem import FilesystemPolicyError, write_exact_descriptor_files
 from specchoice_measurement.strict_json import decode_strict_json
 from specchoice_treatments.schema import (
     FRAME_ENUMS,
@@ -32,6 +34,10 @@ _PROMPT_CONTRACT_PATH = _TREATMENTS_ROOT / "config/treatments/prompt-contract-v1
 _SYNTHETIC_TARGET_PATH = _TREATMENTS_ROOT / "fixtures/treatments/synthetic-target-v1.json"
 _SYNTHETIC_PAIR_CORPUS_PATH = _TREATMENTS_ROOT / "fixtures/treatments/synthetic-complete-pairs-v1.json"
 _SYNTHETIC_RETRIEVAL_RECEIPT_PATH = _TREATMENTS_ROOT / "fixtures/treatments/synthetic-retrieval-receipt-v1.json"
+_CONTRACT_RESPONSE_PATHS = {
+    system: _TREATMENTS_ROOT / f"fixtures/treatments/contract-response-{system.lower()}-v1.json"
+    for system in ("A", "B", "C")
+}
 _PROMPT_CONTRACT_KEYS = frozenset({
     "schema_version", "section_order", "shared_guidance", "frame_instructions",
     "adjudication_instructions", "output_schema", "evidence_rules", "demonstration_count",
@@ -421,3 +427,145 @@ def render_prompt_sections_v1(config: object, target: object, system: str) -> di
 def render_treatment_prompt_v1(config: object, target: object) -> dict[str, bytes]:
     """Render all three exact offline system prompts without publishing files."""
     return {system: b"".join(render_prompt_sections_v1(config, target, system).values()) for system in ("A", "B", "C")}
+
+
+def _validate_raw_prompt_bytes(raw: bytes) -> str:
+    if not isinstance(raw, bytes) or not raw or b"\r" in raw or not raw.endswith(b"\n") or raw.endswith(b"\n\n"):
+        raise PromptBundleError("PROMPT_RAW_BYTES_INVALID")
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise PromptBundleError("PROMPT_RAW_BYTES_INVALID") from error
+
+
+def offline_lexical_token_count_v1(raw: bytes) -> int:
+    """Count frozen standard-library lexical tokens over unnormalised prompt bytes."""
+    return len(re.findall(r"(?u)\b\w+\b", _validate_raw_prompt_bytes(raw)))
+
+
+def count_prompt_bytes_v1(raw: bytes) -> dict[str, int]:
+    """Return raw UTF-8/LF accounting without canonicalising the prompt authority."""
+    text = _validate_raw_prompt_bytes(raw)
+    return {
+        "utf8_byte_count": len(raw),
+        "unicode_code_point_count": len(text),
+        "logical_line_count": raw.count(b"\n"),
+        "offline_lexical_token_count": offline_lexical_token_count_v1(raw),
+    }
+
+
+def _validate_demo_order(raw: bytes) -> None:
+    first = raw.find(b"Demonstration 1:")
+    second = raw.find(b"Demonstration 2:")
+    if first != 0 or second <= first or raw.count(b"Demonstration ") != 2:
+        raise PromptBundleError("TREATMENT_DIFF_NOT_ALLOWLISTED")
+
+
+def validate_treatment_diffs_v1(
+    sections: Mapping[str, Mapping[str, bytes]],
+) -> dict[str, dict[str, list[str]]]:
+    """Accept only the frozen A/B and B/C named-section treatment deltas."""
+    if set(sections) != {"A", "B", "C"}:
+        raise PromptBundleError("TREATMENT_DIFF_NOT_ALLOWLISTED")
+    for system in ("A", "B", "C"):
+        if not isinstance(sections[system], Mapping) or tuple(sections[system]) != PROMPT_SECTION_ORDER:
+            raise PromptBundleError("TREATMENT_DIFF_NOT_ALLOWLISTED")
+        for name, raw in sections[system].items():
+            if name == "frame_instructions" and system == "A" and raw == b"":
+                continue
+            _validate_raw_prompt_bytes(raw)
+        _validate_demo_order(sections[system]["demonstrations"])
+
+    comparisons: dict[str, dict[str, list[str]]] = {}
+    for label, left, right, allowed in (
+        ("A_B", "A", "B", ["frame_instructions", "output_schema"]),
+        ("B_C", "B", "C", ["demonstrations"]),
+    ):
+        observed = [name for name in PROMPT_SECTION_ORDER if sections[left][name] != sections[right][name]]
+        if observed != allowed:
+            raise PromptBundleError("TREATMENT_DIFF_NOT_ALLOWLISTED")
+        comparisons[label] = {"allowed_differences": allowed, "observed_differences": observed}
+    return comparisons
+
+
+def _response_records_v1(target_raw: bytes) -> dict[str, dict[str, object]]:
+    records: dict[str, dict[str, object]] = {}
+    for system, path in _CONTRACT_RESPONSE_PATHS.items():
+        try:
+            raw = path.read_bytes()
+        except OSError as error:
+            raise PromptBundleError("PROMPT_RESPONSE_INVALID") from error
+        parsed = validate_contract_response_origin_v1(raw, target_raw)
+        if parsed.system != system:
+            raise PromptBundleError("PROMPT_RESPONSE_INVALID")
+        records[system] = {
+            "path": f"fixtures/treatments/contract-response-{system.lower()}-v1.json",
+            "sha256": sha256_bytes(raw),
+            "origin": parsed.origin,
+            "model_generated": parsed.model_generated,
+            "test_only": True,
+            "count_eligible": False,
+        }
+    return records
+
+
+def _prompt_bundle_v1(config: object, target: object) -> tuple[dict[str, bytes], dict[str, object]]:
+    contract, closed_target = _closed_contract_and_target(config, target)
+    corpus = _load_complete_pair_corpus_v1()
+    prompts = render_treatment_prompt_v1(config, target)
+    sections = {system: render_prompt_sections_v1(config, target, system) for system in ("A", "B", "C")}
+    comparisons = validate_treatment_diffs_v1(sections)
+    selection = contract["fixed_pair_selection"]
+    assert isinstance(selection, Mapping)
+    retrieved = _load_retrieval_receipt_v1(contract, closed_target, corpus)
+    target_raw = closed_target["source_text"]
+    assert isinstance(target_raw, str)
+    manifest: dict[str, object] = {
+        "schema_version": "offline-prompt-bundle-v1",
+        "contract_sha256": sha256_bytes(canonical_json_bytes(contract)),
+        "target_sha256": closed_target["source_sha256"],
+        "corpus_sha256": corpus["corpus_sha256"],
+        "prompt_records": {
+            system: {"path": f"prompts/treatments/system-{system.lower()}-v1.txt", "sha256": sha256_bytes(raw), "counts": count_prompt_bytes_v1(raw)}
+            for system, raw in prompts.items()
+        },
+        "response_records": _response_records_v1(target_raw.encode("utf-8")),
+        "section_hashes": {
+            system: {name: sha256_bytes(raw) for name, raw in system_sections.items()}
+            for system, system_sections in sections.items()
+        },
+        "pair_selection": {
+            "A": list(_require_pair_ids(selection["ordered_pair_ids"], "PROMPT_CONTRACT_INVALID")),
+            "B": list(_require_pair_ids(selection["ordered_pair_ids"], "PROMPT_CONTRACT_INVALID")),
+            "C": list(retrieved),
+        },
+        "structural_comparison": comparisons,
+        "offline_accounting": {system: count_prompt_bytes_v1(raw) for system, raw in prompts.items()},
+        "provider_input_tokens": "not_applicable_red",
+        "provider_output_tokens": "not_applicable_red",
+        "maximum_output_tokens": "not_applicable_red",
+    }
+    manifest["manifest_sha256"] = sha256_bytes(canonical_json_bytes(manifest))
+    return prompts, manifest
+
+
+def build_prompt_bundle_manifest_v1(config: object, target: object) -> dict[str, object]:
+    """Build the canonical projection for closed inputs without publishing artifacts."""
+    _, manifest = _prompt_bundle_v1(config, target)
+    return manifest
+
+
+def write_offline_prompt_bundle_v1(output_root: Path, config: object, target: object) -> dict[str, object]:
+    """Publish exact prompt authority and its manifest together, permitting exact resume only."""
+    if not isinstance(output_root, Path):
+        raise PromptBundleError("PROMPT_BUNDLE_WRITE_INVALID")
+    prompts, manifest = _prompt_bundle_v1(config, target)
+    payloads = {
+        **{f"prompts/treatments/system-{system.lower()}-v1.txt": raw for system, raw in prompts.items()},
+        "prompts/treatments/prompt-bundle-manifest-v1.json": canonical_json_bytes(manifest),
+    }
+    try:
+        write_exact_descriptor_files(output_root, payloads)
+    except (FilesystemPolicyError, OSError, ValueError) as error:
+        raise PromptBundleError("PROMPT_BUNDLE_WRITE_INVALID") from error
+    return manifest

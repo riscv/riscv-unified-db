@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from copy import deepcopy
 from pathlib import Path
@@ -11,11 +12,16 @@ from unittest.mock import patch
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_treatments.schema import TreatmentContractError, parse_treatment_response_v1
 from specchoice_treatments.prompts import (
+    build_prompt_bundle_manifest_v1,
+    count_prompt_bytes_v1,
+    offline_lexical_token_count_v1,
     PromptBundleError,
     PROMPT_SECTION_ORDER,
     render_prompt_sections_v1,
     render_treatment_prompt_v1,
     validate_contract_response_origin_v1,
+    validate_treatment_diffs_v1,
+    write_offline_prompt_bundle_v1,
 )
 
 
@@ -346,6 +352,76 @@ class PromptBundleTests(unittest.TestCase):
             with patch("specchoice_treatments.prompts._SYNTHETIC_PAIR_CORPUS_PATH", corpus_path):
                 with self.assertRaisesRegex(PromptBundleError, "^PROMPT_PAIR_CORPUS_INVALID$"):
                     render_treatment_prompt_v1(self.config, self.target)
+
+    def test_prompt_publication_exactly_resumes_raw_bytes(self) -> None:
+        rendered = render_treatment_prompt_v1(self.config, self.target)
+        with TemporaryDirectory() as directory:
+            output_root = Path(directory)
+            manifest = write_offline_prompt_bundle_v1(output_root, self.config, self.target)
+            resumed = write_offline_prompt_bundle_v1(output_root, self.config, self.target)
+
+            self.assertEqual(manifest, resumed)
+            prompt_root = output_root / "prompts/treatments"
+            self.assertEqual(canonical_json_bytes(manifest), (prompt_root / "prompt-bundle-manifest-v1.json").read_bytes())
+            for system, raw in rendered.items():
+                stored = (prompt_root / f"system-{system.lower()}-v1.txt").read_bytes()
+                self.assertEqual(stored, raw)
+                record = manifest["prompt_records"][system]
+                self.assertEqual(record["sha256"], sha256_bytes(raw))
+                self.assertEqual(record["counts"], count_prompt_bytes_v1(raw))
+                self.assertEqual(record["counts"]["offline_lexical_token_count"], len(re.findall(r"(?u)\b\w+\b", raw.decode("utf-8"))))
+                self.assertEqual(offline_lexical_token_count_v1(raw), record["counts"]["offline_lexical_token_count"])
+
+    def test_treatment_diff_allowlist_rejects_padding_and_reordering(self) -> None:
+        sections = {
+            system: render_prompt_sections_v1(self.config, self.target, system)
+            for system in ("A", "B", "C")
+        }
+        comparison = validate_treatment_diffs_v1(sections)
+
+        self.assertEqual(comparison["A_B"]["allowed_differences"], ["frame_instructions", "output_schema"])
+        self.assertEqual(comparison["A_B"]["observed_differences"], ["frame_instructions", "output_schema"])
+        self.assertEqual(comparison["B_C"]["allowed_differences"], ["demonstrations"])
+        self.assertEqual(comparison["B_C"]["observed_differences"], ["demonstrations"])
+        for system in ("A", "B", "C"):
+            self.assertEqual(sections[system]["demonstrations"].count(b"Demonstration "), 2)
+
+        padded = deepcopy(sections)
+        padded["B"]["shared_guidance"] += b"neutral padding\n"
+        with self.assertRaisesRegex(PromptBundleError, "^TREATMENT_DIFF_NOT_ALLOWLISTED$"):
+            validate_treatment_diffs_v1(padded)
+        reordered = deepcopy(sections)
+        reordered["C"]["demonstrations"] = (
+            reordered["C"]["demonstrations"].split(b"Demonstration 2:")[1]
+            + b"Demonstration 2:"
+            + reordered["C"]["demonstrations"].split(b"Demonstration 2:")[0]
+        )
+        with self.assertRaisesRegex(PromptBundleError, "^TREATMENT_DIFF_NOT_ALLOWLISTED$"):
+            validate_treatment_diffs_v1(reordered)
+
+    def test_manifest_accounting_and_preflight_fail_closed(self) -> None:
+        manifest = build_prompt_bundle_manifest_v1(self.config, self.target)
+
+        self.assertEqual(manifest["manifest_sha256"], sha256_bytes(canonical_json_bytes({
+            key: value for key, value in manifest.items() if key != "manifest_sha256"
+        })))
+        for field in ("provider_input_tokens", "provider_output_tokens", "maximum_output_tokens"):
+            self.assertEqual(manifest[field], "not_applicable_red")
+        self.assertEqual(set(manifest["pair_selection"]), {"A", "B", "C"})
+        self.assertEqual(manifest["pair_selection"]["A"], manifest["pair_selection"]["B"])
+        self.assertNotEqual(manifest["pair_selection"]["B"], manifest["pair_selection"]["C"])
+        self.assertEqual(set(manifest["response_records"]), {"A", "B", "C"})
+
+        with TemporaryDirectory() as directory:
+            output_root = Path(directory)
+            prompt_root = output_root / "prompts/treatments"
+            prompt_root.mkdir(parents=True)
+            (prompt_root / "system-a-v1.txt").write_bytes(b"divergent\n")
+            with self.assertRaisesRegex(PromptBundleError, "^PROMPT_BUNDLE_WRITE_INVALID$"):
+                write_offline_prompt_bundle_v1(output_root, self.config, self.target)
+            self.assertFalse((prompt_root / "system-b-v1.txt").exists())
+            self.assertFalse((prompt_root / "system-c-v1.txt").exists())
+            self.assertFalse((prompt_root / "prompt-bundle-manifest-v1.json").exists())
 
 
 if __name__ == "__main__":
