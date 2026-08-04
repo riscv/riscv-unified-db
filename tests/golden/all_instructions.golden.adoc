@@ -39253,7 +39253,7 @@ Base::
 |===
 
 Assembly::
-ssamoswap.d xd, xs2, xs1
+ssamoswap.d xd, xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -39307,7 +39307,7 @@ Base::
 |===
 
 Assembly::
-ssamoswap.w xd, xs2, xs1
+ssamoswap.w xd, xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
