@@ -5,8 +5,10 @@ import json
 import unittest
 from copy import deepcopy
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
-from specchoice_evidence.canonical import canonical_json_bytes
+from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_treatments.prompts import (
     PromptBundleError,
     PROMPT_SECTION_ORDER,
@@ -20,8 +22,12 @@ class PromptBundleTests(unittest.TestCase):
         experiment = Path(__file__).parents[1]
         self.config_path = experiment / "config/treatments/prompt-contract-v1.json"
         self.target_path = experiment / "fixtures/treatments/synthetic-target-v1.json"
+        self.corpus_path = experiment / "fixtures/treatments/synthetic-complete-pairs-v1.json"
+        self.receipt_path = experiment / "fixtures/treatments/synthetic-retrieval-receipt-v1.json"
         self.config = json.loads(self.config_path.read_text(encoding="utf-8"))
         self.target = json.loads(self.target_path.read_text(encoding="utf-8"))
+        self.corpus = json.loads(self.corpus_path.read_text(encoding="utf-8"))
+        self.receipt = json.loads(self.receipt_path.read_text(encoding="utf-8"))
 
     def test_named_section_tracer_renders_three_systems(self) -> None:
         rendered = render_treatment_prompt_v1(self.config, self.target)
@@ -37,6 +43,16 @@ class PromptBundleTests(unittest.TestCase):
                 PROMPT_SECTION_ORDER,
             )
             self.assertEqual(raw, b"".join(render_prompt_sections_v1(self.config, self.target, system).values()))
+        self.assertEqual(
+            self.target["source_sha256"],
+            "326b6a1274252ca7a69ceff68685f6b3f4e5067eacd83411b9fcfceff77da2c4",
+        )
+        self.assertEqual(self.target["source_sha256"], sha256_bytes(self.target["source_text"].encode("utf-8")))
+        self.assertEqual(
+            self.target["record_sha256"],
+            sha256_bytes(canonical_json_bytes({key: value for key, value in self.target.items() if key != "record_sha256"})),
+        )
+        self.assertNotIn("target_sha256", self.target)
 
     def test_frame_and_shared_sections_are_exact(self) -> None:
         sections = {
@@ -49,9 +65,27 @@ class PromptBundleTests(unittest.TestCase):
             self.assertEqual(sections[system]["demonstrations"].count(b"Demonstration "), 2)
         self.assertEqual(sections["A"]["frame_instructions"], b"")
         self.assertEqual(sections["B"]["frame_instructions"], sections["C"]["frame_instructions"])
+        self.assertNotIn(b"For each DelegationFrame axis", sections["A"]["frame_instructions"])
+        self.assertIn(b"For each DelegationFrame axis", sections["B"]["frame_instructions"])
         for section in ("adjudication_instructions", "output_schema", "evidence_rules"):
             self.assertEqual(sections["B"][section], sections["C"][section])
             self.assertTrue(sections["B"][section])
+        self.assertEqual(sections["A"]["evidence_rules"], sections["B"]["evidence_rules"])
+        self.assertEqual(
+            sections["A"]["evidence_rules"],
+            b"For every surfaced finding, quote one or more verbatim source spans in adjudication.evidence_spans.\n",
+        )
+        self.assertIn(b'exactly one top-level key: "adjudication"', sections["A"]["output_schema"])
+        self.assertIn(b'exactly two top-level keys: "delegation_frame" and "adjudication"', sections["B"]["output_schema"])
+        for system in ("A", "B", "C"):
+            self.assertIn(b'"positive"', sections[system]["demonstrations"])
+            self.assertIn(b'"contrast"', sections[system]["demonstrations"])
+            self.assertIn(b'"shared_structure"', sections[system]["demonstrations"])
+            self.assertIn(b'"discriminating_axes"', sections[system]["demonstrations"])
+        self.assertIn(b"SYNTH_PAIR_BETA", sections["B"]["demonstrations"])
+        self.assertNotIn(b"SYNTH_PAIR_BETA", sections["C"]["demonstrations"])
+        self.assertIn(b"SYNTH_PAIR_GAMMA", sections["C"]["demonstrations"])
+        self.assertNotIn(b"fixed synthetic pair", sections["C"]["demonstrations"])
         for section in ("shared_guidance", "target"):
             self.assertEqual(sections["A"][section], sections["B"][section])
             self.assertEqual(sections["B"][section], sections["C"][section])
@@ -75,6 +109,59 @@ class PromptBundleTests(unittest.TestCase):
         noncanonical["shared_guidance"] = noncanonical["shared_guidance"].replace("\n", "\r\n")
         with self.assertRaisesRegex(PromptBundleError, "^PROMPT_CONTRACT_INVALID$"):
             render_treatment_prompt_v1(noncanonical, self.target)
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+
+            def render_with_target(value: object) -> None:
+                path = root / "target.json"
+                path.write_bytes(canonical_json_bytes(value))
+                with patch("specchoice_treatments.prompts._SYNTHETIC_TARGET_PATH", path):
+                    render_treatment_prompt_v1(self.config, value)
+
+            source_as_record = deepcopy(self.target)
+            source_as_record["source_sha256"] = self.target["record_sha256"]
+            with self.assertRaisesRegex(PromptBundleError, "^PROMPT_TARGET_INVALID$"):
+                render_with_target(source_as_record)
+            record_as_source = deepcopy(self.target)
+            record_as_source["record_sha256"] = self.target["source_sha256"]
+            with self.assertRaisesRegex(PromptBundleError, "^PROMPT_TARGET_INVALID$"):
+                render_with_target(record_as_source)
+
+            def seal_corpus(value: dict[str, object]) -> None:
+                value["corpus_sha256"] = sha256_bytes(canonical_json_bytes({key: item for key, item in value.items() if key != "corpus_sha256"}))
+
+            for mutate in (
+                lambda corpus: corpus["pairs"][0].pop("positive"),
+                lambda corpus: corpus["pairs"].__setitem__(1, deepcopy(corpus["pairs"][0])),
+                lambda corpus: corpus["pairs"][0].__setitem__("test_only", False),
+                lambda corpus: corpus["pairs"][0].__setitem__("count_eligible", True),
+            ):
+                invalid_corpus = deepcopy(self.corpus)
+                mutate(invalid_corpus)
+                seal_corpus(invalid_corpus)
+                corpus_path = root / "corpus.json"
+                corpus_path.write_bytes(canonical_json_bytes(invalid_corpus))
+                with patch("specchoice_treatments.prompts._SYNTHETIC_PAIR_CORPUS_PATH", corpus_path):
+                    with self.assertRaisesRegex(PromptBundleError, "^PROMPT_PAIR_(CORPUS_INVALID|ID_DUPLICATE)$"):
+                        render_treatment_prompt_v1(self.config, self.target)
+
+            def seal_receipt(value: dict[str, object]) -> None:
+                value["receipt_sha256"] = sha256_bytes(canonical_json_bytes({key: item for key, item in value.items() if key != "receipt_sha256"}))
+
+            for mutate in (
+                lambda receipt: receipt.__setitem__("target_source_sha256", self.target["record_sha256"]),
+                lambda receipt: receipt.__setitem__("corpus_sha256", "0" * 64),
+                lambda receipt: receipt.__setitem__("ordered_pair_ids", ["SYNTH_PAIR_GAMMA", "SYNTH_PAIR_ALPHA"]),
+            ):
+                invalid_receipt = deepcopy(self.receipt)
+                mutate(invalid_receipt)
+                seal_receipt(invalid_receipt)
+                receipt_path = root / "receipt.json"
+                receipt_path.write_bytes(canonical_json_bytes(invalid_receipt))
+                with patch("specchoice_treatments.prompts._SYNTHETIC_RETRIEVAL_RECEIPT_PATH", receipt_path):
+                    with self.assertRaisesRegex(PromptBundleError, "^PROMPT_PAIR_CORPUS_INVALID$"):
+                        render_prompt_sections_v1(self.config, self.target, "C")
 
 
 if __name__ == "__main__":
