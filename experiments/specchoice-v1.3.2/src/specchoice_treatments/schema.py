@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_measurement.diagnostics import Diagnostic, ordered_diagnostics
@@ -32,6 +33,11 @@ _ADJUDICATION_KEYS = frozenset({
     "surfaced", "parameter_status", "proposed_name", "evidence_spans", "rationale",
 })
 _SURFACED_STATUSES = frozenset({"accept", "classify_out", "review"})
+_ADVISORY_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config/treatments/frame-advisory-patterns-v1.json"
+_ADVISORY_CONFIG_KEYS = frozenset({"schema_version", "patterns"})
+_ADVISORY_PATTERN_KEYS = frozenset({"id", "when", "diagnostic"})
+_ADVISORY_SCHEMA_VERSION = "frame-advisory-patterns-v1"
+_ADVISORY_DIAGNOSTIC = "FRAME_COMBINATION_REQUIRES_REVIEW"
 
 
 class TreatmentContractError(ValueError):
@@ -177,6 +183,71 @@ def validate_delegation_frame_v1(
     _raise_blockers(diagnostics)
     assert parsed is not None
     return parsed
+
+
+def _load_frame_advisory_patterns_v1() -> tuple[dict[str, object], ...]:
+    raw = _ADVISORY_CONFIG_PATH.read_bytes()
+    try:
+        config = decode_strict_json(raw)
+    except (UnicodeDecodeError, ValueError) as error:
+        raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID") from error
+    if canonical_json_bytes(config) != raw:
+        raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID")
+    if not isinstance(config, dict) or set(config) != _ADVISORY_CONFIG_KEYS:
+        raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID")
+    if config.get("schema_version") != _ADVISORY_SCHEMA_VERSION:
+        raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID")
+    patterns = config.get("patterns")
+    if not isinstance(patterns, list):
+        raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID")
+
+    pattern_ids: set[str] = set()
+    validated: list[dict[str, object]] = []
+    for pattern in patterns:
+        if not isinstance(pattern, dict) or set(pattern) != _ADVISORY_PATTERN_KEYS:
+            raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID")
+        pattern_id = pattern.get("id")
+        when = pattern.get("when")
+        diagnostic = pattern.get("diagnostic")
+        if not isinstance(pattern_id, str) or not pattern_id or pattern_id in pattern_ids:
+            raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID")
+        if diagnostic != _ADVISORY_DIAGNOSTIC or not isinstance(when, dict) or not when:
+            raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID")
+        if any(axis not in FRAME_ENUMS or value not in FRAME_ENUMS[axis] for axis, value in when.items()):
+            raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID")
+        pattern_ids.add(pattern_id)
+        validated.append({"id": pattern_id, "when": when, "diagnostic": diagnostic})
+    if [item["id"] for item in validated] != sorted(pattern_ids):
+        raise RuntimeError("FRAME_ADVISORY_CONFIG_INVALID")
+    return tuple(validated)
+
+
+_FRAME_ADVISORY_PATTERNS = _load_frame_advisory_patterns_v1()
+
+
+def evaluate_frame_advisories_v1(
+    delegation_frame: dict[str, dict[str, object]],
+) -> tuple[Diagnostic, ...]:
+    """Return preregistered warning-only advisory diagnostics for a parsed frame."""
+    warnings: list[Diagnostic] = []
+    for occurrence, pattern in enumerate(_FRAME_ADVISORY_PATTERNS):
+        when = pattern["when"]
+        assert isinstance(when, dict)
+        if all(
+            isinstance(delegation_frame.get(axis), dict)
+            and delegation_frame[axis].get("value") == value
+            for axis, value in when.items()
+        ):
+            warnings.append(
+                Diagnostic(
+                    _ADVISORY_DIAGNOSTIC,
+                    "warning",
+                    field="delegation_frame",
+                    finding_id=pattern["id"],
+                    occurrence=occurrence,
+                )
+            )
+    return ordered_diagnostics(warnings)
 
 
 def _parse_delegation_frame(
