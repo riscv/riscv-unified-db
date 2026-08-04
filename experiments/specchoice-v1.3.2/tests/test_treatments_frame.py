@@ -7,7 +7,10 @@ from copy import deepcopy
 from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes
-from specchoice_treatments.schema import parse_treatment_response_v1
+from specchoice_treatments.schema import (
+    evaluate_frame_advisories_v1,
+    parse_treatment_response_v1,
+)
 
 
 class FrameContractTests(unittest.TestCase):
@@ -96,6 +99,24 @@ class FrameContractTests(unittest.TestCase):
             axes["choice_space_origin"]["evidence_span"]["start_byte"],
         )
         self.assertEqual(len(axes), 3)
+
+    def test_preregistered_frame_combination_is_warning_only(self) -> None:
+        frame = deepcopy(self.response["delegation_frame"])
+        frame["authority"]["value"] = "software"
+        frame["choice_space_origin"]["value"] = "implementation_selected"
+
+        warnings = evaluate_frame_advisories_v1(frame)
+
+        self.assertEqual(
+            [(item.code, item.severity, item.field) for item in warnings],
+            [
+                (
+                    "FRAME_COMBINATION_REQUIRES_REVIEW",
+                    "warning",
+                    "delegation_frame",
+                )
+            ],
+        )
 
 
 if __name__ == "__main__":
