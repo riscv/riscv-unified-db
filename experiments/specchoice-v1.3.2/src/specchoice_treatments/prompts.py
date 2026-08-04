@@ -3,14 +3,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 import math
-from pathlib import Path
 import re
+from collections.abc import Mapping
+from pathlib import Path
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_evidence.filesystem import FilesystemPolicyError, write_exact_descriptor_files
 from specchoice_measurement.strict_json import decode_strict_json
+
 from specchoice_treatments.schema import (
     FRAME_ENUMS,
     REQUIRED_FRAME_AXES,
@@ -18,7 +19,6 @@ from specchoice_treatments.schema import (
     TreatmentContractError,
     parse_treatment_response_v1,
 )
-
 
 PROMPT_SECTION_ORDER = (
     "shared_guidance",
@@ -32,45 +32,111 @@ PROMPT_SECTION_ORDER = (
 _TREATMENTS_ROOT = Path(__file__).resolve().parents[2]
 _PROMPT_CONTRACT_PATH = _TREATMENTS_ROOT / "config/treatments/prompt-contract-v1.json"
 _SYNTHETIC_TARGET_PATH = _TREATMENTS_ROOT / "fixtures/treatments/synthetic-target-v1.json"
-_SYNTHETIC_PAIR_CORPUS_PATH = _TREATMENTS_ROOT / "fixtures/treatments/synthetic-complete-pairs-v1.json"
-_SYNTHETIC_RETRIEVAL_RECEIPT_PATH = _TREATMENTS_ROOT / "fixtures/treatments/synthetic-retrieval-receipt-v1.json"
+_SYNTHETIC_PAIR_CORPUS_PATH = (
+    _TREATMENTS_ROOT / "fixtures/treatments/synthetic-complete-pairs-v1.json"
+)
+_SYNTHETIC_RETRIEVAL_RECEIPT_PATH = (
+    _TREATMENTS_ROOT / "fixtures/treatments/synthetic-retrieval-receipt-v1.json"
+)
 _CONTRACT_RESPONSE_PATHS = {
     system: _TREATMENTS_ROOT / f"fixtures/treatments/contract-response-{system.lower()}-v1.json"
     for system in ("A", "B", "C")
 }
-_PROMPT_CONTRACT_KEYS = frozenset({
-    "schema_version", "section_order", "shared_guidance", "frame_instructions",
-    "adjudication_instructions", "output_schema", "evidence_rules", "demonstration_count",
-    "fixed_pair_selection", "retrieval_contract_id", "retrieval_receipt_sha256", "allowed_differences",
-    "offline_lexical_rule", "provider_fields",
-})
-_TARGET_KEYS = frozenset({
-    "schema_version", "target_id", "source_text", "source_sha256", "record_sha256",
-    "test_only", "count_eligible",
-})
-_FIXED_SELECTION_KEYS = frozenset({
-    "selection_id", "target_source_sha256", "corpus_sha256", "ordered_pair_ids", "test_only", "count_eligible",
-})
-_CORPUS_KEYS = frozenset({"schema_version", "test_only", "count_eligible", "pairs", "corpus_sha256"})
-_PAIR_KEYS = frozenset({
-    "pair_id", "positive", "contrast", "shared_structure", "discriminating_axes",
-    "test_only", "count_eligible",
-})
-_PAIR_SIDE_KEYS = frozenset({"source_text", "source_sha256", "frame", "evidence_spans", "final_status"})
+_PROMPT_CONTRACT_KEYS = frozenset(
+    {
+        "schema_version",
+        "section_order",
+        "shared_guidance",
+        "frame_instructions",
+        "adjudication_instructions",
+        "output_schema",
+        "evidence_rules",
+        "demonstration_count",
+        "fixed_pair_selection",
+        "retrieval_contract_id",
+        "retrieval_receipt_sha256",
+        "allowed_differences",
+        "offline_lexical_rule",
+        "provider_fields",
+    }
+)
+_TARGET_KEYS = frozenset(
+    {
+        "schema_version",
+        "target_id",
+        "source_text",
+        "source_sha256",
+        "record_sha256",
+        "test_only",
+        "count_eligible",
+    }
+)
+_FIXED_SELECTION_KEYS = frozenset(
+    {
+        "selection_id",
+        "target_source_sha256",
+        "corpus_sha256",
+        "ordered_pair_ids",
+        "test_only",
+        "count_eligible",
+    }
+)
+_CORPUS_KEYS = frozenset(
+    {"schema_version", "test_only", "count_eligible", "pairs", "corpus_sha256"}
+)
+_PAIR_KEYS = frozenset(
+    {
+        "pair_id",
+        "positive",
+        "contrast",
+        "shared_structure",
+        "discriminating_axes",
+        "test_only",
+        "count_eligible",
+    }
+)
+_PAIR_SIDE_KEYS = frozenset(
+    {"source_text", "source_sha256", "frame", "evidence_spans", "final_status"}
+)
 _PAIR_FRAME_AXIS_KEYS = frozenset({"value", "evidence_span"})
 _SPAN_KEYS = frozenset({"source_sha256", "start_byte", "end_byte", "text"})
-_RETRIEVAL_RECEIPT_KEYS = frozenset({
-    "schema_version", "test_only", "count_eligible", "target_source_sha256", "corpus_sha256",
-    "ranking", "ordering_rule", "query_rule", "lexical_rule", "retrieval_contract_id", "receipt_sha256",
-})
+_RETRIEVAL_RECEIPT_KEYS = frozenset(
+    {
+        "schema_version",
+        "test_only",
+        "count_eligible",
+        "target_source_sha256",
+        "corpus_sha256",
+        "ranking",
+        "ordering_rule",
+        "query_rule",
+        "lexical_rule",
+        "retrieval_contract_id",
+        "receipt_sha256",
+    }
+)
 _RANKING_ITEM_KEYS = frozenset({"rank", "pair_id", "cosine_score"})
 _CONTRACT_RESPONSE_ISOLATION_KEYS = frozenset({"test_only", "count_eligible"})
-_CONTRACT_RESPONSE_BASE_KEYS = frozenset({
-    "schema_version", "system", "origin", "model_generated", "target_sha256", "adjudication",
-})
-_FORBIDDEN_CORPUS_FIELD_NAMES = frozenset({
-    "accepted_path", "candidate_inventory", "final_disposition", "gold", "primary_family", "relevance",
-})
+_CONTRACT_RESPONSE_BASE_KEYS = frozenset(
+    {
+        "schema_version",
+        "system",
+        "origin",
+        "model_generated",
+        "target_sha256",
+        "adjudication",
+    }
+)
+_FORBIDDEN_CORPUS_FIELD_NAMES = frozenset(
+    {
+        "accepted_path",
+        "candidate_inventory",
+        "final_disposition",
+        "gold",
+        "primary_family",
+        "relevance",
+    }
+)
 
 
 class PromptBundleError(ValueError):
@@ -124,13 +190,26 @@ def _is_int(value: object) -> bool:
 def _validate_prompt_contract_v1(value: object) -> dict[str, object]:
     if not isinstance(value, dict) or set(value) != _PROMPT_CONTRACT_KEYS:
         raise PromptBundleError("PROMPT_CONTRACT_INVALID")
-    if value.get("schema_version") != "prompt-contract-v1" or tuple(value.get("section_order", ())) != PROMPT_SECTION_ORDER:
+    if (
+        value.get("schema_version") != "prompt-contract-v1"
+        or tuple(value.get("section_order", ())) != PROMPT_SECTION_ORDER
+    ):
         raise PromptBundleError("PROMPT_CONTRACT_INVALID")
-    if value.get("demonstration_count") != 2 or value.get("provider_fields") != "not_applicable_red":
+    if (
+        value.get("demonstration_count") != 2
+        or value.get("provider_fields") != "not_applicable_red"
+    ):
         raise PromptBundleError("PROMPT_CONTRACT_INVALID")
     if value.get("offline_lexical_rule") != "python_re_findall_unicode_word_boundaries_v1":
         raise PromptBundleError("PROMPT_CONTRACT_INVALID")
-    for field in ("shared_guidance", "frame_instructions", "adjudication_instructions", "evidence_rules", "retrieval_contract_id", "retrieval_receipt_sha256"):
+    for field in (
+        "shared_guidance",
+        "frame_instructions",
+        "adjudication_instructions",
+        "evidence_rules",
+        "retrieval_contract_id",
+        "retrieval_receipt_sha256",
+    ):
         _require_text(value.get(field), "PROMPT_CONTRACT_INVALID")
     output_schema = value.get("output_schema")
     if not isinstance(output_schema, dict) or set(output_schema) != {"A", "BC"}:
@@ -140,7 +219,11 @@ def _validate_prompt_contract_v1(value: object) -> dict[str, object]:
     selection = value.get("fixed_pair_selection")
     if not isinstance(selection, dict) or set(selection) != _FIXED_SELECTION_KEYS:
         raise PromptBundleError("PROMPT_CONTRACT_INVALID")
-    if selection.get("selection_id") != "fixed-synthetic-pairs-v1" or selection.get("test_only") is not True or selection.get("count_eligible") is not False:
+    if (
+        selection.get("selection_id") != "fixed-synthetic-pairs-v1"
+        or selection.get("test_only") is not True
+        or selection.get("count_eligible") is not False
+    ):
         raise PromptBundleError("PROMPT_CONTRACT_INVALID")
     _require_text(selection.get("target_source_sha256"), "PROMPT_CONTRACT_INVALID")
     _require_text(selection.get("corpus_sha256"), "PROMPT_CONTRACT_INVALID")
@@ -170,7 +253,9 @@ def _validate_synthetic_target_v1(value: object) -> dict[str, object]:
     return value
 
 
-def _closed_contract_and_target(config: object, target: object) -> tuple[dict[str, object], dict[str, object]]:
+def _closed_contract_and_target(
+    config: object, target: object
+) -> tuple[dict[str, object], dict[str, object]]:
     canonical_config = _load_canonical_json(_PROMPT_CONTRACT_PATH, "PROMPT_CONTRACT_INVALID")
     canonical_target = _load_canonical_json(_SYNTHETIC_TARGET_PATH, "PROMPT_TARGET_INVALID")
     if canonical_json_bytes(config) != canonical_json_bytes(canonical_config):
@@ -228,7 +313,11 @@ def validate_complete_pair_side_v1(value: object, expected_final_status: str) ->
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     for axis in REQUIRED_FRAME_AXES:
         item = frame[axis]
-        if not isinstance(item, dict) or set(item) != _PAIR_FRAME_AXIS_KEYS or item.get("value") not in FRAME_ENUMS[axis]:
+        if (
+            not isinstance(item, dict)
+            or set(item) != _PAIR_FRAME_AXIS_KEYS
+            or item.get("value") not in FRAME_ENUMS[axis]
+        ):
             raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
         _validate_pair_span(item.get("evidence_span"), source_raw)
 
@@ -241,7 +330,11 @@ def _load_complete_pair_corpus_v1() -> dict[str, object]:
         or _contains_forbidden_corpus_field(corpus)
     ):
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
-    if corpus.get("schema_version") != "synthetic-complete-pair-corpus-v1" or corpus.get("test_only") is not True or corpus.get("count_eligible") is not False:
+    if (
+        corpus.get("schema_version") != "synthetic-complete-pair-corpus-v1"
+        or corpus.get("test_only") is not True
+        or corpus.get("count_eligible") is not False
+    ):
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     expected = {key: item for key, item in corpus.items() if key != "corpus_sha256"}
     if corpus.get("corpus_sha256") != sha256_bytes(canonical_json_bytes(expected)):
@@ -306,26 +399,36 @@ def validate_contract_response_origin_v1(
         or envelope.get("count_eligible") is not False
     ):
         raise PromptBundleError("PROMPT_RESPONSE_INVALID")
-    projection = {key: value for key, value in envelope.items() if key not in _CONTRACT_RESPONSE_ISOLATION_KEYS}
+    projection = {
+        key: value
+        for key, value in envelope.items()
+        if key not in _CONTRACT_RESPONSE_ISOLATION_KEYS
+    }
     try:
         return parse_treatment_response_v1(canonical_json_bytes(projection), target_raw)
     except TreatmentContractError as error:
         raise PromptBundleError("PROMPT_RESPONSE_INVALID") from error
 
 
-def _resolve_pairs(pair_ids: tuple[str, str], corpus: Mapping[str, object]) -> tuple[dict[str, object], dict[str, object]]:
+def _resolve_pairs(
+    pair_ids: tuple[str, str], corpus: Mapping[str, object]
+) -> tuple[dict[str, object], dict[str, object]]:
     pairs = corpus["pairs"]
     assert isinstance(pairs, list)
     by_id = {pair["pair_id"]: pair for pair in pairs if isinstance(pair, dict)}
     if set(pair_ids) - set(by_id):
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     resolved = tuple(by_id[pair_id] for pair_id in pair_ids)
-    if any(pair["test_only"] is not True or pair["count_eligible"] is not False for pair in resolved):
+    if any(
+        pair["test_only"] is not True or pair["count_eligible"] is not False for pair in resolved
+    ):
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     return resolved  # type: ignore[return-value]
 
 
-def _load_retrieval_receipt_v1(contract: Mapping[str, object], target: Mapping[str, object], corpus: Mapping[str, object]) -> tuple[str, str]:
+def _load_retrieval_receipt_v1(
+    contract: Mapping[str, object], target: Mapping[str, object], corpus: Mapping[str, object]
+) -> tuple[str, str]:
     receipt = _load_canonical_json(_SYNTHETIC_RETRIEVAL_RECEIPT_PATH, "PROMPT_PAIR_CORPUS_INVALID")
     if not isinstance(receipt, dict) or set(receipt) != _RETRIEVAL_RECEIPT_KEYS:
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
@@ -350,7 +453,11 @@ def _load_retrieval_receipt_v1(contract: Mapping[str, object], target: Mapping[s
     pair_ids: list[str] = []
     scores: list[float] = []
     for expected_rank, item in enumerate(ranking, start=1):
-        if not isinstance(item, dict) or set(item) != _RANKING_ITEM_KEYS or item.get("rank") != expected_rank:
+        if (
+            not isinstance(item, dict)
+            or set(item) != _RANKING_ITEM_KEYS
+            or item.get("rank") != expected_rank
+        ):
             raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
         pair_id = item.get("pair_id")
         score = item.get("cosine_score")
@@ -365,7 +472,11 @@ def _load_retrieval_receipt_v1(contract: Mapping[str, object], target: Mapping[s
             raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
         pair_ids.append(pair_id)
         scores.append(float(score))
-    if len(set(pair_ids)) != 2 or scores[0] < scores[1] or (scores[0] == scores[1] and pair_ids[0] >= pair_ids[1]):
+    if (
+        len(set(pair_ids)) != 2
+        or scores[0] < scores[1]
+        or (scores[0] == scores[1] and pair_ids[0] >= pair_ids[1])
+    ):
         raise PromptBundleError("PROMPT_PAIR_CORPUS_INVALID")
     return tuple(pair_ids)  # type: ignore[return-value]
 
@@ -388,7 +499,11 @@ def render_prompt_sections_v1(config: object, target: object, system: str) -> di
     assert isinstance(selection, dict)
     if selection["corpus_sha256"] != corpus["corpus_sha256"]:
         raise PromptBundleError("PROMPT_CONTRACT_INVALID")
-    pair_ids = _load_retrieval_receipt_v1(contract, closed_target, corpus) if system == "C" else _require_pair_ids(selection["ordered_pair_ids"], "PROMPT_CONTRACT_INVALID")
+    pair_ids = (
+        _load_retrieval_receipt_v1(contract, closed_target, corpus)
+        if system == "C"
+        else _require_pair_ids(selection["ordered_pair_ids"], "PROMPT_CONTRACT_INVALID")
+    )
     pairs = _resolve_pairs(pair_ids, corpus)
     selection_label = "retrieved contract pair" if system == "C" else "fixed synthetic pair"
     demonstrations = "".join(
@@ -427,11 +542,20 @@ def render_prompt_sections_v1(config: object, target: object, system: str) -> di
 
 def render_treatment_prompt_v1(config: object, target: object) -> dict[str, bytes]:
     """Render all three exact offline system prompts without publishing files."""
-    return {system: b"".join(render_prompt_sections_v1(config, target, system).values()) for system in ("A", "B", "C")}
+    return {
+        system: b"".join(render_prompt_sections_v1(config, target, system).values())
+        for system in ("A", "B", "C")
+    }
 
 
 def _validate_raw_prompt_bytes(raw: bytes) -> str:
-    if not isinstance(raw, bytes) or not raw or b"\r" in raw or not raw.endswith(b"\n") or raw.endswith(b"\n\n"):
+    if (
+        not isinstance(raw, bytes)
+        or not raw
+        or b"\r" in raw
+        or not raw.endswith(b"\n")
+        or raw.endswith(b"\n\n")
+    ):
         raise PromptBundleError("PROMPT_RAW_BYTES_INVALID")
     try:
         return raw.decode("utf-8")
@@ -469,7 +593,10 @@ def validate_treatment_diffs_v1(
     if set(sections) != {"A", "B", "C"}:
         raise PromptBundleError("TREATMENT_DIFF_NOT_ALLOWLISTED")
     for system in ("A", "B", "C"):
-        if not isinstance(sections[system], Mapping) or tuple(sections[system]) != PROMPT_SECTION_ORDER:
+        if (
+            not isinstance(sections[system], Mapping)
+            or tuple(sections[system]) != PROMPT_SECTION_ORDER
+        ):
             raise PromptBundleError("TREATMENT_DIFF_NOT_ALLOWLISTED")
         for name, raw in sections[system].items():
             if name == "frame_instructions" and system == "A" and raw == b"":
@@ -482,7 +609,9 @@ def validate_treatment_diffs_v1(
         ("A_B", "A", "B", ["frame_instructions", "output_schema"]),
         ("B_C", "B", "C", ["demonstrations"]),
     ):
-        observed = [name for name in PROMPT_SECTION_ORDER if sections[left][name] != sections[right][name]]
+        observed = [
+            name for name in PROMPT_SECTION_ORDER if sections[left][name] != sections[right][name]
+        ]
         if observed != allowed:
             raise PromptBundleError("TREATMENT_DIFF_NOT_ALLOWLISTED")
         comparisons[label] = {"allowed_differences": allowed, "observed_differences": observed}
@@ -514,7 +643,9 @@ def _prompt_bundle_v1(config: object, target: object) -> tuple[dict[str, bytes],
     contract, closed_target = _closed_contract_and_target(config, target)
     corpus = _load_complete_pair_corpus_v1()
     prompts = render_treatment_prompt_v1(config, target)
-    sections = {system: render_prompt_sections_v1(config, target, system) for system in ("A", "B", "C")}
+    sections = {
+        system: render_prompt_sections_v1(config, target, system) for system in ("A", "B", "C")
+    }
     comparisons = validate_treatment_diffs_v1(sections)
     selection = contract["fixed_pair_selection"]
     assert isinstance(selection, Mapping)
@@ -527,7 +658,11 @@ def _prompt_bundle_v1(config: object, target: object) -> tuple[dict[str, bytes],
         "target_sha256": closed_target["source_sha256"],
         "corpus_sha256": corpus["corpus_sha256"],
         "prompt_records": {
-            system: {"path": f"prompts/treatments/system-{system.lower()}-v1.txt", "sha256": sha256_bytes(raw), "counts": count_prompt_bytes_v1(raw)}
+            system: {
+                "path": f"prompts/treatments/system-{system.lower()}-v1.txt",
+                "sha256": sha256_bytes(raw),
+                "counts": count_prompt_bytes_v1(raw),
+            }
             for system, raw in prompts.items()
         },
         "response_records": _response_records_v1(target_raw.encode("utf-8")),
@@ -541,7 +676,9 @@ def _prompt_bundle_v1(config: object, target: object) -> tuple[dict[str, bytes],
             "C": list(retrieved),
         },
         "structural_comparison": comparisons,
-        "offline_accounting": {system: count_prompt_bytes_v1(raw) for system, raw in prompts.items()},
+        "offline_accounting": {
+            system: count_prompt_bytes_v1(raw) for system, raw in prompts.items()
+        },
         "provider_input_tokens": "not_applicable_red",
         "provider_output_tokens": "not_applicable_red",
         "maximum_output_tokens": "not_applicable_red",
@@ -556,13 +693,18 @@ def build_prompt_bundle_manifest_v1(config: object, target: object) -> dict[str,
     return manifest
 
 
-def write_offline_prompt_bundle_v1(output_root: Path, config: object, target: object) -> dict[str, object]:
+def write_offline_prompt_bundle_v1(
+    output_root: Path, config: object, target: object
+) -> dict[str, object]:
     """Publish exact prompt authority and its manifest together, permitting exact resume only."""
     if not isinstance(output_root, Path):
         raise PromptBundleError("PROMPT_BUNDLE_WRITE_INVALID")
     prompts, manifest = _prompt_bundle_v1(config, target)
     payloads = {
-        **{f"prompts/treatments/system-{system.lower()}-v1.txt": raw for system, raw in prompts.items()},
+        **{
+            f"prompts/treatments/system-{system.lower()}-v1.txt": raw
+            for system, raw in prompts.items()
+        },
         "prompts/treatments/prompt-bundle-manifest-v1.json": canonical_json_bytes(manifest),
     }
     try:

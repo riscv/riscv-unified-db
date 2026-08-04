@@ -19,7 +19,6 @@ from .retrieval import (
     validate_test_only_target_v1,
 )
 
-
 _EXPERIMENT_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -30,11 +29,21 @@ def _verify_retrieval_contract(args: argparse.Namespace) -> int:
     validate_test_only_target_v1(target)
     validate_test_only_corpus_v1(corpus)
     prompt_manifest = load_prompt_manifest_v1(
-        _EXPERIMENT_ROOT, args.prompt_manifest, target=target, corpus=corpus,
+        _EXPERIMENT_ROOT,
+        args.prompt_manifest,
+        target=target,
+        corpus=corpus,
     )
-    sys.stdout.buffer.write(canonical_json_bytes(build_retrieval_report_v1(
-        target=target, corpus=corpus, config=config, prompt_manifest=prompt_manifest,
-    )))
+    sys.stdout.buffer.write(
+        canonical_json_bytes(
+            build_retrieval_report_v1(
+                target=target,
+                corpus=corpus,
+                config=config,
+                prompt_manifest=prompt_manifest,
+            )
+        )
+    )
     return 0
 
 
