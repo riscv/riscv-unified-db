@@ -31,8 +31,8 @@ Requirements for the frozen SpecChoice v1.3.2 execution baseline. Each maps to e
 - [x] **TS-05** `[ALL]`: Tests and reports expose every required stable diagnostic code with structured fields, while `ACCEPTED_PARAMETER_NAME_MISSING` remains an identity warning that cannot change disposition correctness.
 - [ ] **TS-06** `[ALL]`: The reviewer receives independently calculated surfacing, disposition, exact/incorrect/missing identity, classify-out, and evidence-integrity outcomes; Green/Yellow additionally reports each frame axis and retrieval quality separately.
 - [ ] **TS-07** `[ALL]`: The reviewer can audit at least one non-empty verbatim evidence span for every surfaced finding and can inspect immutable raw outputs, parsed outputs, and parser diagnostics as separate artifacts.
-- [ ] **TS-08** `[ALL]`: Automated validation proves provenance for every data item, zero prototype/held-out example overlap, zero prototype/strict-core primary-family overlap, registered primary families, compatible registry versions, and no held-out passage in prompt demonstrations.
-- [ ] **TS-09** `[ALL]`: The human reviewer controls labels, dataset membership, primary families, contrastive pairs and axes, relevance judgments, metamorphic expectations, fallback state, and public communication; any frozen-input change stops the run, enters the decision log, increments the experiment version, and triggers symmetric reruns.
+- [x] **TS-08** `[ALL]`: Automated validation proves provenance for every data item, zero prototype/held-out example overlap, zero prototype/strict-core primary-family overlap, registered primary families, compatible registry versions, and no held-out passage in prompt demonstrations.
+- [x] **TS-09** `[ALL]`: The human reviewer controls labels, dataset membership, primary families, contrastive pairs and axes, relevance judgments, metamorphic expectations, fallback state, and public communication; any frozen-input change stops the run, enters the decision log, increments the experiment version, and triggers symmetric reruns.
 - [ ] **TS-10** `[ALL]`: A machine-evaluated and human-approved gate records exactly one Green, Yellow, or Red state plus `N_strict` and repeat count, blocks model execution on every Red trigger, and prevents model output from compensating for unreliable gold.
 - [ ] **TS-11** `[G/Y]`: The operator can execute every preregistered strict-core case under A, B, and C with the same model snapshot, sampling, target context, shared guidance, decision space, evidence rules, exactly two demonstration pairs, and repeat count; only the intended treatment differs.
 - [ ] **TS-12** `[G/Y]`: The reviewer can inspect every call's prompt hash, actual input/output tokens, output limit, model snapshot, sampling settings, raw response, parse result, refusal/truncation state, and retry/failure state, with no missing strict-core A/B/C cell.
@@ -49,7 +49,7 @@ Requirements for the frozen SpecChoice v1.3.2 execution baseline. Each maps to e
 
 ### H2 — Axis-Contrastive Retrieval Effect
 
-- [ ] **H2-01** `[G/Y]`: The human reviewer can approve a bank of complete contrastive pairs in which each unit records positive and contrast passages, shared structure, frames, final statuses, discriminating axes, evidence spans, source provenance, and manual verification, without fabricated quota-filling pairs.
+- [x] **H2-01** `[G/Y]`: The human reviewer can approve a bank of complete contrastive pairs in which each unit records positive and contrast passages, shared structure, frames, final statuses, discriminating axes, evidence spans, source provenance, and manual verification, without fabricated quota-filling pairs.
 - [ ] **H2-02** `[G/Y]`: The operator can retrieve exactly two complete pairs per controlled target using frozen TF-IDF and cosine-similarity settings, deterministic `pair_id` tie-breaking, target-dependent rankings, and no embeddings, vector database, learned retriever, or learned reranker.
 - [ ] **H2-03** `[G/Y]`: The reviewer can inspect a versioned and hashed relevance registry frozen before retrieval, per-case retrieved pair IDs, and `PairHit@K` calculated only for cases with preregistered human relevance judgments.
 - [ ] **H2-04** `[G/Y]`: The reviewer can compare paired C-minus-B outcomes where B and C share the identical frame, adjudication, context, evidence, model, pair-count, and repeat controls, with complete-pair selection method as the only intended intervention.
@@ -137,8 +137,8 @@ Roadmap creation maps every v1 requirement to exactly one phase.
 | TS-05 | Phase 2 | Complete |
 | TS-06 | Phase 6 | Pending |
 | TS-07 | Phase 5 | Pending |
-| TS-08 | Phase 3 | Pending |
-| TS-09 | Phase 3 | Pending |
+| TS-08 | Phase 3 | Complete |
+| TS-09 | Phase 3 | Complete |
 | TS-10 | Phase 4 | Pending |
 | TS-11 | Phase 5 | Pending |
 | TS-12 | Phase 5 | Pending |
@@ -149,7 +149,7 @@ Roadmap creation maps every v1 requirement to exactly one phase.
 | H1-02 | Phase 6 | Pending |
 | H1-03 | Phase 6 | Pending |
 | H1-04 | Phase 6 | Pending |
-| H2-01 | Phase 3 | Pending |
+| H2-01 | Phase 3 | Complete |
 | H2-02 | Phase 4 | Pending |
 | H2-03 | Phase 6 | Pending |
 | H2-04 | Phase 6 | Pending |

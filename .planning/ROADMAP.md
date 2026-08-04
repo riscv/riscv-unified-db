@@ -16,7 +16,7 @@ SpecChoice v1.3.2 proceeds through seven strict, dependency-ordered increments: 
 
 - [x] **Phase 1: Isolated Evidence Boundary and Source Integrity** - Establish a dependency-light experiment boundary and independently verifiable public inputs. (completed 2026-07-31)
 - [x] **Phase 2: Deterministic Measurement Spine** - Prove the frozen adjudication and diagnostic contract on all 11 fixtures before innovation. (completed 2026-08-03)
-- [ ] **Phase 3: Human-Reviewed Data Preregistration** - Produce leakage-safe, provenance-rich data whose semantic decisions are explicitly human-approved.
+- [x] **Phase 3: Human-Reviewed Data Preregistration** - Produce leakage-safe, provenance-rich data whose semantic decisions are explicitly human-approved. (completed 2026-08-04)
 - [ ] **Phase 4: Offline Treatments, Retrieval, and Branch Freeze** - Make the controlled treatments inspectable offline, freeze them, and select exactly one fail-closed branch.
 - [ ] **Phase 5: Authorized Execution and Immutable Evidence** - Execute the approved Green/Yellow call matrix or preserve a verifiable Red no-call record.
 - [ ] **Phase 6: Partition-Aware Ablation and Metamorphic Evaluation** - Score the authorized branch without pooling partitions or collapsing distinct failure modes.
@@ -217,14 +217,14 @@ Plans:
   3. The human reviewer can explicitly approve or dispute every label, membership decision, family, pair axis, relevance judgment, and metamorphic expectation without automated relabeling or quota-filling pairs.
   4. The reviewer receives audited counts showing either a possible Green/Yellow data threshold or the exact defensible evidence requiring Red.
 
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 
 - [x] 03-01-PLAN.md
 - [x] 03-02-PLAN.md
 - [x] 03-03-PLAN.md
-- [ ] 03-04-PLAN.md
+- [x] 03-04-PLAN.md
 
 **Wave 1**
 
@@ -240,7 +240,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 03-04: Run leakage/provenance validation and assemble the H2 approval and branch-eligibility packet.
+- [x] 03-04: Run leakage/provenance validation and assemble the H2 approval and branch-eligibility packet.
 
 ### Phase 4: Offline Treatments, Retrieval, and Branch Freeze
 
@@ -375,7 +375,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Isolated Evidence Boundary and Source Integrity | 7/7 | Complete    | 2026-07-31 |
 | 2. Deterministic Measurement Spine | 22/22 | Complete | 2026-08-03 |
-| 3. Human-Reviewed Data Preregistration | 3/4 | In Progress|  |
+| 3. Human-Reviewed Data Preregistration | 4/4 | Complete   | 2026-08-04 |
 | 4. Offline Treatments, Retrieval, and Branch Freeze | 0/4 | Not started | - |
 | 5. Authorized Execution and Immutable Evidence | 0/3 | Not started | - |
 | 6. Partition-Aware Ablation and Metamorphic Evaluation | 0/4 | Not started | - |

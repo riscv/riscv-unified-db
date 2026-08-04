@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.3.2
 milestone_name: milestone
-current_phase: 03
-current_phase_name: human-reviewed-data-preregistration
-status: in_progress
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-08-04T07:06:19.619Z"
+current_phase: 4
+current_phase_name: Offline Treatments, Retrieval, and Branch Freeze
+status: planning
+stopped_at: Completed and verified Phase 03; Phase 04 ready to plan
+last_updated: "2026-08-04T07:31:01.136Z"
 last_activity: 2026-08-04
-last_activity_desc: Phase 3 plan 03-03 froze empty relevance and four human-excluded unavailable metamorphic directions
+last_activity_desc: Phase 03 complete, transitioned to Phase 4
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 33
-  completed_plans: 27
-  percent: 82
+  completed_plans: 28
+  percent: 85
 ---
 
 # Project State
@@ -24,24 +24,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-30)
 
 **Core value:** Produce a reproducible, leakage-safe, falsifiable A/B/C result—positive, negative, or Red-path infeasible—without weakening gold semantics, deterministic measurement, or human control of RISC-V judgments.
-**Current focus:** Phase 03 — human-reviewed-data-preregistration
+**Current focus:** Phase 04 — offline-treatments-retrieval-and-branch-freeze
 
 ## Current Position
 
-Phase: 03 (human-reviewed-data-preregistration) — IN PROGRESS
-Plan: 4 of 4
-Status: 03-03 complete; ready to execute final H2 Red feasibility plan 03-04
-Last activity: 2026-08-04 — froze empty relevance and four unavailable metamorphic directions without post-freeze synthesis
+Phase: 4 — Offline Treatments, Retrieval, and Branch Freeze
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-04 — Phase 03 complete, transitioned to Phase 4
 
-Progress: [████████░░] 82%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans executed: 29
-- Total plans resolved: 32 (including three superseded Phase 2 plans)
-- GSD summary-bearing plans: 27 (02-20 and 02-21 intentionally have no summaries)
+- Total plans executed: 30
+- Total plans resolved: 33 (including three superseded Phase 2 plans)
+- GSD summary-bearing plans: 28 (02-20 and 02-21 intentionally have no summaries)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -51,7 +51,7 @@ Progress: [████████░░] 82%
 |-------|-------|-------|----------|
 | 01 | 7 | - | - |
 | 02 | 19 executed / 22 resolved | - | - |
-| 03 | 3 | - | - |
+| 03 | 4 | - | - |
 
 **Recent Trend:**
 
@@ -85,6 +85,7 @@ Progress: [████████░░] 82%
 | Phase 03 P01 | multi-session | 3 tasks | 14 files |
 | Phase 03 P02 | multi-session | 3 tasks | 9 files |
 | Phase 03 P03 | multi-session | 3 tasks | 8 files |
+| Phase 03 P04 | multi-session | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -153,6 +154,7 @@ Recent decisions affecting current work:
 - [Phase 03]: Phase 3 candidate inventory is frozen at one H1-consistent natural pair; no upstream reopening, weak pairing, or replacement is permitted to meet Green/Yellow thresholds. — The only remaining H1 classify_out fixture has no same-choice-object positive partner. Rejected cache-block and CSR-access proposals fail controlled-contrast or frozen-status requirements, so insufficient coverage must flow deterministically to red_required with model execution unauthorized.
 - [Phase 03]: Family registry and split freeze one warl_legal_set prototype pair with empty strict and auxiliary sets; membership is deterministic and no case may be moved or fabricated. — The approved registry and assignment derive prototype=1, strict=0, auxiliary=0 without diagnostics. Insufficient natural coverage remains red_required and model execution stays unauthorized.
 - [Phase 03]: The frozen inventory contains no metamorphic candidates; all four required directions are explicit unavailable, human-excluded, and non-counting records. — Post-freeze candidate addition or synthetic semantic completion is prohibited. Empty strict and auxiliary relevance remains exact, and the audit continues to red_required without model authorization.
+- [Phase 03]: Approved H2 data authority deterministically selects red_required from one qualifying natural pair, zero strict cases, and four unavailable metamorphic directions. — Yellow and Green count thresholds are unmet; pair failure analysis preserves CHOICE_OBJECT_MISMATCH and H1_STATUS_CONFLICT without replacement. Retrieval, model execution, external publication, and final Phase 4 branch authority remain false.
 
 ### Pending Todos
 
@@ -160,9 +162,8 @@ None yet.
 
 ### Blockers/Concerns
 
-- Exact provider and immutable model snapshot remain unfrozen until the conditional H4 checkpoint.
-- Python 3.14/scikit-learn lock resolution remains unverified for later measurement work.
-- Human-reviewed natural-pair and strict-core coverage is insufficient; Phase 3 must preserve the deterministic `red_required` conclusion.
+- Exact provider/model snapshot and Python lock resolution remain intentionally conditional because the approved Phase 3 authority requires the Red no-model branch.
+- Phase 4 must preserve `red_required` and obtain its own branch decision without converting Phase 3 eligibility into execution authority.
 
 ## Deferred Items
 
@@ -172,6 +173,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-04T07:06:18.547Z
-Stopped at: Completed 03-03-PLAN.md
-Resume file: .planning/phases/03-human-reviewed-data-preregistration/03-04-PLAN.md
+Last session: 2026-08-04T07:31:01.118Z
+Stopped at: Completed and verified Phase 03; Phase 04 ready to plan
+Resume file: .planning/ROADMAP.md
