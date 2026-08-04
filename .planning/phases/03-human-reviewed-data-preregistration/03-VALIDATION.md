@@ -1,9 +1,9 @@
 ---
 phase: 03
 slug: human-reviewed-data-preregistration
-status: draft
+status: complete
 nyquist_compliant: true
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-08-03
 ---
 
@@ -32,25 +32,25 @@ created: 2026-08-03
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 03-01-01 | 01 | 1 | TS-08, TS-09, H2-01 | T-03-01-01..05 | Descriptor-bound tracer rejects stale/unlisted source and inferred review | integration | `python -m unittest tests.test_data_admission` | ❌ W0 | ⬜ pending |
-| 03-01-02 | 01 | 1 | H2-01 | T-03-01-02..06 | Full inventory is frozen before review and cannot be backfilled | integration | `python -m unittest tests.test_data_admission` | ❌ W0 | ⬜ pending |
-| 03-01-03 | 01 | 1 | TS-09, H2-01 | T-03-01-03..06 | Human pair decisions bind exact packet/readiness hashes | integration | `python -m unittest tests.test_data_admission` | ❌ W0 | ⬜ pending |
-| 03-02-01 | 02 | 2 | TS-08, TS-09 | T-03-02-01..05 | Registry changes invalidate all dependent assignments | unit | `python -m unittest tests.test_data_splits` | ❌ W0 | ⬜ pending |
-| 03-02-02 | 02 | 2 | TS-08 | T-03-02-02..06 | Split derivation enforces example and family isolation | integration | `python -m unittest tests.test_data_splits` | ❌ W0 | ⬜ pending |
-| 03-02-03 | 02 | 2 | TS-09 | T-03-02-03..06 | Human membership decisions cannot override deterministic split rules | integration | `python -m unittest tests.test_data_splits` | ❌ W0 | ⬜ pending |
-| 03-03-01 | 03 | 3 | TS-08, TS-09 | T-03-03-01..05 | Every strict case has explicit relevance or no-relevant-pair | unit | `python -m unittest tests.test_data_relevance` | ❌ W0 | ⬜ pending |
-| 03-03-02 | 03 | 3 | TS-09 | T-03-03-02..06 | Four exact directions exist and synthetic text cannot count | integration | `python -m unittest tests.test_data_relevance` | ❌ W0 | ⬜ pending |
-| 03-03-03 | 03 | 3 | TS-09 | T-03-03-03..06 | Human relevance/metamorphic decision binds complete registries | integration | `python -m unittest tests.test_data_relevance` | ❌ W0 | ⬜ pending |
-| 03-04-01 | 04 | 4 | TS-08, TS-09, H2-01 | T-03-04-01..06 | Whole-chain readiness recomputes every authority and count | integration | `python -m unittest tests.test_data_h2` | ❌ W0 | ⬜ pending |
-| 03-04-02 | 04 | 4 | TS-09, H2-01 | T-03-04-02..06 | Only a complete human H2 decision can authorize data root | integration | `python -m unittest tests.test_data_h2` | ❌ W0 | ⬜ pending |
-| 03-04-03 | 04 | 4 | TS-08, TS-09, H2-01 | T-03-04-03..06 | Eligibility is exact, deterministic, and never final branch authority | integration | `python -m unittest tests.test_data_h2 tests.test_canonical tests.test_filesystem_boundary` | ❌ W0 | ⬜ pending |
+| 03-01-01 | 01 | 1 | TS-08, TS-09, H2-01 | T-03-01-01..05 | Descriptor-bound tracer rejects stale/unlisted source and inferred review | integration | `python -m unittest tests.test_data_admission` | ✅ | ✅ passed |
+| 03-01-02 | 01 | 1 | H2-01 | T-03-01-02..06 | Full inventory is frozen before review and cannot be backfilled | integration | `python -m unittest tests.test_data_admission` | ✅ | ✅ passed |
+| 03-01-03 | 01 | 1 | TS-09, H2-01 | T-03-01-03..06 | Human pair decisions bind exact packet/readiness hashes | integration | `python -m unittest tests.test_data_admission` | ✅ | ✅ passed |
+| 03-02-01 | 02 | 2 | TS-08, TS-09 | T-03-02-01..05 | Registry changes invalidate all dependent assignments | unit | `python -m unittest tests.test_data_splits` | ✅ | ✅ passed |
+| 03-02-02 | 02 | 2 | TS-08 | T-03-02-02..06 | Split derivation enforces example and family isolation | integration | `python -m unittest tests.test_data_splits` | ✅ | ✅ passed |
+| 03-02-03 | 02 | 2 | TS-09 | T-03-02-03..06 | Human membership decisions cannot override deterministic split rules | integration | `python -m unittest tests.test_data_splits` | ✅ | ✅ passed |
+| 03-03-01 | 03 | 3 | TS-08, TS-09 | T-03-03-01..05 | Every strict case has explicit relevance or no-relevant-pair | unit | `python -m unittest tests.test_data_relevance` | ✅ | ✅ passed |
+| 03-03-02 | 03 | 3 | TS-09 | T-03-03-02..06 | Four exact directions exist and synthetic text cannot count | integration | `python -m unittest tests.test_data_relevance` | ✅ | ✅ passed |
+| 03-03-03 | 03 | 3 | TS-09 | T-03-03-03..06 | Human relevance/metamorphic decision binds complete registries | integration | `python -m unittest tests.test_data_relevance` | ✅ | ✅ passed |
+| 03-04-01 | 04 | 4 | TS-08, TS-09, H2-01 | T-03-04-01..06 | Whole-chain readiness recomputes every authority and count | integration | `python -m unittest tests.test_data_h2` | ✅ | ✅ passed |
+| 03-04-02 | 04 | 4 | TS-09, H2-01 | T-03-04-02..06 | Only a complete human H2 decision can authorize data root | integration | `python -m unittest tests.test_data_h2` | ✅ | ✅ passed |
+| 03-04-03 | 04 | 4 | TS-08, TS-09, H2-01 | T-03-04-03..06 | Eligibility is exact, deterministic, and never final branch authority | integration | `python -m unittest tests.test_data_h2 tests.test_canonical tests.test_filesystem_boundary` | ✅ | ✅ passed |
 
 ## Wave 0 Requirements
 
-- [ ] `tests/test_data_admission.py` — temporary accepted-source fixtures and tracer/full-inventory admission coverage.
-- [ ] `tests/test_data_splits.py` — registry, reuse, leakage, and deterministic split fixtures.
-- [ ] `tests/test_data_relevance.py` — relevance completeness and metamorphic fixtures.
-- [ ] `tests/test_data_h2.py` — readiness, human-decision, eligibility, and data-root fixtures.
+- [x] `tests/test_data_admission.py` — temporary accepted-source fixtures and tracer/full-inventory admission coverage.
+- [x] `tests/test_data_splits.py` — registry, reuse, leakage, and deterministic split fixtures.
+- [x] `tests/test_data_relevance.py` — relevance completeness and metamorphic fixtures.
+- [x] `tests/test_data_h2.py` — readiness, human-decision, eligibility, and data-root fixtures.
 
 No framework or dependency installation is required.
 
@@ -72,4 +72,4 @@ No framework or dependency installation is required.
 - [x] Expected feedback latency is under 30 seconds.
 - [x] `nyquist_compliant: true` is set in frontmatter.
 
-**Approval:** pending Phase 3 execution
+**Approval:** complete — 72-test terminal suite passed on 2026-08-04; all four human decisions are content-bound and approved.
