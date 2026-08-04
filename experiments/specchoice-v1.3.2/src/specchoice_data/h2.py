@@ -52,6 +52,7 @@ class EligibilityAudit:
     ids: Mapping[str, tuple[str, ...]]
     invariants: Mapping[str, bool]
     terminal_buckets_disjoint: bool
+    failure_analysis: tuple[Mapping[str, object], ...] = ()
 
     @property
     def counts(self) -> dict[str, int]:
@@ -62,6 +63,7 @@ class EligibilityAudit:
             "counts": self.counts,
             "ids": {key: list(value) for key, value in sorted(self.ids.items())},
             "invariants": dict(sorted(self.invariants.items())),
+            "pair_admission_failure_analysis": [dict(item) for item in self.failure_analysis],
             "terminal_buckets_disjoint": self.terminal_buckets_disjoint,
         }
 
@@ -72,6 +74,7 @@ _PATHS = (
     "reports/h2/pair-review-v1/review-packet.json",
     "receipts/pair-review-readiness-v1.json",
     "reviews/pair-review-decision-v1.json",
+    "reviews/pair-authoring-rejections-v1.json",
     "data/preregistration/family-registry-v1.json",
     "data/preregistration/split-manifest-v1.json",
     "reports/h2/family-split-review-v1/review-packet.json",
@@ -156,6 +159,19 @@ def validate_phase3_chain_v1(
             raise H2ValidationError("H2_CHAIN_INPUT_INVALID")
         pair_decision = artifacts["reviews/pair-review-decision-v1.json"]
         validate_pair_review_decision_v1(decision=pair_decision, packet=pair_packet, readiness=pair_readiness)
+        rejection_audit = artifacts["reviews/pair-authoring-rejections-v1.json"]
+        if (
+            rejection_audit.get("schema_version") != "pair-authoring-rejections-v1"
+            or rejection_audit.get("bindings") != {
+                "candidate_inventory_sha256": inventory["inventory_sha256"],
+                "h1_decision_sha256": gate["decision_sha256"],
+                "pair_review_decision_sha256": pair_decision["decision_sha256"],
+            }
+            or not isinstance(rejection_audit.get("rejections"), list)
+            or not isinstance(rejection_audit.get("no_replacement_attestation"), str)
+            or not rejection_audit["no_replacement_attestation"].strip()
+        ):
+            raise H2ValidationError("H2_CHAIN_INPUT_INVALID")
 
         family = artifacts["data/preregistration/family-registry-v1.json"]
         validate_family_registry_v1(
@@ -236,6 +252,9 @@ def validate_phase3_chain_v1(
             "family_split_decision_sha256": family_decision["decision_sha256"],
             "h1_decision_sha256": gate["decision_sha256"],
             "metamorphic_registry_sha256": metamorphic["registry_sha256"],
+            "pair_authoring_rejections_file_sha256": sha256_bytes(
+                raw_by_path["reviews/pair-authoring-rejections-v1.json"]
+            ),
             "pair_review_decision_sha256": pair_decision["decision_sha256"],
             "phase2_authority_sha256": gate["authority_sha256"],
             "phase3_schema_sha256": sha256_bytes(schema_raw),
@@ -268,6 +287,7 @@ def validate_phase3_chain_v1(
             "held_out_dispositions": {},
             "invariants": invariants,
             "metamorphic_directions": metamorphic_states,
+            "pair_authoring_rejections": rejection_audit["rejections"],
             "pair_dispositions": {str(admission.candidate_id): "approved_qualifying"},
             "relevance_dispositions": {},
             "strict_case_ids": manifest["strict_case_ids"],
@@ -360,7 +380,15 @@ def audit_phase3_counts_v1(chain: Mapping[str, object]) -> EligibilityAudit:
     }
     if len(normalized_invariants) != len(invariants):
         raise H2ValidationError("H2_COUNT_INPUT_INVALID")
-    return EligibilityAudit(ids=ids, invariants=normalized_invariants, terminal_buckets_disjoint=terminal_disjoint)
+    failure_analysis = material.get("pair_authoring_rejections", [])
+    if not isinstance(failure_analysis, list) or any(not isinstance(item, Mapping) for item in failure_analysis):
+        raise H2ValidationError("H2_COUNT_INPUT_INVALID")
+    return EligibilityAudit(
+        ids=ids,
+        invariants=normalized_invariants,
+        terminal_buckets_disjoint=terminal_disjoint,
+        failure_analysis=tuple(dict(item) for item in failure_analysis),
+    )
 
 
 def derive_data_eligibility_v1(audit: EligibilityAudit) -> dict[str, object]:
@@ -375,12 +403,25 @@ def derive_data_eligibility_v1(audit: EligibilityAudit) -> dict[str, object]:
         status = "yellow_eligible"
     else:
         status = "red_required"
+    metamorphic_available = len(audit.ids.get("metamorphic_available_approved", ()))
+    metamorphic_unavailable = len(audit.ids.get("metamorphic_excluded_unavailable", ()))
     payload = {
         "audit": audit.as_dict(),
+        "corpus_coverage_audit": {
+            "green_pair_shortfall": max(0, 6 - pairs),
+            "green_strict_shortfall": max(0, 10 - strict),
+            "metamorphic_available": metamorphic_available,
+            "metamorphic_unavailable": metamorphic_unavailable,
+            "qualifying_natural_pairs": pairs,
+            "strict_cases": strict,
+            "yellow_pair_shortfall": max(0, 4 - pairs),
+            "yellow_strict_shortfall": max(0, 6 - strict),
+        },
         "eligibility_status": status,
         "external_publication_authorized": False,
         "model_experiment_authorized": False,
         "phase4_decision_required": True,
+        "pair_admission_failure_analysis": [dict(item) for item in audit.failure_analysis],
         "qualifying_pair_count": pairs,
         "qualifying_pair_ids": list(audit.ids.get("qualifying_pairs", ())),
         "reason": (
