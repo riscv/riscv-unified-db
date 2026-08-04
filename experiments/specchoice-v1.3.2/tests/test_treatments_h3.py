@@ -13,21 +13,34 @@ from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_treatments.h3 import (
     audit_no_model_reachability_v1,
     build_h3_red_authority_v2,
+    build_h3_red_authority_v4,
+    build_h3_red_decision_v4,
     build_h3_red_readiness_v1,
     build_h3_red_review_packet_v1,
     build_h3_red_readiness_v2,
     build_h3_red_readiness_v3,
+    build_h3_red_readiness_v4,
     build_h3_red_review_packet_v2,
     build_h3_red_review_packet_v3,
+    build_h3_red_review_packet_v4,
     load_phase4_freeze_inputs_v1,
     load_phase4_freeze_inputs_v2,
     load_phase4_freeze_inputs_v3,
+    load_phase4_freeze_inputs_v4,
     render_h3_red_review_markdown_v2,
     render_h3_red_review_markdown_v3,
+    render_h3_red_review_markdown_v4,
     validate_h3_red_authority_v2,
     validate_h3_red_decision_v2,
+    validate_h3_red_authority_v4,
+    validate_h3_red_decision_v4,
+    validate_h3_v4_post_publication_lifecycle,
+    validate_h3_v4_pre_publication_lifecycle,
+    validate_h3_v4_decision_published_lifecycle,
     write_h3_red_readiness_v2,
     write_h3_red_readiness_v3,
+    write_h3_red_authority_v4,
+    write_h3_red_decision_v4,
 )
 
 
@@ -234,6 +247,128 @@ class H3ContractTests(unittest.TestCase):
             self.assertTrue((root / "receipts/h3-branch-readiness-v3.json").is_file())
             self.assertFalse((root / "reviews/h3-branch-decision-v3.json").exists())
             self.assertFalse((root / "phase4/branch-authority-v3.json").exists())
+
+    def _v4_packet_readiness(self) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+        freeze_inputs = load_phase4_freeze_inputs_v4(experiment_root=self.experiment)
+        packet = build_h3_red_review_packet_v4(freeze_inputs)
+        readiness = build_h3_red_readiness_v4(packet)
+        return freeze_inputs, packet, readiness
+
+    def _v4_decision(
+        self, packet: dict[str, object], readiness: dict[str, object], *, aggregate: str = "approved_red",
+    ) -> dict[str, object]:
+        acknowledgment_disposition = "approved" if aggregate == "approved_red" else aggregate
+        return build_h3_red_decision_v4(
+            packet=packet,
+            readiness=readiness,
+            acknowledgments=[
+                {
+                    "category": category,
+                    "disposition": acknowledgment_disposition,
+                    "rationale": "A human reviewed this exact v4 category.",
+                }
+                for category in packet["required_acknowledgment_categories"]
+            ],
+            aggregate_disposition=aggregate,
+            aggregate_rationale="A human-owned aggregate disposition for the exact v4 root.",
+            reviewer_id="v4-test-reviewer",
+            attestation="I reviewed the exact v4 packet and authorize no broader boundary.",
+            signature="V4 Test Reviewer",
+            timestamp_utc="2026-08-04T16:00:00Z",
+        )
+
+    def test_v4_prepublication_requires_no_decision_or_authority(self) -> None:
+        """The real v4 root is machine-only before a new human decision exists."""
+        freeze_inputs, packet, readiness = self._v4_packet_readiness()
+
+        self.assertEqual("h3-red-review-packet-v4", packet["schema_version"])
+        self.assertEqual("h3-branch-readiness-v4", readiness["schema_version"])
+        self.assertEqual("no_persisted_v3_decision_artifact", packet["predecessor_v3"]["decision_status"])
+        self.assertEqual("historical_user_approval_source", packet["predecessor_v3"]["human_approval_source"]["kind"])
+        self.assertFalse((self.experiment / "reviews/h3-branch-decision-v4.json").exists())
+        self.assertFalse((self.experiment / "phase4/branch-authority-v4.json").exists())
+        self.assertEqual(
+            {"state": "pre_publication"},
+            validate_h3_v4_pre_publication_lifecycle(
+                experiment_root=self.experiment, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
+            ),
+        )
+
+    def test_v4_decision_writer_is_immutable_and_non_authorizing(self) -> None:
+        """Absent, incomplete, disputed, conflicting, and hash-drifted decisions never publish authority."""
+        freeze_inputs, packet, readiness = self._v4_packet_readiness()
+        approved = self._v4_decision(packet, readiness)
+        incomplete = self._v4_decision(packet, readiness, aggregate="incomplete")
+        disputed = self._v4_decision(packet, readiness, aggregate="disputed")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(Exception, "H3_APPROVED_RED_REQUIRED"):
+                build_h3_red_authority_v4(
+                    freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=None,
+                )
+            write_h3_red_decision_v4(output_root=root, packet=packet, readiness=readiness, decision=approved)
+            write_h3_red_decision_v4(output_root=root, packet=packet, readiness=readiness, decision=approved)
+            self.assertEqual(
+                canonical_json_bytes(approved), (root / "reviews/h3-branch-decision-v4.json").read_bytes(),
+            )
+            self.assertEqual(
+                {"state": "decision_published_authority_absent"},
+                validate_h3_v4_decision_published_lifecycle(
+                    output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
+                ),
+            )
+            with self.assertRaisesRegex(Exception, "H3_DECISION_WRITE_INVALID"):
+                write_h3_red_decision_v4(output_root=root, packet=packet, readiness=readiness, decision=incomplete)
+            for decision in (incomplete, disputed):
+                with self.assertRaisesRegex(Exception, "H3_APPROVED_RED_REQUIRED"):
+                    build_h3_red_authority_v4(
+                        freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision,
+                    )
+            drifted = deepcopy(approved)
+            drifted["signature"] = "changed"
+            with self.assertRaisesRegex(Exception, "H3_DECISION_HASH_INVALID"):
+                validate_h3_red_decision_v4(decision=drifted, packet=packet, readiness=readiness)
+
+    def test_v4_authority_exact_resume_and_closed_predecessor_chain(self) -> None:
+        """Only the exact fresh approval can create one byte-identical v4 authority."""
+        freeze_inputs, packet, readiness = self._v4_packet_readiness()
+        decision = self._v4_decision(packet, readiness)
+        wrong_packet = deepcopy(packet)
+        wrong_packet["predecessor_v2"]["authority"]["self_sha256"] = "0" * 64
+        wrong_packet = self._hash(
+            {key: value for key, value in wrong_packet.items() if key != "packet_sha256"}, "packet_sha256",
+        )
+
+        with self.assertRaisesRegex(Exception, "FROZEN_INPUT_CHANGE_REQUIRES_NEW_EXPERIMENT_VERSION"):
+            build_h3_red_authority_v4(
+                freeze_inputs=freeze_inputs, packet=wrong_packet, readiness=readiness, decision=decision,
+            )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_h3_red_decision_v4(output_root=root, packet=packet, readiness=readiness, decision=decision)
+            authority = write_h3_red_authority_v4(
+                output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision,
+            )
+            resumed = write_h3_red_authority_v4(
+                output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision,
+            )
+            self.assertEqual(authority, resumed)
+            self.assertEqual(
+                canonical_json_bytes(authority), (root / "phase4/branch-authority-v4.json").read_bytes(),
+            )
+            self.assertEqual(
+                authority,
+                validate_h3_red_authority_v4(
+                    authority=authority, packet=packet, readiness=readiness, decision=decision,
+                ),
+            )
+            self.assertEqual(
+                {"state": "post_publication"},
+                validate_h3_v4_post_publication_lifecycle(
+                    output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
+                ),
+            )
 
 
 if __name__ == "__main__":
