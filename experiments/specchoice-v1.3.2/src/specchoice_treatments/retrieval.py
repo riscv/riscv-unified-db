@@ -36,6 +36,12 @@ _PAIR_KEYS = frozenset({
     "count_eligible",
 })
 _SIDE_KEYS = frozenset({"source_text", "source_sha256", "frame", "evidence_spans", "final_status"})
+_PROMPT_MANIFEST_KEYS = frozenset({
+    "schema_version", "contract_sha256", "target_sha256", "corpus_sha256", "prompt_records",
+    "response_records", "section_hashes", "pair_selection", "structural_comparison",
+    "offline_accounting", "provider_input_tokens", "provider_output_tokens", "maximum_output_tokens",
+    "manifest_sha256",
+})
 _CONFIG_VALUES = {
     "schema_version": "lexical-retrieval-contract-v1",
     "unicode_normalization": "NFC",
@@ -51,9 +57,6 @@ _CONFIG_VALUES = {
     "result_count": 2,
     "score_serialization": ".17g",
 }
-_MANIFEST_PATH = "prompts/treatments/prompt-bundle-manifest-v1.json"
-
-
 class RetrievalContractError(ValueError):
     """Stable failure emitted by the closed retrieval contract."""
 
@@ -98,9 +101,7 @@ def _self_hash_valid(value: Mapping[str, object], field: str) -> bool:
     return value.get(field) == sha256_bytes(canonical_json_bytes({key: item for key, item in value.items() if key != field}))
 
 
-def load_retrieval_contract_v1(root: Path, relative_path: str) -> dict[str, object]:
-    """Read and validate the immutable lexical algorithm declaration."""
-    value, _ = _canonical_read(root, relative_path, "RETRIEVAL_CONFIG_INVALID")
+def _validate_retrieval_contract_v1(value: object) -> dict[str, object]:
     if set(value) != _CONFIG_KEYS or any(value.get(key) != expected for key, expected in _CONFIG_VALUES.items()):
         raise RetrievalContractError("RETRIEVAL_CONFIG_INVALID")
     try:
@@ -110,6 +111,12 @@ def load_retrieval_contract_v1(root: Path, relative_path: str) -> dict[str, obje
     if not _self_hash_valid(value, "contract_sha256"):
         raise RetrievalContractError("RETRIEVAL_CONFIG_INVALID")
     return value
+
+
+def load_retrieval_contract_v1(root: Path, relative_path: str) -> dict[str, object]:
+    """Read and validate the immutable lexical algorithm declaration."""
+    value, _ = _canonical_read(root, relative_path, "RETRIEVAL_CONFIG_INVALID")
+    return _validate_retrieval_contract_v1(value)
 
 
 def validate_test_only_target_v1(target: object) -> dict[str, object]:
@@ -250,8 +257,7 @@ def rank_complete_pairs_v1(
     """Rank complete isolated pairs using frozen raw TF-IDF and full-float ties."""
     validated_target = validate_test_only_target_v1(dict(target))
     pairs = validate_test_only_corpus_v1(corpus)
-    if set(config) != _CONFIG_KEYS or any(config.get(key) != expected for key, expected in _CONFIG_VALUES.items()):
-        raise RetrievalContractError("RETRIEVAL_CONFIG_INVALID")
+    _validate_retrieval_contract_v1(dict(config))
     documents = {str(pair["pair_id"]): Counter(tokenize_retrieval_text_v1(construct_pair_document_v1(pair, config), config)) for pair in pairs}
     document_frequency = Counter(
         token for document in documents.values() for token in document
@@ -273,22 +279,59 @@ def rank_complete_pairs_v1(
     return tuple(sorted(scored, key=lambda item: (-item.cosine_score, item.pair_id))[:2])
 
 
-def _load_manifest_selection(root: Path) -> list[str]:
-    manifest, _ = _canonical_read(root, _MANIFEST_PATH, "RETRIEVAL_PROMPT_SELECTION_MISMATCH")
+def _validate_prompt_manifest_v1(
+    manifest: object, *, target: Mapping[str, object], corpus: Mapping[str, object],
+) -> list[str]:
+    if not isinstance(manifest, dict) or set(manifest) != _PROMPT_MANIFEST_KEYS:
+        raise RetrievalContractError("RETRIEVAL_PROMPT_SELECTION_MISMATCH")
+    if manifest.get("schema_version") != "offline-prompt-bundle-v1":
+        raise RetrievalContractError("RETRIEVAL_PROMPT_SELECTION_MISMATCH")
+    try:
+        for field in ("contract_sha256", "target_sha256", "corpus_sha256", "manifest_sha256"):
+            require_sha256(manifest.get(field))
+    except (TypeError, ValueError) as error:
+        raise RetrievalContractError("RETRIEVAL_PROMPT_SELECTION_MISMATCH") from error
+    if not _self_hash_valid(manifest, "manifest_sha256"):
+        raise RetrievalContractError("RETRIEVAL_PROMPT_SELECTION_MISMATCH")
+    if (
+        manifest.get("target_sha256") != target.get("source_sha256")
+        or manifest.get("corpus_sha256") != corpus.get("corpus_sha256")
+    ):
+        raise RetrievalContractError("RETRIEVAL_PROMPT_SELECTION_MISMATCH")
     selection = manifest.get("pair_selection")
-    if not isinstance(selection, Mapping) or not isinstance(selection.get("C"), list) or len(selection["C"]) != 2:
+    if (
+        not isinstance(selection, Mapping)
+        or set(selection) != {"A", "B", "C"}
+        or not isinstance(selection.get("C"), list)
+        or len(selection["C"]) != 2
+        or any(not _non_empty_text(pair_id) for pair_id in selection["C"])
+        or len(set(selection["C"])) != 2
+    ):
         raise RetrievalContractError("RETRIEVAL_PROMPT_SELECTION_MISMATCH")
     return list(selection["C"])
 
 
-def build_retrieval_report_v1(
-    *, target: Mapping[str, object], corpus: Mapping[str, object], config: Mapping[str, object], experiment_root: Path,
+def load_prompt_manifest_v1(
+    root: Path, relative_path: str, *, target: Mapping[str, object], corpus: Mapping[str, object],
 ) -> dict[str, object]:
-    """Build the canonical non-authoritative report and bind it to C's selection."""
+    """Read the declared prompt manifest through the experiment-root descriptor."""
+    manifest, _ = _canonical_read(root, relative_path, "RETRIEVAL_PROMPT_SELECTION_MISMATCH")
+    _validate_prompt_manifest_v1(manifest, target=target, corpus=corpus)
+    return manifest
+
+
+def build_retrieval_report_v1(
+    *, target: Mapping[str, object], corpus: Mapping[str, object], config: Mapping[str, object],
+    prompt_manifest: Mapping[str, object],
+) -> dict[str, object]:
+    """Build the canonical non-authoritative report from four declared inputs."""
     results = rank_complete_pairs_v1(target=target, corpus=corpus, config=config)
     target_valid = validate_test_only_target_v1(dict(target))
     corpus_valid = validate_test_only_corpus_v1(dict(corpus))
-    prompt_selection = _load_manifest_selection(experiment_root)
+    config_valid = _validate_retrieval_contract_v1(dict(config))
+    prompt_selection = _validate_prompt_manifest_v1(
+        dict(prompt_manifest), target=target_valid, corpus=dict(corpus),
+    )
     result_values = [{
         "pair_id": item.pair_id,
         "cosine_score": format(item.cosine_score, ".17g"),
@@ -299,9 +342,14 @@ def build_retrieval_report_v1(
         "schema_version": "test-only-retrieval-contract-report-v1",
         "test_only": True,
         "count_eligible": False,
-        "config_sha256": sha256_bytes(canonical_json_bytes(dict(config))),
-        "target_sha256": sha256_bytes(canonical_json_bytes(target_valid)),
-        "corpus_sha256": sha256_bytes(canonical_json_bytes(dict(corpus))),
+        "config_file_sha256": sha256_bytes(canonical_json_bytes(config_valid)),
+        "config_contract_sha256": config_valid["contract_sha256"],
+        "target_file_sha256": sha256_bytes(canonical_json_bytes(target_valid)),
+        "target_record_sha256": target_valid["record_sha256"],
+        "target_source_sha256": target_valid["source_sha256"],
+        "corpus_file_sha256": sha256_bytes(canonical_json_bytes(dict(corpus))),
+        "corpus_content_sha256": corpus["corpus_sha256"],
+        "prompt_manifest_file_sha256": sha256_bytes(canonical_json_bytes(dict(prompt_manifest))),
         "query_source_field": "source_text",
         "eligible_pair_count": len(corpus_valid),
         "results": result_values,
@@ -315,8 +363,11 @@ def build_retrieval_report_v1(
 
 
 def verify_retrieval_contract_v1(
-    *, target: Mapping[str, object], corpus: Mapping[str, object], config: Mapping[str, object], experiment_root: Path,
+    *, target: Mapping[str, object], corpus: Mapping[str, object], config: Mapping[str, object],
+    prompt_manifest: Mapping[str, object],
 ) -> tuple[RetrievedPair, ...]:
     """Verify the closed contract and return only the two ranked whole pairs."""
-    build_retrieval_report_v1(target=target, corpus=corpus, config=config, experiment_root=experiment_root)
+    build_retrieval_report_v1(
+        target=target, corpus=corpus, config=config, prompt_manifest=prompt_manifest,
+    )
     return rank_complete_pairs_v1(target=target, corpus=corpus, config=config)

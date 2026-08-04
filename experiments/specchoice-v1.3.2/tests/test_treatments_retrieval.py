@@ -5,14 +5,18 @@ from __future__ import annotations
 
 import io
 import json
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from copy import deepcopy
 from pathlib import Path
+import shutil
+import tempfile
 import unittest
+from unittest.mock import patch
 
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_treatments.cli import build_parser, main
 from specchoice_treatments.retrieval import (
+    RetrievalContractError,
     build_retrieval_report_v1,
     load_retrieval_contract_v1,
     rank_complete_pairs_v1,
@@ -26,11 +30,13 @@ class RetrievalContractTests(unittest.TestCase):
     target_path = "fixtures/treatments/synthetic-target-v1.json"
     corpus_path = "fixtures/treatments/synthetic-complete-pairs-v1.json"
     config_path = "config/treatments/lexical-retrieval-contract-v1.json"
+    prompt_manifest_path = "prompts/treatments/prompt-bundle-manifest-v1.json"
 
     def setUp(self) -> None:
         self.target = json.loads((self.root / self.target_path).read_bytes())
         self.corpus = json.loads((self.root / self.corpus_path).read_bytes())
         self.config = load_retrieval_contract_v1(self.root, self.config_path)
+        self.prompt_manifest = json.loads((self.root / self.prompt_manifest_path).read_bytes())
 
     def _run_cli(self) -> tuple[int, bytes]:
         output = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
@@ -40,6 +46,7 @@ class RetrievalContractTests(unittest.TestCase):
                 "--target", self.target_path,
                 "--corpus", self.corpus_path,
                 "--config", self.config_path,
+                "--prompt-manifest", self.prompt_manifest_path,
             ])
         output.flush()
         return exit_code, output.buffer.getvalue()
@@ -59,7 +66,7 @@ class RetrievalContractTests(unittest.TestCase):
             target=self.target,
             corpus=self.corpus,
             config=self.config,
-            experiment_root=self.root,
+            prompt_manifest=self.prompt_manifest,
         )
 
         self.assertEqual(exit_code, 0)
@@ -109,25 +116,157 @@ class RetrievalContractTests(unittest.TestCase):
         )
         self.assertEqual([item.pair_id for item in changed], ["SYNTH_PAIR_BETA", "SYNTH_PAIR_ALPHA"])
 
-    def test_report_matches_prompt_c_selection(self) -> None:
+    def test_report_binds_explicit_prompt_manifest_and_distinct_identities(self) -> None:
         parser = build_parser()
         subparsers = next(action for action in parser._actions if action.dest == "command")
         self.assertEqual(set(subparsers.choices), {"verify-retrieval-contract"})
+        command = subparsers.choices["verify-retrieval-contract"]
+        self.assertEqual(
+            {action.dest for action in command._actions if action.required},
+            {"target", "corpus", "config", "prompt_manifest"},
+        )
 
         report = build_retrieval_report_v1(
             target=self.target,
             corpus=self.corpus,
             config=self.config,
-            experiment_root=self.root,
-        )
-        manifest = json.loads(
-            (self.root / "prompts/treatments/prompt-bundle-manifest-v1.json").read_bytes()
+            prompt_manifest=self.prompt_manifest,
         )
         self.assertEqual(
             [item["pair_id"] for item in report["results"]],
-            manifest["pair_selection"]["C"],
+            self.prompt_manifest["pair_selection"]["C"],
         )
         self.assertTrue(report["prompt_c_pair_ids_match"])
+        self.assertEqual(
+            report["config_file_sha256"],
+            sha256_bytes((self.root / self.config_path).read_bytes()),
+        )
+        self.assertEqual(report["config_contract_sha256"], self.config["contract_sha256"])
+        self.assertEqual(
+            report["target_file_sha256"],
+            sha256_bytes((self.root / self.target_path).read_bytes()),
+        )
+        self.assertEqual(report["target_record_sha256"], self.target["record_sha256"])
+        self.assertEqual(report["target_source_sha256"], self.target["source_sha256"])
+        self.assertEqual(
+            report["corpus_file_sha256"],
+            sha256_bytes((self.root / self.corpus_path).read_bytes()),
+        )
+        self.assertEqual(report["corpus_content_sha256"], self.corpus["corpus_sha256"])
+        self.assertEqual(
+            report["prompt_manifest_file_sha256"],
+            sha256_bytes((self.root / self.prompt_manifest_path).read_bytes()),
+        )
+        self.assertNotEqual(report["config_file_sha256"], report["config_contract_sha256"])
+        self.assertNotEqual(report["target_file_sha256"], report["target_record_sha256"])
+        self.assertNotEqual(report["target_record_sha256"], report["target_source_sha256"])
+        self.assertNotEqual(report["corpus_file_sha256"], report["corpus_content_sha256"])
+        self.assertNotIn("target_sha256", report)
+        self.assertNotIn("corpus_sha256", report)
+        self.assertEqual(
+            report["report_sha256"],
+            sha256_bytes(canonical_json_bytes({
+                key: value for key, value in report.items() if key != "report_sha256"
+            })),
+        )
+
+    def test_prompt_manifest_is_required_and_no_ambient_default_path_is_read(self) -> None:
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as missing_manifest:
+            main([
+                "verify-retrieval-contract",
+                "--target", self.target_path,
+                "--corpus", self.corpus_path,
+                "--config", self.config_path,
+            ])
+        self.assertEqual(missing_manifest.exception.code, 2)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            sandbox = Path(temporary)
+            for relative_path in (
+                self.target_path,
+                self.corpus_path,
+                self.config_path,
+            ):
+                source = self.root / relative_path
+                destination = sandbox / relative_path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(source, destination)
+            explicit_manifest_path = "inputs/selected-prompt-manifest-v1.json"
+            explicit_manifest = sandbox / explicit_manifest_path
+            explicit_manifest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(self.root / self.prompt_manifest_path, explicit_manifest)
+            ambient_manifest = sandbox / "prompts/treatments/prompt-bundle-manifest-v1.json"
+            ambient_manifest.parent.mkdir(parents=True, exist_ok=True)
+            ambient_manifest.write_bytes(b'{"not":"an approved manifest"}\n')
+            output = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
+            with patch("specchoice_treatments.cli._EXPERIMENT_ROOT", sandbox), redirect_stdout(output):
+                exit_code = main([
+                    "verify-retrieval-contract",
+                    "--target", self.target_path,
+                    "--corpus", self.corpus_path,
+                    "--config", self.config_path,
+                    "--prompt-manifest", explicit_manifest_path,
+                ])
+            self.assertEqual(exit_code, 0)
+
+    def test_malformed_or_unapproved_prompt_manifest_fails_closed(self) -> None:
+        malformed = deepcopy(self.prompt_manifest)
+        malformed["pair_selection"] = {"C": ["SYNTH_PAIR_ALPHA"]}
+        malformed["manifest_sha256"] = sha256_bytes(canonical_json_bytes({
+            key: value for key, value in malformed.items() if key != "manifest_sha256"
+        }))
+        with self.assertRaisesRegex(RetrievalContractError, "RETRIEVAL_PROMPT_SELECTION_MISMATCH"):
+            build_retrieval_report_v1(
+                target=self.target,
+                corpus=self.corpus,
+                config=self.config,
+                prompt_manifest=malformed,
+            )
+
+        mismatch = deepcopy(self.prompt_manifest)
+        mismatch["pair_selection"]["C"] = ["SYNTH_PAIR_ALPHA", "SYNTH_PAIR_BETA"]
+        mismatch["manifest_sha256"] = sha256_bytes(canonical_json_bytes({
+            key: value for key, value in mismatch.items() if key != "manifest_sha256"
+        }))
+        with self.assertRaisesRegex(RetrievalContractError, "RETRIEVAL_PROMPT_SELECTION_MISMATCH"):
+            build_retrieval_report_v1(
+                target=self.target,
+                corpus=self.corpus,
+                config=self.config,
+                prompt_manifest=mismatch,
+            )
+
+        unapproved = deepcopy(self.prompt_manifest)
+        unapproved["manifest_sha256"] = "0" * 64
+        with self.assertRaisesRegex(RetrievalContractError, "RETRIEVAL_PROMPT_SELECTION_MISMATCH"):
+            build_retrieval_report_v1(
+                target=self.target,
+                corpus=self.corpus,
+                config=self.config,
+                prompt_manifest=unapproved,
+            )
+
+    def test_noncanonical_prompt_manifest_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            sandbox = Path(temporary)
+            for relative_path in (self.target_path, self.corpus_path, self.config_path):
+                source = self.root / relative_path
+                destination = sandbox / relative_path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(source, destination)
+            malformed_manifest_path = "inputs/noncanonical-manifest.json"
+            destination = sandbox / malformed_manifest_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes((self.root / self.prompt_manifest_path).read_bytes().rstrip(b"\n") + b" \n")
+            with patch("specchoice_treatments.cli._EXPERIMENT_ROOT", sandbox), redirect_stderr(io.StringIO()):
+                exit_code = main([
+                    "verify-retrieval-contract",
+                    "--target", self.target_path,
+                    "--corpus", self.corpus_path,
+                    "--config", self.config_path,
+                    "--prompt-manifest", malformed_manifest_path,
+                ])
+            self.assertEqual(exit_code, 2)
 
 
 if __name__ == "__main__":
