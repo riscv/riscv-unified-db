@@ -12,35 +12,48 @@ from unittest.mock import patch
 from specchoice_evidence.canonical import canonical_json_bytes, sha256_bytes
 from specchoice_treatments.h3 import (
     audit_no_model_reachability_v1,
+    audit_no_model_reachability_v5,
     build_h3_red_authority_v2,
     build_h3_red_authority_v4,
     build_h3_red_decision_v4,
+    build_h3_red_decision_v5,
     build_h3_red_readiness_v1,
     build_h3_red_review_packet_v1,
     build_h3_red_readiness_v2,
     build_h3_red_readiness_v3,
     build_h3_red_readiness_v4,
+    build_h3_red_readiness_v5,
     build_h3_red_review_packet_v2,
     build_h3_red_review_packet_v3,
     build_h3_red_review_packet_v4,
+    build_h3_red_review_packet_v5,
     load_phase4_freeze_inputs_v1,
     load_phase4_freeze_inputs_v2,
     load_phase4_freeze_inputs_v3,
     load_phase4_freeze_inputs_v4,
+    load_phase4_freeze_inputs_v5,
     render_h3_red_review_markdown_v2,
     render_h3_red_review_markdown_v3,
-    render_h3_red_review_markdown_v4,
+    render_h3_red_review_markdown_v5,
     validate_h3_red_authority_v2,
     validate_h3_red_decision_v2,
     validate_h3_red_authority_v4,
     validate_h3_red_decision_v4,
+    validate_h3_red_decision_v5,
+    validate_h3_red_authority_v5,
     validate_h3_v4_post_publication_lifecycle,
     validate_h3_v4_pre_publication_lifecycle,
     validate_h3_v4_decision_published_lifecycle,
+    validate_h3_v5_post_publication_lifecycle,
+    validate_h3_v5_pre_publication_lifecycle,
+    validate_h3_v5_publication_lifecycle,
     write_h3_red_readiness_v2,
     write_h3_red_readiness_v3,
     write_h3_red_authority_v4,
     write_h3_red_decision_v4,
+    write_h3_red_decision_v5,
+    write_h3_red_readiness_v5,
+    publish_h3_red_authority_v5,
 )
 
 
@@ -278,21 +291,20 @@ class H3ContractTests(unittest.TestCase):
         )
 
     def test_v4_prepublication_requires_no_decision_or_authority(self) -> None:
-        """The real v4 root is machine-only before a new human decision exists."""
+        """Pre-publication uses an isolated empty root, never current checkout history."""
         freeze_inputs, packet, readiness = self._v4_packet_readiness()
 
         self.assertEqual("h3-red-review-packet-v4", packet["schema_version"])
         self.assertEqual("h3-branch-readiness-v4", readiness["schema_version"])
         self.assertEqual("no_persisted_v3_decision_artifact", packet["predecessor_v3"]["decision_status"])
         self.assertEqual("historical_user_approval_source", packet["predecessor_v3"]["human_approval_source"]["kind"])
-        self.assertFalse((self.experiment / "reviews/h3-branch-decision-v4.json").exists())
-        self.assertFalse((self.experiment / "phase4/branch-authority-v4.json").exists())
-        self.assertEqual(
-            {"state": "pre_publication"},
-            validate_h3_v4_pre_publication_lifecycle(
-                experiment_root=self.experiment, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
-            ),
-        )
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(
+                {"state": "pre_publication"},
+                validate_h3_v4_pre_publication_lifecycle(
+                    experiment_root=Path(directory), freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
+                ),
+            )
 
     def test_v4_decision_writer_is_immutable_and_non_authorizing(self) -> None:
         """Absent, incomplete, disputed, conflicting, and hash-drifted decisions never publish authority."""
@@ -369,6 +381,135 @@ class H3ContractTests(unittest.TestCase):
                     output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
                 ),
             )
+
+    def _v5_packet_readiness(self) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+        freeze_inputs = load_phase4_freeze_inputs_v5(experiment_root=self.experiment)
+        packet = build_h3_red_review_packet_v5(freeze_inputs)
+        return freeze_inputs, packet, build_h3_red_readiness_v5(packet)
+
+    def _v5_decision(
+        self, packet: dict[str, object], readiness: dict[str, object], *, aggregate: str = "approved_red", signature: str = "V5 Test Reviewer",
+    ) -> dict[str, object]:
+        acknowledgment_disposition = "approved" if aggregate == "approved_red" else aggregate
+        return build_h3_red_decision_v5(
+            packet=packet,
+            readiness=readiness,
+            acknowledgments=[
+                {"category": category, "disposition": acknowledgment_disposition, "rationale": "A human reviewed this exact v5 category."}
+                for category in packet["required_acknowledgment_categories"]
+            ],
+            aggregate_disposition=aggregate,
+            aggregate_rationale="A human-owned aggregate disposition for the exact v5 root.",
+            reviewer_id="v5-test-reviewer",
+            attestation="I reviewed the exact v5 packet and authorize no broader boundary.",
+            signature=signature,
+            timestamp_utc="2026-08-04T17:00:00Z",
+        )
+
+    def test_v5_machine_roots_are_portable_and_decision_free(self) -> None:
+        """The local v3 source, lifecycle code, and tests freeze before v5 output publication."""
+        freeze_inputs, packet, readiness = self._v5_packet_readiness()
+        markdown = render_h3_red_review_markdown_v5(packet)
+        audit = audit_no_model_reachability_v5(freeze_inputs)
+        self.assertEqual("h3-no-model-reachability-v5", audit["schema_version"])
+        self.assertEqual("repository_local_historical_user_approval_source", packet["predecessor_v3"]["human_approval_source"]["kind"])
+        self.assertEqual("d98fc8967cdba51283924b457c6b24a3f3dde540cd997867eea748b787e606cc", packet["predecessor_v3"]["human_approval_source"]["raw_sha256"])
+        self.assertEqual("historical_predecessor_not_current_authority", packet["predecessor_v4"]["status"])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_h3_red_readiness_v5(experiment_root=root, packet=packet, markdown=markdown, readiness=readiness)
+            self.assertEqual(canonical_json_bytes(readiness), (root / "receipts/h3-branch-readiness-v5.json").read_bytes())
+            self.assertEqual({"state": "absent"}, validate_h3_v5_pre_publication_lifecycle(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness))
+
+    def test_v5_publication_state_machine_exact_resume_and_raw_binding(self) -> None:
+        """The only authority path derives from a descriptor-re-read approved decision."""
+        freeze_inputs, packet, readiness = self._v5_packet_readiness()
+        decision = self._v5_decision(packet, readiness)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertEqual({"state": "absent"}, validate_h3_v5_publication_lifecycle(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness))
+            write_h3_red_decision_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision)
+            self.assertEqual(decision, validate_h3_red_decision_v5(decision=decision, packet=packet, readiness=readiness))
+            self.assertEqual({"state": "decision_only_exact"}, validate_h3_v5_publication_lifecycle(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness))
+            authority = publish_h3_red_authority_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision)
+            decision_raw = (root / "reviews/h3-branch-decision-v5.json").read_bytes()
+            self.assertEqual(sha256_bytes(decision_raw), authority["decision_raw_sha256"])
+            self.assertEqual(decision["decision_sha256"], authority["decision_sha256"])
+            self.assertEqual(authority, validate_h3_red_authority_v5(authority=authority, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision, decision_raw=decision_raw))
+            self.assertEqual({"state": "decision_and_authority_exact"}, validate_h3_v5_post_publication_lifecycle(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness))
+            authority_raw = (root / "phase4/branch-authority-v5.json").read_bytes()
+            self.assertEqual(authority, publish_h3_red_authority_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision))
+            self.assertEqual(authority_raw, (root / "phase4/branch-authority-v5.json").read_bytes())
+
+    def test_v5_rejects_nonapproved_conflicts_and_authority_only_states(self) -> None:
+        """Every non-state-machine input fails closed without replacing either leaf."""
+        freeze_inputs, packet, readiness = self._v5_packet_readiness()
+        approved = self._v5_decision(packet, readiness)
+        conflicting = self._v5_decision(packet, readiness, signature="Other V5 Reviewer")
+        for aggregate in ("disputed", "incomplete"):
+            with self.subTest(aggregate=aggregate), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                with self.assertRaisesRegex(Exception, "H3_APPROVED_RED_REQUIRED"):
+                    publish_h3_red_authority_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=self._v5_decision(packet, readiness, aggregate=aggregate))
+                self.assertEqual({"state": "absent"}, validate_h3_v5_publication_lifecycle(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_h3_red_decision_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=approved)
+            before = (root / "reviews/h3-branch-decision-v5.json").read_bytes()
+            with self.assertRaisesRegex(Exception, "H3_PUBLICATION_STATE_INVALID"):
+                publish_h3_red_authority_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=conflicting)
+            self.assertEqual(before, (root / "reviews/h3-branch-decision-v5.json").read_bytes())
+            publish_h3_red_authority_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=approved)
+            (root / "reviews/h3-branch-decision-v5.json").unlink()
+            with self.assertRaisesRegex(Exception, "H3_PUBLICATION_STATE_INVALID"):
+                publish_h3_red_authority_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=approved)
+
+    def test_v5_rejects_authority_split_brain_and_root_drift(self) -> None:
+        """Tampered decision binding and every frozen root drift are non-repairable failures."""
+        freeze_inputs, packet, readiness = self._v5_packet_readiness()
+        decision = self._v5_decision(packet, readiness)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            publish_h3_red_authority_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision)
+            authority_path = root / "phase4/branch-authority-v5.json"
+            tampered = json.loads(authority_path.read_text())
+            tampered["decision_raw_sha256"] = "0" * 64
+            tampered = self._hash(tampered, "authority_sha256")
+            authority_path.write_bytes(canonical_json_bytes(tampered))
+            before = authority_path.read_bytes()
+            with self.assertRaisesRegex(Exception, "H3_AUTHORITY_INVALID"):
+                publish_h3_red_authority_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision)
+            self.assertEqual(before, authority_path.read_bytes())
+        for label, modified_inputs, modified_packet, modified_readiness in (
+            ("packet", freeze_inputs, self._hash({**packet, "warning": "drift"}, "packet_sha256"), readiness),
+            ("readiness", freeze_inputs, packet, self._hash({**readiness, "status": "drift"}, "readiness_sha256")),
+            ("inventory", {**freeze_inputs, "freeze_inventory_sha256": "0" * 64}, packet, readiness),
+            ("no_model", {**freeze_inputs, "raw_by_path": {**freeze_inputs["raw_by_path"], "src/specchoice_treatments/h3.py": b"# drift\n"}}, packet, readiness),
+            ("predecessor", {**freeze_inputs, "predecessor_v4": {**freeze_inputs["predecessor_v4"], "status": "drift"}}, packet, readiness),
+        ):
+            with self.subTest(root=label), tempfile.TemporaryDirectory() as directory:
+                with self.assertRaisesRegex(Exception, "FROZEN_INPUT_CHANGE_REQUIRES_NEW_EXPERIMENT_VERSION|H3_DECISION"):
+                    publish_h3_red_authority_v5(output_root=Path(directory), freeze_inputs=modified_inputs, packet=modified_packet, readiness=modified_readiness, decision=decision)
+
+    def test_v5_rejects_regular_conflicts_and_symlinked_leaf_or_parent(self) -> None:
+        """Missing, regular, symlink, and dangling-symlink states remain distinct and fail closed."""
+        freeze_inputs, packet, readiness = self._v5_packet_readiness()
+        decision = self._v5_decision(packet, readiness)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "reviews").mkdir()
+            leaf = root / "reviews/h3-branch-decision-v5.json"
+            leaf.symlink_to(root / "missing-decision")
+            with self.assertRaisesRegex(Exception, "H3_PUBLICATION_PATH_INVALID"):
+                validate_h3_v5_pre_publication_lifecycle(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness)
+            with self.assertRaisesRegex(Exception, "H3_PUBLICATION_PATH_INVALID"):
+                publish_h3_red_authority_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision)
+            self.assertTrue(leaf.is_symlink())
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "reviews").symlink_to(root / "missing-directory", target_is_directory=True)
+            with self.assertRaisesRegex(Exception, "H3_PUBLICATION_PATH_INVALID"):
+                write_h3_red_decision_v5(output_root=root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=decision)
 
 
 if __name__ == "__main__":

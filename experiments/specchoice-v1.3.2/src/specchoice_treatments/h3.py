@@ -1410,3 +1410,547 @@ def validate_h3_v4_post_publication_lifecycle(
     validate_h3_red_decision_v4(decision=decision, packet=packet, readiness=readiness)
     validate_h3_red_authority_v4(authority=authority, packet=packet, readiness=readiness, decision=decision)
     return {"state": "post_publication"}
+
+
+# V5 deliberately does not modify the v1--v4 records above.  It freezes a new
+# lifecycle whose only mutable names are the two declared v5 publication leaves.
+_V5_DECISION_FIELDS = _V4_DECISION_FIELDS
+_V5_AUTHORITY_FIELDS = _V4_AUTHORITY_FIELDS | frozenset({"decision_raw_sha256"})
+_V5_DECISION_PATH = "reviews/h3-branch-decision-v5.json"
+_V5_AUTHORITY_PATH = "phase4/branch-authority-v5.json"
+_V3_APPROVAL_EVIDENCE_PATH = "fixtures/h3/h3-v3-human-approval-source.txt"
+_V3_APPROVAL_SOURCE_LOCATOR = "codex-attachment:b0c0b467-0d6c-405a-8c3b-2b9afe4b678a/pasted-text.txt"
+_V3_APPROVAL_SOURCE_SHA256 = "d98fc8967cdba51283924b457c6b24a3f3dde540cd997867eea748b787e606cc"
+_V3_APPROVAL_SOURCE_LENGTH = 6227
+_FROZEN_PATHS_V5 = tuple(sorted({
+    *_FROZEN_PATHS,
+    _V3_APPROVAL_EVIDENCE_PATH,
+    "phase4/h3-v5-lifecycle-contract.md",
+}))
+
+
+def _inventory_v5(root: Path) -> tuple[list[dict[str, object]], dict[str, bytes]]:
+    """Freeze v5-only inputs without recalculating any historical inventory."""
+    try:
+        observations = {path: read_authoritative_file(root, path) for path in _FROZEN_PATHS_V5}
+    except (FilesystemPolicyError, OSError) as error:
+        raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID") from error
+    records: list[dict[str, object]] = []
+    raw_by_path: dict[str, bytes] = {}
+    for path in _FROZEN_PATHS_V5:
+        evidence, raw = observations[path]
+        if evidence.file_kind != "regular_file" or evidence.hardlink_count != 1 or evidence.sha256 is None:
+            raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID")
+        records.append({"byte_length": evidence.byte_length, "kind": evidence.file_kind, "path": evidence.path, "sha256": evidence.sha256})
+        raw_by_path[path] = raw
+    return records, raw_by_path
+
+
+def _require_absent_authoritative_leaf(root: Path, relative: str, code: str) -> None:
+    """Only a descriptor-proven ENOENT represents an unoccupied protected leaf."""
+    try:
+        read_authoritative_file(root, relative)
+    except FilesystemPolicyError as error:
+        if str(error) == "AUTHORITATIVE_FILE_MISSING":
+            return
+        raise H3ValidationError(code) from error
+    raise H3ValidationError(code)
+
+
+def _read_v5_leaf_or_absent(root: Path, relative: str) -> bytes | None:
+    """Return an exact regular leaf or distinguish every occupied unsafe path."""
+    try:
+        _, raw = read_authoritative_file(root, relative)
+        return raw
+    except FilesystemPolicyError as error:
+        if str(error) == "AUTHORITATIVE_FILE_MISSING":
+            return None
+        raise H3ValidationError("H3_PUBLICATION_PATH_INVALID") from error
+
+
+def _decode_v5_canonical(raw: bytes, *, code: str) -> dict[str, object]:
+    try:
+        value = decode_strict_json(raw)
+    except (UnicodeDecodeError, ValueError) as error:
+        raise H3ValidationError(code) from error
+    if not isinstance(value, dict) or canonical_json_bytes(value) != raw:
+        raise H3ValidationError(code)
+    return value
+
+
+def _load_h3_v3_local_historical_predecessor(*, root: Path) -> dict[str, object]:
+    """Bind the original v3 approval bytes stored locally without inventing a v3 leaf."""
+    packet, packet_raw = _load_canonical(root, "reports/h3/h3-red-review-v3/review-packet.json")
+    readiness, readiness_raw = _load_canonical(root, "receipts/h3-branch-readiness-v3.json")
+    try:
+        _, approval_raw = read_authoritative_file(root, _V3_APPROVAL_EVIDENCE_PATH)
+    except (FilesystemPolicyError, OSError) as error:
+        raise H3ValidationError("H3_PREDECESSOR_CHAIN_INVALID") from error
+    _require_absent_authoritative_leaf(root, "reviews/h3-branch-decision-v3.json", "H3_PREDECESSOR_CHAIN_INVALID")
+    _require_absent_authoritative_leaf(root, "phase4/branch-authority-v3.json", "H3_PREDECESSOR_CHAIN_INVALID")
+    if (
+        packet.get("schema_version") != "h3-red-review-packet-v3"
+        or readiness.get("schema_version") != "h3-branch-readiness-v3"
+        or not _self_hash_valid(packet, "packet_sha256")
+        or not _self_hash_valid(readiness, "readiness_sha256")
+        or readiness.get("packet_sha256") != packet.get("packet_sha256")
+        or len(approval_raw) != _V3_APPROVAL_SOURCE_LENGTH
+        or sha256_bytes(approval_raw) != _V3_APPROVAL_SOURCE_SHA256
+    ):
+        raise H3ValidationError("H3_PREDECESSOR_CHAIN_INVALID")
+    return {
+        "decision_status": "no_persisted_v3_decision_artifact",
+        "human_approval_source": {
+            "byte_length": len(approval_raw),
+            "kind": "repository_local_historical_user_approval_source",
+            "path": _V3_APPROVAL_EVIDENCE_PATH,
+            "raw_sha256": sha256_bytes(approval_raw),
+            "source_locator": _V3_APPROVAL_SOURCE_LOCATOR,
+        },
+        "packet": _historical_identity(path="reports/h3/h3-red-review-v3/review-packet.json", raw=packet_raw, value=packet, self_hash_field="packet_sha256"),
+        "readiness": _historical_identity(path="receipts/h3-branch-readiness-v3.json", raw=readiness_raw, value=readiness, self_hash_field="readiness_sha256"),
+        "status": "historical_predecessor_not_current_authority",
+    }
+
+
+def _load_h3_v4_historical_predecessor(*, root: Path) -> dict[str, object]:
+    """Validate the published v4 chain strictly as historical predecessor evidence."""
+    packet, packet_raw = _load_canonical(root, "reports/h3/h3-red-review-v4/review-packet.json")
+    readiness, readiness_raw = _load_canonical(root, "receipts/h3-branch-readiness-v4.json")
+    decision, decision_raw = _load_canonical(root, _V4_DECISION_PATH)
+    authority, authority_raw = _load_canonical(root, _V4_AUTHORITY_PATH)
+    if (
+        packet.get("schema_version") != "h3-red-review-packet-v4"
+        or readiness.get("schema_version") != "h3-branch-readiness-v4"
+        or not _self_hash_valid(packet, "packet_sha256")
+        or not _self_hash_valid(readiness, "readiness_sha256")
+        or readiness.get("packet_sha256") != packet.get("packet_sha256")
+    ):
+        raise H3ValidationError("H3_PREDECESSOR_CHAIN_INVALID")
+    validate_h3_red_decision_v4(decision=decision, packet=packet, readiness=readiness)
+    validate_h3_red_authority_v4(authority=authority, packet=packet, readiness=readiness, decision=decision)
+    return {
+        "authority": _historical_identity(path=_V4_AUTHORITY_PATH, raw=authority_raw, value=authority, self_hash_field="authority_sha256"),
+        "decision": _historical_identity(path=_V4_DECISION_PATH, raw=decision_raw, value=decision, self_hash_field="decision_sha256"),
+        "packet": _historical_identity(path="reports/h3/h3-red-review-v4/review-packet.json", raw=packet_raw, value=packet, self_hash_field="packet_sha256"),
+        "readiness": _historical_identity(path="receipts/h3-branch-readiness-v4.json", raw=readiness_raw, value=readiness, self_hash_field="readiness_sha256"),
+        "status": "historical_predecessor_not_current_authority",
+    }
+
+
+def load_phase4_freeze_inputs_v5(*, experiment_root: Path | None = None) -> dict[str, object]:
+    """Open the portable v5 freeze without depending on an ambient attachment path."""
+    root = experiment_root or Path(__file__).resolve().parents[2]
+    base = load_phase4_freeze_inputs_v1(experiment_root=root)
+    inventory, raw_by_path = _inventory_v5(root)
+    return {
+        **base,
+        "phase4_freeze_inventory": inventory,
+        "freeze_inventory_sha256": sha256_bytes(canonical_json_bytes(inventory)),
+        "raw_by_path": raw_by_path,
+        "predecessor_v1": _load_h3_v1_historical_chain(root=root),
+        "predecessor_v2": _load_h3_v2_historical_predecessor(root=root),
+        "predecessor_v3": _load_h3_v3_local_historical_predecessor(root=root),
+        "predecessor_v4": _load_h3_v4_historical_predecessor(root=root),
+    }
+
+
+def audit_no_model_reachability_v5(freeze_inputs: Mapping[str, object]) -> dict[str, object]:
+    """Audit only the v5 machine outputs; the post-decision leaves stay excluded."""
+    inventory = freeze_inputs.get("phase4_freeze_inventory")
+    raw_by_path = freeze_inputs.get("raw_by_path")
+    root = freeze_inputs.get("_experiment_root")
+    if not isinstance(inventory, list) or not isinstance(raw_by_path, Mapping) or not isinstance(root, Path):
+        raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID")
+    paths = [entry.get("path") for entry in inventory if isinstance(entry, Mapping)]
+    if paths != sorted(_FROZEN_PATHS_V5) or set(paths) != set(_FROZEN_PATHS_V5):
+        raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID")
+    for path in _TREATMENT_SOURCES:
+        raw = raw_by_path.get(path)
+        if not isinstance(raw, bytes):
+            raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID")
+        _forbidden_imports(raw, path)
+    from . import cli
+
+    parser = cli.build_parser()
+    commands = sorted(action.dest for action in parser._actions if isinstance(action, argparse._SubParsersAction) for _ in action.choices)
+    command_names = sorted(name for action in parser._actions if isinstance(action, argparse._SubParsersAction) for name in action.choices)
+    if commands != ["command"] or command_names != ["verify-retrieval-contract"]:
+        raise H3ValidationError("H3_CLI_SURFACE_INVALID")
+    parser.parse_args([
+        "verify-retrieval-contract", "--target", "fixtures/treatments/synthetic-target-v1.json",
+        "--corpus", "fixtures/treatments/synthetic-complete-pairs-v1.json",
+        "--config", "config/treatments/lexical-retrieval-contract-v1.json",
+        "--prompt-manifest", "prompts/treatments/prompt-bundle-manifest-v1.json",
+    ])
+    with contextlib.redirect_stderr(io.StringIO()):
+        if cli.main(["model-run"]) != 2:
+            raise H3ValidationError("H3_NETWORK_REACHABILITY_INVALID")
+    try:
+        all_paths = enumerate_authoritative_files(root)
+    except (FilesystemPolicyError, OSError) as error:
+        raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID") from error
+    if any("h4" in path.lower() for path in all_paths):
+        raise H3ValidationError("H3_H4_ARTIFACT_FORBIDDEN")
+    treatment_paths = [path for path in all_paths if path.startswith(("config/treatments/", "fixtures/treatments/", "prompts/treatments/", "src/specchoice_treatments/"))]
+    if any(any(token in path.lower() for token in ("credential", "secret", "provider", "model", ".env")) for path in treatment_paths):
+        raise H3ValidationError("H3_CREDENTIAL_PATH_FORBIDDEN")
+    payload = {
+        "checks": {
+            "cli_singleton": True, "forbidden_imports_absent": True, "h4_artifacts_absent": True,
+            "runtime_success_parser_no_network": True, "runtime_unknown_command_no_network": True,
+            "unsafe_config_and_credential_paths_absent": True,
+        },
+        "cli_commands": command_names,
+        "forbidden_import_roots": sorted(_FORBIDDEN_IMPORT_ROOTS),
+        "inspected_output_paths": [
+            "reports/h3/h3-red-review-v5/review-packet.json",
+            "reports/h3/h3-red-review-v5/review-packet.md",
+            "receipts/h3-branch-readiness-v5.json",
+        ],
+        "schema_version": "h3-no-model-reachability-v5",
+    }
+    return {**payload, "no_model_reachability_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def build_h3_red_review_packet_v5(freeze_inputs: Mapping[str, object]) -> dict[str, object]:
+    """Build the v5 machine-only packet after the full lifecycle is frozen."""
+    predecessors = tuple(freeze_inputs.get(f"predecessor_v{version}") for version in (1, 2, 3, 4))
+    if any(not isinstance(item, Mapping) or item.get("status") != "historical_predecessor_not_current_authority" for item in predecessors):
+        raise H3ValidationError("H3_PREDECESSOR_CHAIN_INVALID")
+    bindings = freeze_inputs.get("phase3_bindings")
+    inventory = freeze_inputs.get("phase4_freeze_inventory")
+    inventory_hash = freeze_inputs.get("freeze_inventory_sha256")
+    raw_by_path = freeze_inputs.get("raw_by_path")
+    if not isinstance(bindings, Mapping) or not isinstance(inventory, list) or not isinstance(inventory_hash, str) or not isinstance(raw_by_path, Mapping):
+        raise H3ValidationError("H3_CHAIN_INPUT_INVALID")
+    prompt_raw = raw_by_path.get("prompts/treatments/prompt-bundle-manifest-v1.json")
+    retrieval_raw = raw_by_path.get("reports/h3/test-only-retrieval-contract-v1.json")
+    if not isinstance(prompt_raw, bytes) or not isinstance(retrieval_raw, bytes):
+        raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID")
+    no_model = audit_no_model_reachability_v5(freeze_inputs)
+    payload = {
+        "N_strict": 0, "branch": "red", "credentials_boundary": "not_applicable_red", "external_calls_authorized": False,
+        "freeze_inventory_sha256": inventory_hash, "h4_reason": "not_applicable_red", "h4_required": False,
+        "model_execution_authorized": False, "model_snapshot": "not_applicable_red", "phase3_bindings": dict(bindings),
+        "phase4_freeze_inventory": inventory, "production_retrieval_authorized": False,
+        "prompt_bundle_manifest_sha256": sha256_bytes(prompt_raw), "provider_config_present": False, "repeat_count": 0,
+        "required_acknowledgment_categories": list(_ACKNOWLEDGMENTS), "retrieval_contract_report_sha256": sha256_bytes(retrieval_raw),
+        "recovery_contract": {
+            "disputed": "corrected upstream input requires a versioned regenerated successor chain",
+            "incomplete": "a new immutable decision may bind unchanged readiness",
+            "missing": "machine readiness is not branch authority",
+        },
+        "warning": "MACHINE READINESS ONLY; NOT BRANCH AUTHORITY",
+        "no_model_reachability": no_model,
+        "no_model_reachability_sha256": no_model["no_model_reachability_sha256"],
+        "predecessor_v1": dict(predecessors[0]),
+        "predecessor_v2": dict(predecessors[1]),
+        "predecessor_v3": dict(predecessors[2]),
+        "predecessor_v4": dict(predecessors[3]),
+        "schema_version": "h3-red-review-packet-v5",
+        "successor_rationale": (
+            "v5 successor rationale: v4 roots, decision, and authority remain historically valid under their bound evidence, "
+            "but v4's frozen pre-publication test incorrectly depended on authority absence in the real checkout and its "
+            "publication writer did not force one persisted decision/authority state-machine binding, so v4 cannot provide "
+            "complete Phase 4 closure. v5 fixes only test-state isolation, decision/authority publication consistency, symlink "
+            "protection, and historical-attachment portability; it does not change Red semantics, N_strict=0, repeat_count=0, "
+            "or any permission boundary."
+        ),
+    }
+    return {**payload, "packet_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def render_h3_red_review_markdown_v5(packet: Mapping[str, object]) -> bytes:
+    """Render v5 Markdown only from its canonical packet."""
+    if not _self_hash_valid(packet, "packet_sha256") or packet.get("schema_version") != "h3-red-review-packet-v5":
+        raise H3ValidationError("H3_READINESS_INVALID")
+    return (
+        "# Phase 4 H3 Red Successor Review v5\n\n"
+        "**MACHINE READINESS ONLY; V5 HUMAN DECISION REQUIRED BEFORE ANY AUTHORITY**\n\n"
+        "## Canonical packet\n\n```json\n"
+    ).encode("utf-8") + canonical_json_bytes(dict(packet)) + b"```\n"
+
+
+def build_h3_red_readiness_v5(packet: Mapping[str, object], markdown: bytes | None = None) -> dict[str, object]:
+    """Bind the v5 machine-only roots before any v5 decision leaf exists."""
+    rendered = render_h3_red_review_markdown_v5(packet)
+    if markdown is None:
+        markdown = rendered
+    if (
+        markdown != rendered or any(field in packet for field in _V2_MACHINE_ONLY_FIELDS)
+        or packet.get("branch") != "red" or packet.get("N_strict") != 0 or isinstance(packet.get("N_strict"), bool)
+        or packet.get("repeat_count") != 0 or isinstance(packet.get("repeat_count"), bool)
+        or packet.get("h4_required") is not False or packet.get("h4_reason") != "not_applicable_red"
+        or any(packet.get(field) is not False for field in ("provider_config_present", "external_calls_authorized", "production_retrieval_authorized", "model_execution_authorized"))
+        or packet.get("model_snapshot") != "not_applicable_red" or packet.get("credentials_boundary") != "not_applicable_red"
+        or not isinstance(packet.get("phase3_bindings"), Mapping)
+        or any(not isinstance(packet.get(f"predecessor_v{version}"), Mapping) for version in (1, 2, 3, 4))
+    ):
+        raise H3ValidationError("H3_READINESS_INVALID")
+    payload = {
+        "N_strict": 0, "branch": "red", "credentials_boundary": "not_applicable_red", "external_calls_authorized": False,
+        "freeze_inventory_sha256": packet["freeze_inventory_sha256"], "h4_reason": "not_applicable_red", "h4_required": False,
+        "historical_predecessors": {str(version): dict(packet[f"predecessor_v{version}"]) for version in (1, 2, 3, 4)},
+        "markdown_sha256": sha256_bytes(markdown), "model_execution_authorized": False, "model_snapshot": "not_applicable_red",
+        "no_model_reachability_sha256": packet["no_model_reachability_sha256"], "packet_sha256": packet["packet_sha256"],
+        "phase3_authority_sha256": packet["phase3_bindings"]["phase3_authority_sha256"], "production_retrieval_authorized": False,
+        "provider_config_present": False, "repeat_count": 0, "schema_version": "h3-branch-readiness-v5", "status": "ready_for_human",
+    }
+    return {**payload, "readiness_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def write_h3_red_readiness_v5(*, experiment_root: Path, packet: Mapping[str, object], markdown: bytes, readiness: Mapping[str, object]) -> None:
+    """Publish only the declared machine-only v5 packet, Markdown, and readiness."""
+    expected = build_h3_red_readiness_v5(packet, markdown)
+    if dict(readiness) != expected or not _self_hash_valid(readiness, "readiness_sha256"):
+        raise H3ValidationError("H3_READINESS_INVALID")
+    try:
+        write_exact_descriptor_files(experiment_root, {
+            "receipts/h3-branch-readiness-v5.json": canonical_json_bytes(readiness),
+            "reports/h3/h3-red-review-v5/review-packet.json": canonical_json_bytes(packet),
+            "reports/h3/h3-red-review-v5/review-packet.md": markdown,
+        })
+    except (FilesystemPolicyError, OSError) as error:
+        raise H3ValidationError("H3_READINESS_INVALID") from error
+
+
+def validate_h3_red_decision_v5(*, decision: object, packet: Mapping[str, object], readiness: Mapping[str, object]) -> dict[str, object]:
+    """Validate the exact closed v5 decision schema without granting authority."""
+    if (
+        not isinstance(decision, dict) or set(decision) != _V5_DECISION_FIELDS
+        or decision.get("schema_version") != "h3-branch-decision-v5"
+        or decision.get("packet_sha256") != packet.get("packet_sha256")
+        or decision.get("readiness_sha256") != readiness.get("readiness_sha256")
+        or not _self_hash_valid(decision, "decision_sha256")
+    ):
+        raise H3ValidationError("H3_DECISION_INCOMPLETE")
+    for field in ("aggregate_rationale", "attestation", "reviewer_id", "signature"):
+        if not isinstance(decision.get(field), str) or not decision[field].strip():
+            raise H3ValidationError("H3_DECISION_INCOMPLETE")
+    try:
+        require_canonical_utc(decision.get("timestamp_utc"), "H3_DECISION_INCOMPLETE")
+    except DataSchemaError as error:
+        raise H3ValidationError(str(error)) from error
+    aggregate = decision.get("aggregate_disposition")
+    if aggregate not in {"approved_red", "disputed", "incomplete"}:
+        raise H3ValidationError("H3_DECISION_INCOMPLETE")
+    acknowledgments = decision.get("acknowledgments")
+    expected = packet.get("required_acknowledgment_categories")
+    if not isinstance(acknowledgments, list) or [item.get("category") if isinstance(item, Mapping) else None for item in acknowledgments] != expected:
+        raise H3ValidationError("H3_DECISION_INCOMPLETE")
+    for item in acknowledgments:
+        if not isinstance(item, Mapping) or set(item) != {"category", "disposition", "rationale"} or item.get("disposition") not in {"approved", "disputed", "incomplete"} or not isinstance(item.get("rationale"), str) or not item["rationale"].strip():
+            raise H3ValidationError("H3_DECISION_INCOMPLETE")
+    if aggregate == "approved_red" and any(item["disposition"] != "approved" for item in acknowledgments):
+        raise H3ValidationError("H3_DECISION_INCONSISTENT")
+    return decision
+
+
+def build_h3_red_decision_v5(
+    *, packet: Mapping[str, object], readiness: Mapping[str, object], acknowledgments: list[dict[str, str]],
+    aggregate_disposition: str, aggregate_rationale: str, reviewer_id: str, attestation: str, signature: str, timestamp_utc: str,
+) -> dict[str, object]:
+    """Construct a v5 human decision value; publication remains a separate state transition."""
+    payload = {
+        "acknowledgments": acknowledgments, "aggregate_disposition": aggregate_disposition, "aggregate_rationale": aggregate_rationale,
+        "attestation": attestation, "packet_sha256": packet.get("packet_sha256"), "readiness_sha256": readiness.get("readiness_sha256"),
+        "reviewer_id": reviewer_id, "schema_version": "h3-branch-decision-v5", "signature": signature, "timestamp_utc": timestamp_utc,
+    }
+    decision = {**payload, "decision_sha256": sha256_bytes(canonical_json_bytes(payload))}
+    return validate_h3_red_decision_v5(decision=decision, packet=packet, readiness=readiness)
+
+
+def _require_current_v5_inputs(freeze_inputs: Mapping[str, object]) -> dict[str, object]:
+    root = freeze_inputs.get("_experiment_root")
+    if not isinstance(root, Path):
+        raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID")
+    current = load_phase4_freeze_inputs_v5(experiment_root=root)
+    for field in ("phase3_bindings", "phase4_freeze_inventory", "freeze_inventory_sha256", "predecessor_v1", "predecessor_v2", "predecessor_v3", "predecessor_v4", "raw_by_path"):
+        if freeze_inputs.get(field) != current.get(field):
+            raise H3ValidationError("FROZEN_INPUT_CHANGE_REQUIRES_NEW_EXPERIMENT_VERSION")
+    return current
+
+
+def _validate_v5_machine_roots(*, freeze_inputs: Mapping[str, object], packet: Mapping[str, object], readiness: Mapping[str, object]) -> dict[str, object]:
+    current = _require_current_v5_inputs(freeze_inputs)
+    expected_packet = build_h3_red_review_packet_v5(current)
+    expected_readiness = build_h3_red_readiness_v5(expected_packet)
+    if dict(packet) != expected_packet or dict(readiness) != expected_readiness:
+        raise H3ValidationError("FROZEN_INPUT_CHANGE_REQUIRES_NEW_EXPERIMENT_VERSION")
+    return current
+
+
+def _freeze_root_v5(*, packet: Mapping[str, object], readiness: Mapping[str, object], decision: Mapping[str, object], decision_raw: bytes) -> str:
+    return sha256_bytes(canonical_json_bytes({
+        "decision_raw_sha256": sha256_bytes(decision_raw), "decision_sha256": decision["decision_sha256"],
+        "freeze_inventory_sha256": packet["freeze_inventory_sha256"], "no_model_reachability_sha256": packet["no_model_reachability_sha256"],
+        "packet_sha256": packet["packet_sha256"], "phase3_authority_sha256": readiness["phase3_authority_sha256"],
+        "predecessor_v1_decision_sha256": packet["predecessor_v1"]["decision"]["self_sha256"],
+        "predecessor_v2_authority_sha256": packet["predecessor_v2"]["authority"]["self_sha256"],
+        "predecessor_v2_decision_sha256": packet["predecessor_v2"]["decision"]["self_sha256"],
+        "predecessor_v3_packet_sha256": packet["predecessor_v3"]["packet"]["self_sha256"],
+        "predecessor_v3_readiness_sha256": packet["predecessor_v3"]["readiness"]["self_sha256"],
+        "predecessor_v4_authority_sha256": packet["predecessor_v4"]["authority"]["self_sha256"],
+        "predecessor_v4_decision_sha256": packet["predecessor_v4"]["decision"]["self_sha256"],
+        "readiness_sha256": readiness["readiness_sha256"],
+    }))
+
+
+def _build_h3_red_authority_v5_from_persisted_decision(
+    *, freeze_inputs: Mapping[str, object], packet: Mapping[str, object], readiness: Mapping[str, object], decision_raw: bytes,
+) -> dict[str, object]:
+    """Construct authority only from descriptor-re-read decision bytes."""
+    _validate_v5_machine_roots(freeze_inputs=freeze_inputs, packet=packet, readiness=readiness)
+    decision = _decode_v5_canonical(decision_raw, code="H3_DECISION_PUBLICATION_LIFECYCLE_INVALID")
+    validate_h3_red_decision_v5(decision=decision, packet=packet, readiness=readiness)
+    if decision.get("aggregate_disposition") != "approved_red":
+        raise H3ValidationError("H3_APPROVED_RED_REQUIRED")
+    payload = {
+        "N_strict": 0, "branch": "red", "credentials_boundary": "not_applicable_red", "decision_raw_sha256": sha256_bytes(decision_raw),
+        "decision_sha256": decision["decision_sha256"], "external_calls_authorized": False,
+        "freeze_root_sha256": _freeze_root_v5(packet=packet, readiness=readiness, decision=decision, decision_raw=decision_raw),
+        "h4_reason": "not_applicable_red", "h4_required": False, "model_execution_authorized": False, "model_snapshot": "not_applicable_red",
+        "packet_sha256": packet["packet_sha256"], "phase3_authority_sha256": readiness["phase3_authority_sha256"],
+        "predecessor_v1_decision_sha256": packet["predecessor_v1"]["decision"]["self_sha256"],
+        "predecessor_v2_authority_sha256": packet["predecessor_v2"]["authority"]["self_sha256"],
+        "predecessor_v2_decision_sha256": packet["predecessor_v2"]["decision"]["self_sha256"],
+        "predecessor_v3_packet_sha256": packet["predecessor_v3"]["packet"]["self_sha256"],
+        "predecessor_v3_readiness_sha256": packet["predecessor_v3"]["readiness"]["self_sha256"],
+        "predecessor_v4_authority_sha256": packet["predecessor_v4"]["authority"]["self_sha256"],
+        "predecessor_v4_decision_sha256": packet["predecessor_v4"]["decision"]["self_sha256"],
+        "production_retrieval_authorized": False, "provider_config_present": False, "readiness_sha256": readiness["readiness_sha256"],
+        "repeat_count": 0, "schema_version": "phase4-branch-authority-v5",
+    }
+    return {**payload, "authority_sha256": sha256_bytes(canonical_json_bytes(payload))}
+
+
+def validate_h3_red_authority_v5(
+    *, authority: object, freeze_inputs: Mapping[str, object], packet: Mapping[str, object], readiness: Mapping[str, object], decision: Mapping[str, object], decision_raw: bytes,
+) -> dict[str, object]:
+    """Validate that authority binds both raw and self identities of its decision."""
+    if not isinstance(authority, dict) or set(authority) != _V5_AUTHORITY_FIELDS or authority.get("schema_version") != "phase4-branch-authority-v5" or not _self_hash_valid(authority, "authority_sha256"):
+        raise H3ValidationError("H3_AUTHORITY_INVALID")
+    expected = _build_h3_red_authority_v5_from_persisted_decision(
+        freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision_raw=decision_raw,
+    )
+    if decision != _decode_v5_canonical(decision_raw, code="H3_AUTHORITY_INVALID") or dict(authority) != expected:
+        raise H3ValidationError("H3_AUTHORITY_INVALID")
+    return authority
+
+
+def write_h3_red_decision_v5(
+    *, output_root: Path, freeze_inputs: Mapping[str, object], packet: Mapping[str, object], readiness: Mapping[str, object], decision: object,
+) -> dict[str, object]:
+    """Publish only an approved, exact v5 decision when authority is still absent."""
+    _validate_v5_machine_roots(freeze_inputs=freeze_inputs, packet=packet, readiness=readiness)
+    validated = validate_h3_red_decision_v5(decision=decision, packet=packet, readiness=readiness)
+    if validated.get("aggregate_disposition") != "approved_red":
+        raise H3ValidationError("H3_APPROVED_RED_REQUIRED")
+    expected_raw = canonical_json_bytes(validated)
+    current_decision = _read_v5_leaf_or_absent(output_root, _V5_DECISION_PATH)
+    current_authority = _read_v5_leaf_or_absent(output_root, _V5_AUTHORITY_PATH)
+    if current_authority is not None or (current_decision is not None and current_decision != expected_raw):
+        raise H3ValidationError("H3_PUBLICATION_STATE_INVALID")
+    if current_decision is None:
+        try:
+            write_exact_descriptor_files(output_root, {_V5_DECISION_PATH: expected_raw})
+        except (FilesystemPolicyError, OSError) as error:
+            raise H3ValidationError("H3_DECISION_WRITE_INVALID") from error
+        current_decision = _read_v5_leaf_or_absent(output_root, _V5_DECISION_PATH)
+    if current_decision != expected_raw:
+        raise H3ValidationError("H3_DECISION_WRITE_INVALID")
+    return validated
+
+
+def publish_h3_red_authority_v5(
+    *, output_root: Path, freeze_inputs: Mapping[str, object], packet: Mapping[str, object], readiness: Mapping[str, object], decision: object,
+) -> dict[str, object]:
+    """Advance exactly one v5 publication state, deriving authority from the persisted decision only."""
+    _validate_v5_machine_roots(freeze_inputs=freeze_inputs, packet=packet, readiness=readiness)
+    requested = validate_h3_red_decision_v5(decision=decision, packet=packet, readiness=readiness)
+    if requested.get("aggregate_disposition") != "approved_red":
+        raise H3ValidationError("H3_APPROVED_RED_REQUIRED")
+    expected_decision_raw = canonical_json_bytes(requested)
+    current_decision = _read_v5_leaf_or_absent(output_root, _V5_DECISION_PATH)
+    current_authority = _read_v5_leaf_or_absent(output_root, _V5_AUTHORITY_PATH)
+    if current_authority is not None and current_decision is None:
+        raise H3ValidationError("H3_PUBLICATION_STATE_INVALID")
+    if current_decision is not None and current_decision != expected_decision_raw:
+        raise H3ValidationError("H3_PUBLICATION_STATE_INVALID")
+    if current_authority is not None:
+        persisted = _decode_v5_canonical(current_decision, code="H3_PUBLICATION_STATE_INVALID")
+        authority = _decode_v5_canonical(current_authority, code="H3_PUBLICATION_STATE_INVALID")
+        validate_h3_red_authority_v5(
+            authority=authority, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
+            decision=persisted, decision_raw=current_decision,
+        )
+        return authority
+    if current_decision is None:
+        write_h3_red_decision_v5(
+            output_root=output_root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision=requested,
+        )
+        current_decision = _read_v5_leaf_or_absent(output_root, _V5_DECISION_PATH)
+    if current_decision != expected_decision_raw:
+        raise H3ValidationError("H3_DECISION_WRITE_INVALID")
+    authority = _build_h3_red_authority_v5_from_persisted_decision(
+        freeze_inputs=freeze_inputs, packet=packet, readiness=readiness, decision_raw=current_decision,
+    )
+    authority_raw = canonical_json_bytes(authority)
+    try:
+        write_exact_descriptor_files(output_root, {_V5_AUTHORITY_PATH: authority_raw})
+    except (FilesystemPolicyError, OSError) as error:
+        raise H3ValidationError("H3_AUTHORITY_WRITE_INVALID") from error
+    retained = _read_v5_leaf_or_absent(output_root, _V5_AUTHORITY_PATH)
+    if retained != authority_raw:
+        raise H3ValidationError("H3_AUTHORITY_WRITE_INVALID")
+    return authority
+
+
+def validate_h3_v5_publication_lifecycle(
+    *, output_root: Path, freeze_inputs: Mapping[str, object], packet: Mapping[str, object], readiness: Mapping[str, object],
+) -> dict[str, str]:
+    """Classify only the three allowed v5 publication states via no-follow reads."""
+    _validate_v5_machine_roots(freeze_inputs=freeze_inputs, packet=packet, readiness=readiness)
+    decision_raw = _read_v5_leaf_or_absent(output_root, _V5_DECISION_PATH)
+    authority_raw = _read_v5_leaf_or_absent(output_root, _V5_AUTHORITY_PATH)
+    if decision_raw is None and authority_raw is None:
+        return {"state": "absent"}
+    if decision_raw is None:
+        raise H3ValidationError("H3_PUBLICATION_STATE_INVALID")
+    decision = _decode_v5_canonical(decision_raw, code="H3_PUBLICATION_STATE_INVALID")
+    validate_h3_red_decision_v5(decision=decision, packet=packet, readiness=readiness)
+    if decision.get("aggregate_disposition") != "approved_red":
+        raise H3ValidationError("H3_APPROVED_RED_REQUIRED")
+    if authority_raw is None:
+        return {"state": "decision_only_exact"}
+    authority = _decode_v5_canonical(authority_raw, code="H3_PUBLICATION_STATE_INVALID")
+    validate_h3_red_authority_v5(
+        authority=authority, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
+        decision=decision, decision_raw=decision_raw,
+    )
+    return {"state": "decision_and_authority_exact"}
+
+
+def validate_h3_v5_pre_publication_lifecycle(
+    *, output_root: Path, freeze_inputs: Mapping[str, object], packet: Mapping[str, object], readiness: Mapping[str, object],
+) -> dict[str, str]:
+    """Require the explicit empty state in an isolated output root."""
+    state = validate_h3_v5_publication_lifecycle(
+        output_root=output_root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
+    )
+    if state != {"state": "absent"}:
+        raise H3ValidationError("H3_PRE_PUBLICATION_LIFECYCLE_INVALID")
+    return state
+
+
+def validate_h3_v5_post_publication_lifecycle(
+    *, output_root: Path, freeze_inputs: Mapping[str, object], packet: Mapping[str, object], readiness: Mapping[str, object],
+) -> dict[str, str]:
+    """Require the fully exact state after the declared v5 publication."""
+    state = validate_h3_v5_publication_lifecycle(
+        output_root=output_root, freeze_inputs=freeze_inputs, packet=packet, readiness=readiness,
+    )
+    if state != {"state": "decision_and_authority_exact"}:
+        raise H3ValidationError("H3_POST_PUBLICATION_LIFECYCLE_INVALID")
+    return state
