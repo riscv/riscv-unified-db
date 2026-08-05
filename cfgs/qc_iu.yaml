@@ -12,6 +12,7 @@ implemented_extensions:
   - { name: Smdbltrp, version: "= 1.0" }
   - { name: I, version: "= 2.1" }
   - { name: M, version: "= 2.0" }
+  - { name: Zmmul, version: "= 1.0" }
   - { name: B, version: "= 1.0" }
   - { name: Zbs, version: "= 1.0" }
   - { name: Zbb, version: "= 1.0" }
