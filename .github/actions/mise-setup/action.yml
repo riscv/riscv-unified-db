@@ -15,7 +15,7 @@ runs:
       run: mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
     - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4
       with:
-        version: 2026.7.14
+        version: 2026.7.15
     # Write toolchain preference to .toolchain-local so bin/setup (section 7)
     # finds it and section 8 behaves correctly without prompting.
     - name: Configure toolchain
@@ -35,7 +35,7 @@ runs:
       uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
     - name: Login to GHCR
       if: inputs.toolchain == 'true'
-      uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
+      uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c # v4.5.2
       with:
         registry: ghcr.io
         username: ${{ github.actor }}

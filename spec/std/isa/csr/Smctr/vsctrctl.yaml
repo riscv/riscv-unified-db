@@ -225,4 +225,4 @@ sw_read(): |
   if (MCTRCTL_CUSTOM_IMPLEMENTED) {
     mask = mask | (4'b1111 `<< 60);
   }
-  return ($bits(CSR[mctrctl]) & mask);
+  return ($bits(CSR[vsctrctl]) & mask);
