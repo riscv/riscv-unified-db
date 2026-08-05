@@ -45,8 +45,11 @@ description: |
 
 definedBy:
   allOf:
-    - extension:
-        name: Sm
+    - anyOf:
+        - extension:
+            name: Sm
+        - extension:
+            name: Zicntr
     - param:
         name: MCOUNTINHIBIT_IMPLEMENTED
         equal: true
@@ -54,8 +57,11 @@ fields:
   CY:
     location: 0
     definedBy:
-      extension:
-        name: Sm
+      anyOf:
+        - extension:
+            name: Sm
+        - extension:
+            name: Zicntr
     description: When set, `mcycle.COUNT` stops counting in all privilege modes.
     type(): |
       return COUNTINHIBIT_EN[0] ? CsrFieldType::RW : CsrFieldType::RO;
@@ -64,8 +70,11 @@ fields:
   IR:
     location: 2
     definedBy:
-      extension:
-        name: Sm
+      anyOf:
+        - extension:
+            name: Sm
+        - extension:
+            name: Zicntr
     description: When set, `minstret.COUNT` stops counting in all privilege modes.
     type(): |
       return COUNTINHIBIT_EN[2] ? CsrFieldType::RW : CsrFieldType::RO;
@@ -76,8 +85,11 @@ fields:
     location: <%= hpm_num %>
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: <%= hpm_num %>

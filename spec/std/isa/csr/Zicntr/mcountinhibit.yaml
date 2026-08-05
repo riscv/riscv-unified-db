@@ -48,8 +48,11 @@ description: |
 
 definedBy:
   allOf:
-    - extension:
-        name: Sm
+    - anyOf:
+        - extension:
+            name: Sm
+        - extension:
+            name: Zicntr
     - param:
         name: MCOUNTINHIBIT_IMPLEMENTED
         equal: true
@@ -57,8 +60,11 @@ fields:
   CY:
     location: 0
     definedBy:
-      extension:
-        name: Sm
+      anyOf:
+        - extension:
+            name: Sm
+        - extension:
+            name: Zicntr
     description: When set, `mcycle.COUNT` stops counting in all privilege modes.
     type(): |
       return COUNTINHIBIT_EN[0] ? CsrFieldType::RW : CsrFieldType::RO;
@@ -67,8 +73,11 @@ fields:
   IR:
     location: 2
     definedBy:
-      extension:
-        name: Sm
+      anyOf:
+        - extension:
+            name: Sm
+        - extension:
+            name: Zicntr
     description: When set, `minstret.COUNT` stops counting in all privilege modes.
     type(): |
       return COUNTINHIBIT_EN[2] ? CsrFieldType::RW : CsrFieldType::RO;
@@ -78,8 +87,11 @@ fields:
     location: 3
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 3
@@ -98,8 +110,11 @@ fields:
     location: 4
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 4
@@ -118,8 +133,11 @@ fields:
     location: 5
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 5
@@ -138,8 +156,11 @@ fields:
     location: 6
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 6
@@ -158,8 +179,11 @@ fields:
     location: 7
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 7
@@ -178,8 +202,11 @@ fields:
     location: 8
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 8
@@ -198,8 +225,11 @@ fields:
     location: 9
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 9
@@ -218,8 +248,11 @@ fields:
     location: 10
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 10
@@ -238,8 +271,11 @@ fields:
     location: 11
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 11
@@ -258,8 +294,11 @@ fields:
     location: 12
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 12
@@ -278,8 +317,11 @@ fields:
     location: 13
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 13
@@ -298,8 +340,11 @@ fields:
     location: 14
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 14
@@ -318,8 +363,11 @@ fields:
     location: 15
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 15
@@ -338,8 +386,11 @@ fields:
     location: 16
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 16
@@ -358,8 +409,11 @@ fields:
     location: 17
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 17
@@ -378,8 +432,11 @@ fields:
     location: 18
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 18
@@ -398,8 +455,11 @@ fields:
     location: 19
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 19
@@ -418,8 +478,11 @@ fields:
     location: 20
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 20
@@ -438,8 +501,11 @@ fields:
     location: 21
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 21
@@ -458,8 +524,11 @@ fields:
     location: 22
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 22
@@ -478,8 +547,11 @@ fields:
     location: 23
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 23
@@ -498,8 +570,11 @@ fields:
     location: 24
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 24
@@ -518,8 +593,11 @@ fields:
     location: 25
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 25
@@ -538,8 +616,11 @@ fields:
     location: 26
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 26
@@ -558,8 +639,11 @@ fields:
     location: 27
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 27
@@ -578,8 +662,11 @@ fields:
     location: 28
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 28
@@ -598,8 +685,11 @@ fields:
     location: 29
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 29
@@ -618,8 +708,11 @@ fields:
     location: 30
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 30
@@ -638,8 +731,11 @@ fields:
     location: 31
     definedBy:
       allOf:
-        - extension:
-            name: Sm
+        - anyOf:
+            - extension:
+                name: Sm
+            - extension:
+                name: Zicntr
         - param:
             name: HPM_COUNTER_EN
             index: 31

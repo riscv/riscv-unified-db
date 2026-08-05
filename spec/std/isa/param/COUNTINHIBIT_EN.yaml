@@ -36,8 +36,11 @@ requirements:
 
 definedBy:
   allOf:
-    - extension:
-        name: Sm
+    - anyOf:
+        - extension:
+            name: Sm
+        - extension:
+            name: Zicntr
     - param:
         name: MCOUNTINHIBIT_IMPLEMENTED
         equal: true
