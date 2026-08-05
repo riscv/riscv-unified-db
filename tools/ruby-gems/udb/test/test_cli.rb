@@ -98,7 +98,16 @@ class TestCli < Minitest::Test
       assert_instance_of Udb::DummyProgressBar, bar_warn
       bar_warn.format = "New format"
       assert_equal "New format", bar_warn.format
+
+      Udb.log_level = Udb::LogLevel::Info
+      Udb.create_top_level_progressbar(level: Udb::LogLevel::Warn)
+      sub_bar = Udb.create_progressbar("Sub :bar")
+      assert_instance_of Udb::DummyProgressBar, sub_bar
+      assert_equal "Sub :bar", sub_bar.format
+      sub_bar.format = "Updated sub :bar"
+      assert_equal "Updated sub :bar", sub_bar.format
     ensure
+      Udb.delete_top_level_progressbar
       Udb.log_level = old_level
     end
   end
