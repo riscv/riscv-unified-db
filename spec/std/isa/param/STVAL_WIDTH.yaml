@@ -18,3 +18,58 @@ schema:
 definedBy:
   extension:
     name: S
+
+requirements:
+  idl(): |
+    (
+      MXLEN == 32 &&
+      PHYS_ADDR_WIDTH > 32 &&
+      (
+        implemented?(ExtensionName::Sdext) ||
+        REPORT_VA_IN_STVAL_ON_BREAKPOINT ||
+        REPORT_ENCODING_IN_STVAL_ON_ILLEGAL_INSTRUCTION ||
+        REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED ||
+        REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED ||
+        REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED ||
+        REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT ||
+        REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT ||
+        REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT
+      )
+    ) -> (STVAL_WIDTH == 32);
+
+    (
+      (
+        $array_includes?(SXLEN, 64) ||
+        (
+          MXLEN == 32 &&
+          PHYS_ADDR_WIDTH <= 32
+        )
+      ) &&
+      (
+        implemented?(ExtensionName::Sdext) ||
+        REPORT_VA_IN_STVAL_ON_BREAKPOINT ||
+        REPORT_ENCODING_IN_STVAL_ON_ILLEGAL_INSTRUCTION ||
+        REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED ||
+        REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED ||
+        REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED ||
+        REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT ||
+        REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT ||
+        REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT
+      )
+    ) -> (STVAL_WIDTH >= PHYS_ADDR_WIDTH);
+
+    (
+        implemented?(ExtensionName::Sdext) ||
+        REPORT_VA_IN_STVAL_ON_BREAKPOINT ||
+        REPORT_ENCODING_IN_STVAL_ON_ILLEGAL_INSTRUCTION ||
+        REPORT_VA_IN_STVAL_ON_LOAD_MISALIGNED ||
+        REPORT_VA_IN_STVAL_ON_STORE_AMO_MISALIGNED ||
+        REPORT_VA_IN_STVAL_ON_INSTRUCTION_MISALIGNED ||
+        REPORT_VA_IN_STVAL_ON_LOAD_ACCESS_FAULT ||
+        REPORT_VA_IN_STVAL_ON_STORE_AMO_ACCESS_FAULT ||
+        REPORT_VA_IN_STVAL_ON_INSTRUCTION_ACCESS_FAULT
+    ) -> (STVAL_WIDTH >= max_va_size());
+
+    REPORT_ENCODING_IN_STVAL_ON_ILLEGAL_INSTRUCTION -> (STVAL_WIDTH >= INSTR_ENC_SIZE);
+  reason: |
+    `stval` must be able to hold physical and/or virtual addresses in RV32 S-mode
