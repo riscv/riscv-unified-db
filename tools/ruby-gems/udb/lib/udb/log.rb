@@ -74,6 +74,14 @@ module Udb
   class DummyProgressBar
     extend T::Sig
 
+    sig { returns(String) }
+    attr_accessor :format
+
+    sig { params(fmt: String, _options: T.untyped).void }
+    def initialize(fmt = "", **_options)
+      @format = fmt
+    end
+
     sig { void }
     def advance
       # do nothing
@@ -90,7 +98,7 @@ module Udb
 
     sig { params(fmt: String, options: T.untyped).returns(DummyProgressBar) }
     def register(fmt, **options)
-      DummyProgressBar.new
+      DummyProgressBar.new(fmt, **options)
     end
   end
 

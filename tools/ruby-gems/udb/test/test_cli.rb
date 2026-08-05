@@ -84,4 +84,22 @@ class TestCli < Minitest::Test
     assert_equal num_csr_yaml_files, num_listed
   end
 
+  def test_dummy_progressbar_format
+    bar = Udb::DummyProgressBar.new
+    bar.format = "Test :bar"
+    assert_equal "Test :bar", bar.format
+    bar.advance
+    bar.finish
+
+    old_level = Udb.log_level
+    begin
+      Udb.log_level = Udb::LogLevel::Warn
+      bar_warn = Udb.create_progressbar("Test :bar")
+      assert_instance_of Udb::DummyProgressBar, bar_warn
+      bar_warn.format = "New format"
+      assert_equal "New format", bar_warn.format
+    ensure
+      Udb.log_level = old_level
+    end
+  end
 end
