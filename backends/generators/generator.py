@@ -17,9 +17,36 @@ LOGGER = logging.getLogger(__name__)
 def check_requirement(req, exts):
     if isinstance(req, str):
         return req in exts
-    elif isinstance(req, dict) and "name" in req:
-        # If it has a name field, just match the extension name and ignore version
-        return req["name"] in exts
+    elif isinstance(req, dict):
+        if "extension" in req:
+            return check_requirement(req["extension"], exts)
+        elif "xlen" in req:
+            # XLEN filtering is handled separately by target_arch / --arch
+            return True
+        elif "allOf" in req:
+            reqs = req["allOf"]
+            if isinstance(reqs, str):
+                reqs = [reqs]
+            return all(check_requirement(r, exts) for r in reqs)
+        elif "anyOf" in req:
+            reqs = req["anyOf"]
+            if isinstance(reqs, str):
+                reqs = [reqs]
+            return any(check_requirement(r, exts) for r in reqs)
+        elif "oneOf" in req:
+            reqs = req["oneOf"]
+            if isinstance(reqs, str):
+                reqs = [reqs]
+            return any(check_requirement(r, exts) for r in reqs)
+        elif "name" in req:
+            ext_name = req["name"]
+            if isinstance(ext_name, str) and ext_name.startswith("RV"):
+                if ext_name.startswith(("RV32", "RV64")):
+                    ext_parts = ext_name[4:]
+                else:
+                    ext_parts = ext_name[2:]
+                return any(ext_part in exts for ext_part in ext_parts)
+            return ext_name in exts
     return False
 
 
@@ -567,5 +594,21 @@ def signed(value: int, width: int) -> int:
 
 
 if __name__ == "__main__":
-    print("This module is not meant to be run directly.")
-    print("Please use go_generator.py instead.")
+    # Run self-tests for parse_extension_requirements
+    req1 = {"extension": {"name": "Zbb"}}
+    f1 = parse_extension_requirements(req1)
+    assert f1(["Zbb", "I"])
+    assert not f1(["I", "M"])
+
+    req2 = {"allOf": [{"xlen": 64}, {"extension": {"name": "Zbb"}}]}
+    f2 = parse_extension_requirements(req2)
+    assert f2(["Zbb"])
+    assert not f2(["I"])
+
+    req3 = {"extension": {"anyOf": [{"name": "Zbb"}, {"name": "Zba"}]}}
+    f3 = parse_extension_requirements(req3)
+    assert f3(["Zba"])
+    assert f3(["Zbb"])
+    assert not f3(["M"])
+
+    print("parse_extension_requirements self-test passed!")
