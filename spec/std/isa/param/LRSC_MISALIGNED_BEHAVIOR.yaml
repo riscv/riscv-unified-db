@@ -12,7 +12,7 @@ description: |
     * 'always raise misaligned exception': self-explainitory
     * 'always raise access fault': self-explainitory
     * 'custom': Custom behavior; misaligned LR/SC may sometimes raise a misaligned exception and sometimes raise a access fault. Will lead to an 'unpredictable' call on any misaligned LR/SC access
-long_name: TODO
+long_name: "Misaligned LR/SC behavior"
 schema:
   type: string
   enum:
