@@ -7,23 +7,23 @@ $schema: param_schema.json#
 kind: parameter
 name: SUPPORTED_PMLEN_SMNPM
 description: |
-  The number of high-order bits of an address that are masked by the
-  `Smnpm` pointer masking facility for the next privilege mode below
-  M-mode (S/HS if S-mode is implemented, or U-mode otherwise),
-  selectable via the `PMM` field in `menvcfg`.
+  The `PMLEN` values supported by the `Smnpm` pointer masking facility
+  for the next privilege mode below M-mode (S/HS if S-mode is
+  implemented, or U-mode otherwise), selected via the `PMM` field in
+  `menvcfg`. `PMLEN` is the number of high-order bits of an address
+  that are masked.
 
   Options:
 
-    0::
-      Pointer masking disabled (`PMM`=00).
     7::
       PMLEN=XLEN-57 (i.e., PMLEN=7 on RV64)
     16::
       PMLEN=XLEN-48 (i.e., PMLEN=16 on RV64)
 
   The current standard only supports these values (`zpm.adoc`, tag
-  `norm:pmlen_supported_values`, plus the mandatory PMM=00 disabled
-  setting).
+  `norm:pmlen_supported_values`). `PMM`=00 (pointer masking disabled,
+  PMLEN=0) is mandatory and always available, so it is not enumerated
+  here.
 long_name: Pointer mask length for next mode below M mode
 schema:
   type: array
