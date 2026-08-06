@@ -15,7 +15,7 @@ runs:
       run: mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
     - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4
       with:
-        version: 2026.7.16
+        version: 2026.7.17
     # Write toolchain preference to .toolchain-local so bin/setup (section 7)
     # finds it and section 8 behaves correctly without prompting.
     - name: Configure toolchain
