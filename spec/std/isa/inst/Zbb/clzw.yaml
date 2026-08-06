@@ -30,7 +30,7 @@ access:
   vs: always
   vu: always
 operation(): |
-  if (implemented?(ExtensionName::B) && (CSR[misa].B == 1'b0)) {
+  if (implemented?(ExtensionName::B) && MISA_CSR_IMPLEMENTED && (CSR[misa].B == 1'b0)) {
     raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
   }
 
