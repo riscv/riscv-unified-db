@@ -29,7 +29,7 @@ UDB is a relational database, but it doesn't use SQL like most. Rather, UDB stor
   📄 A.yaml              →    📋 Row (record)
 ```
 
-The YAML files follow a [strict data schema](/docs/schemas/overview) defined using [JSON Schema](https://json-schema.org/).
+The YAML files follow a [strict data schema](/docs/schemas) defined using [JSON Schema](https://json-schema.org/).
 
 ## Configuration
 
@@ -45,7 +45,7 @@ UDB contains the **entire** RISC-V specification — all ISAs, all extensions, a
 
 UDB tools can then generate artifacts tailored to your exact configuration — headers with only your CSRs, documentation for only your instructions, validators that check only your requirements.
 
-See the [Configuration documentation](/docs/configuration/overview) to learn how to define and use configurations.
+See the [Configuration documentation](/docs/concepts/configurations/overview) to learn how to define and use configurations.
 
 ## Customization
 
@@ -60,7 +60,7 @@ The RISC-V specification is designed for customization — vendors can add custo
 
 Your overlay sits alongside the standard UDB data, and when tools process your configuration, they automatically merge your customizations with the base spec. The result: all your tooling — generators, validators, documentation — works with your complete, customized specification as a unified whole.
 
-See the [Data Customization documentation](/docs/configuration/customization) to learn how overlays work and how data resolution merges standard and custom data.
+See the [Data Customization documentation](/docs/concepts/configurations/customization) to learn how overlays work and how data resolution merges standard and custom data.
 
 ## Working with UDB Data
 

@@ -1,0 +1,8 @@
+{
+  "label": "Generators",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Artifact generators available in UDB."
+  }
+}
