@@ -8,7 +8,7 @@ kind: instruction
 name: c.sdsp
 long_name: Store doubleword to stack
 description: |
-  Stores a 64-bit value in register rs2 to memory.
+  Stores a 64-bit value in register xs2 to memory.
   It computes an effective address by adding the zero-extended offset, scaled by 8,
   to the stack pointer, x2.
   It expands to `sd` `xs2, offset(x2)`.
