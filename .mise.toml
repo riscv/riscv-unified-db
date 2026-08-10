@@ -48,5 +48,6 @@ fi
 ''' }
 
 [settings]
+idiomatic_version_file_enable_tools = ["node"]
 ruby.compile = false
 ruby.default_packages_file = ".default-gems"
