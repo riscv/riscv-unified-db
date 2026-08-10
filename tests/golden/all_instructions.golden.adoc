@@ -14358,7 +14358,7 @@ RV64::
 ....
 
 Description::
-Stores a 64-bit value in register rs2 to memory.
+Stores a 64-bit value in register xs2 to memory.
 It computes an effective address by adding the zero-extended offset, scaled by 8,
 to the stack pointer, x2.
 It expands to xref:insts:sd.adoc#udb:doc:inst:sd[sd] `xs2, offset(x2)`.
