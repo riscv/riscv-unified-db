@@ -34,7 +34,7 @@ access:
   vu: always
 operation(): |
   if (implemented?(ExtensionName::M) && MISA_CSR_IMPLEMENTED && (CSR[misa].M == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
 
   Bits<32> src1 = X[xs1][31:0];

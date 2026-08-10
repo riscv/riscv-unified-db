@@ -31,7 +31,7 @@ access:
 data_independent_timing: true
 operation(): |
   if (implemented?(ExtensionName::C) && MISA_CSR_IMPLEMENTED && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
 
   X[xd] = X[xs2];

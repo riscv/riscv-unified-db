@@ -28,7 +28,7 @@ access:
   vu: always
 operation(): |
   if (implemented?(ExtensionName::C) && MISA_CSR_IMPLEMENTED && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
 
   jump($pc + $signed(imm));

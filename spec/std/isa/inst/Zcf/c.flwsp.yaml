@@ -31,10 +31,10 @@ access:
   vu: always
 operation(): |
   if (implemented?(ExtensionName::C) && MISA_CSR_IMPLEMENTED && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
   if (implemented?(ExtensionName::F) && MISA_CSR_IMPLEMENTED && (CSR[misa].F == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
 
   XReg virtual_address = X[2] + imm;

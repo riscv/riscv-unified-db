@@ -32,11 +32,11 @@ data_independent_timing: true
 operation(): |
 
   if (implemented?(ExtensionName::M) && MISA_CSR_IMPLEMENTED && (CSR[misa].M == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
 
   if (implemented?(ExtensionName::C) && MISA_CSR_IMPLEMENTED && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
 
   X[creg2reg(xd)] = X[creg2reg(xd)] * X[creg2reg(xs2)];

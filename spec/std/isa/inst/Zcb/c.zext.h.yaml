@@ -31,11 +31,11 @@ access:
 operation(): |2
 
   if (implemented?(ExtensionName::B) && MISA_CSR_IMPLEMENTED && (CSR[misa].B == 1'b0)) {
-    raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
 
   if (implemented?(ExtensionName::C) && MISA_CSR_IMPLEMENTED && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
 
   X[creg2reg(xd)] = X[creg2reg(xd)][15:0];

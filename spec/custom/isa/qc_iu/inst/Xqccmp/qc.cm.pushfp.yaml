@@ -39,7 +39,7 @@ access:
   vu: always
 operation(): |
   if (implemented?(ExtensionName::Xqccmp) && MISA_CSR_IMPLEMENTED && (CSR[misa].C == 1'b0)) {
-    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+    reserved_instruction($encoding);
   }
 
   XReg virtual_address_sp = get_and_validate_stack_pointer(X[2], $encoding);
