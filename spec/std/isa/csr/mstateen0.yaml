@@ -76,15 +76,11 @@ fields:
       if (MSTATEEN_ENVCFG_TYPE == "read-only-0" || MSTATEEN_ENVCFG_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(MSTATEEN_ENVCFG_TYPE == "rw", "Unhandled MSTATEEN_ENVCFG_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
-      if (MSTATEEN_ENVCFG_TYPE == "read-only-0") {
-        return 0;
-      } else if (MSTATEEN_ENVCFG_TYPE == "read-only-1") {
+      if (MSTATEEN_ENVCFG_TYPE == "read-only-1") {
         return 1;
       }
-      assert(MSTATEEN_ENVCFG_TYPE == "rw", "Unhandled MSTATEEN_ENVCFG_TYPE value");
       return 0;
   CSRIND:
     long_name: siselect, sireg*, vsiselect, and vsireg* access control
@@ -99,15 +95,11 @@ fields:
       if (MSTATEEN_CSRIND_TYPE == "read-only-0" || MSTATEEN_CSRIND_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(MSTATEEN_CSRIND_TYPE == "rw", "Unhandled MSTATEEN_CSRIND_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
-      if (MSTATEEN_CSRIND_TYPE == "read-only-0") {
-        return 0;
-      } else if (MSTATEEN_CSRIND_TYPE == "read-only-1") {
+      if (MSTATEEN_CSRIND_TYPE == "read-only-1") {
         return 1;
       }
-      assert(MSTATEEN_CSRIND_TYPE == "rw", "Unhandled MSTATEEN_CSRIND_TYPE value");
       return 0;
   AIA:
     long_name: Ssaia state access control
@@ -122,15 +114,11 @@ fields:
       if (MSTATEEN_AIA_TYPE == "read-only-0" || MSTATEEN_AIA_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(MSTATEEN_AIA_TYPE == "rw", "Unhandled MSTATEEN_AIA_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
-      if (MSTATEEN_AIA_TYPE == "read-only-0") {
-        return 0;
-      } else if (MSTATEEN_AIA_TYPE == "read-only-1") {
+      if (MSTATEEN_AIA_TYPE == "read-only-1") {
         return 1;
       }
-      assert(MSTATEEN_AIA_TYPE == "rw", "Unhandled MSTATEEN_AIA_TYPE value");
       return 0;
   IMSIC:
     long_name: IMSIC state access control
@@ -145,15 +133,11 @@ fields:
       if (MSTATEEN_IMSIC_TYPE == "read-only-0" || MSTATEEN_IMSIC_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(MSTATEEN_IMSIC_TYPE == "rw", "Unhandled MSTATEEN_IMSIC_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
-      if (MSTATEEN_IMSIC_TYPE == "read-only-0") {
-        return 0;
-      } else if (MSTATEEN_IMSIC_TYPE == "read-only-1") {
+      if (MSTATEEN_IMSIC_TYPE == "read-only-1") {
         return 1;
       }
-      assert(MSTATEEN_IMSIC_TYPE == "rw", "Unhandled MSTATEEN_IMSIC_TYPE value");
       return 0;
   CONTEXT:
     long_name: scontext and hcontext access control
@@ -168,15 +152,11 @@ fields:
       if (MSTATEEN_CONTEXT_TYPE == "read-only-0" || MSTATEEN_CONTEXT_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(MSTATEEN_CONTEXT_TYPE == "rw", "Unhandled MSTATEEN_CONTEXT_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
-      if (MSTATEEN_CONTEXT_TYPE == "read-only-0") {
-        return 0;
-      } else if (MSTATEEN_CONTEXT_TYPE == "read-only-1") {
+      if (MSTATEEN_CONTEXT_TYPE == "read-only-1") {
         return 1;
       }
-      assert(MSTATEEN_CONTEXT_TYPE == "rw", "Unhandled MSTATEEN_CONTEXT_TYPE value");
       return 0;
   P1P13:
     long_name: hedelegh access control
@@ -217,15 +197,11 @@ fields:
       if (MSTATEEN_JVT_TYPE == "read-only-0" || MSTATEEN_JVT_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(MSTATEEN_JVT_TYPE == "rw", "Unhandled MSTATEEN_JVT_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
-      if (MSTATEEN_JVT_TYPE == "read-only-0") {
-        return 0;
-      } else if (MSTATEEN_JVT_TYPE == "read-only-1") {
+      if (MSTATEEN_JVT_TYPE == "read-only-1") {
         return 1;
       }
-      assert(MSTATEEN_JVT_TYPE == "rw", "Unhandled MSTATEEN_JVT_TYPE value");
       return 0;
   FCSR:
     long_name: fcsr access control

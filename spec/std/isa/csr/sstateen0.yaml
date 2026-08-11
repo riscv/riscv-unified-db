@@ -71,7 +71,6 @@ fields:
       if (SSTATEEN_JVT_TYPE == "read-only-0" || SSTATEEN_JVT_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(SSTATEEN_JVT_TYPE == "rw", "Unhandled SSTATEEN_JVT_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
       if (SSTATEEN_JVT_TYPE == "read-only-0") {
@@ -79,7 +78,6 @@ fields:
       } else if (SSTATEEN_JVT_TYPE == "read-only-1") {
         return 1;
       }
-      assert(SSTATEEN_JVT_TYPE == "rw", "Unhandled SSTATEEN_JVT_TYPE value");
       return UNDEFINED_LEGAL;
     sw_write(csr_value): |
       if (CSR[mstateen0].JVT == 1'b0){

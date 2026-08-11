@@ -74,7 +74,6 @@ fields:
       if (HSTATEEN_ENVCFG_TYPE == "read-only-0" || HSTATEEN_ENVCFG_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(HSTATEEN_ENVCFG_TYPE == "rw", "Unhandled HSTATEEN_ENVCFG_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
       if (HSTATEEN_ENVCFG_TYPE == "read-only-0") {
@@ -82,7 +81,6 @@ fields:
       } else if (HSTATEEN_ENVCFG_TYPE == "read-only-1") {
         return 1;
       }
-      assert(HSTATEEN_ENVCFG_TYPE == "rw", "Unhandled HSTATEEN_ENVCFG_TYPE value");
       return UNDEFINED_LEGAL;
     sw_write(csr_value): |
       if (CSR[mstateen0].ENVCFG == 1'b0){
@@ -103,7 +101,6 @@ fields:
       if (HSTATEEN_CSRIND_TYPE == "read-only-0" || HSTATEEN_CSRIND_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(HSTATEEN_CSRIND_TYPE == "rw", "Unhandled HSTATEEN_CSRIND_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
       if (HSTATEEN_CSRIND_TYPE == "read-only-0") {
@@ -111,7 +108,6 @@ fields:
       } else if (HSTATEEN_CSRIND_TYPE == "read-only-1") {
         return 1;
       }
-      assert(HSTATEEN_CSRIND_TYPE == "rw", "Unhandled HSTATEEN_CSRIND_TYPE value");
       return UNDEFINED_LEGAL;
     sw_write(csr_value): |
       if (CSR[mstateen0].CSRIND == 1'b0){
@@ -132,7 +128,6 @@ fields:
       if (HSTATEEN_AIA_TYPE == "read-only-0" || HSTATEEN_AIA_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(HSTATEEN_AIA_TYPE == "rw", "Unhandled HSTATEEN_AIA_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
       if (HSTATEEN_AIA_TYPE == "read-only-0") {
@@ -140,7 +135,6 @@ fields:
       } else if (HSTATEEN_AIA_TYPE == "read-only-1") {
         return 1;
       }
-      assert(HSTATEEN_AIA_TYPE == "rw", "Unhandled HSTATEEN_AIA_TYPE value");
       return UNDEFINED_LEGAL;
     sw_write(csr_value): |
       if (CSR[mstateen0].AIA == 1'b0){
@@ -163,7 +157,6 @@ fields:
       if (HSTATEEN_IMSIC_TYPE == "read-only-0" || HSTATEEN_IMSIC_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(HSTATEEN_IMSIC_TYPE == "rw", "Unhandled HSTATEEN_IMSIC_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
       if (HSTATEEN_IMSIC_TYPE == "read-only-0") {
@@ -171,7 +164,6 @@ fields:
       } else if (HSTATEEN_IMSIC_TYPE == "read-only-1") {
         return 1;
       }
-      assert(HSTATEEN_IMSIC_TYPE == "rw", "Unhandled HSTATEEN_IMSIC_TYPE value");
       return UNDEFINED_LEGAL;
     sw_write(csr_value): |
       if (CSR[mstateen0].IMSIC == 1'b0){
@@ -191,7 +183,6 @@ fields:
       if (HSTATEEN_CONTEXT_TYPE == "read-only-0" || HSTATEEN_CONTEXT_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(HSTATEEN_CONTEXT_TYPE == "rw", "Unhandled HSTATEEN_CONTEXT_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
       if (HSTATEEN_CONTEXT_TYPE == "read-only-0") {
@@ -199,7 +190,6 @@ fields:
       } else if (HSTATEEN_CONTEXT_TYPE == "read-only-1") {
         return 1;
       }
-      assert(HSTATEEN_CONTEXT_TYPE == "rw", "Unhandled HSTATEEN_CONTEXT_TYPE value");
       return UNDEFINED_LEGAL;
     sw_write(csr_value): |
       if (CSR[mstateen0].CONTEXT == 1'b0){
@@ -233,7 +223,6 @@ fields:
       if (HSTATEEN_JVT_TYPE == "read-only-0" || HSTATEEN_JVT_TYPE == "read-only-1") {
         return CsrFieldType::RO;
       }
-      assert(HSTATEEN_JVT_TYPE == "rw", "Unhandled HSTATEEN_JVT_TYPE value");
       return CsrFieldType::RW;
     reset_value(): |
       if (HSTATEEN_JVT_TYPE == "read-only-0") {
@@ -241,7 +230,6 @@ fields:
       } else if (HSTATEEN_JVT_TYPE == "read-only-1") {
         return 1;
       }
-      assert(HSTATEEN_JVT_TYPE == "rw", "Unhandled HSTATEEN_JVT_TYPE value");
       return UNDEFINED_LEGAL;
     sw_write(csr_value): |
       if (CSR[mstateen0].JVT == 1'b0){
