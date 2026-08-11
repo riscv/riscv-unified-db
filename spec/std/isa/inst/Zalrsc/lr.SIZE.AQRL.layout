@@ -147,11 +147,7 @@ operation(): |
 
   XReg load_value = load_reserved(<%= current_size[:load_reserved_bits] %>, virtual_address, aq, rl, $encoding);
 <%- if size == "w" -%>
-  if (xlen() == 64) {
-    X[xd] = load_value;
-  } else {
-    X[xd] = sext(load_value[31:0], 32);
-  }
+  X[xd] = sext(load_value[31:0], 32);
 <%- else -%>
   X[xd] = load_value;
 <%- end -%>
