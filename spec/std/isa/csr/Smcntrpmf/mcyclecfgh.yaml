@@ -27,6 +27,9 @@ fields:
         name: Sm
     description: If set, then counting of events in M-mode is inhibited.
     reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      CSR[mcyclecfg].MINH = csr_value.MINH;
+      return csr_value.MINH;
 
   SINH:
     alias: mcyclecfg.SINH
@@ -37,6 +40,9 @@ fields:
         name: S
     description: If set, then counting of events in S/HS-mode is inhibited.
     reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      CSR[mcyclecfg].SINH = csr_value.SINH;
+      return csr_value.SINH;
 
   UINH:
     alias: mcyclecfg.UINH
@@ -47,6 +53,9 @@ fields:
         name: U
     description: If set, then counting of events in U-mode is inhibited.
     reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      CSR[mcyclecfg].UINH = csr_value.UINH;
+      return csr_value.UINH;
 
   VSINH:
     alias: mcyclecfg.VSINH
@@ -57,6 +66,9 @@ fields:
         name: H
     description: If set, then counting of events in VS-mode is inhibited.
     reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      CSR[mcyclecfg].VSINH = csr_value.VSINH;
+      return csr_value.VSINH;
 
   VUINH:
     alias: mcyclecfg.VUINH
@@ -67,3 +79,8 @@ fields:
         name: H
     description: If set, then counting of events in VU-mode is inhibited.
     reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      CSR[mcyclecfg].VUINH = csr_value.VUINH;
+      return csr_value.VUINH;
+sw_read(): |
+  return $bits(CSR[mcyclecfg])[63:32];
