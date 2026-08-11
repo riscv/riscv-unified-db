@@ -7,6 +7,7 @@
 #include <udb/inst.hpp>
 
 #include "udb/cpp_exceptions.hpp"
+#include "udb/coverage.hpp"
 #include "udb/cfgs/<%= cfg_arch.name %>/structs.hxx"
 
 #ifdef assert
@@ -144,6 +145,7 @@ namespace udb {
       <%- if inst.operation_ast.nil? -%>
         m_parent->assert(false, "There is no operation() defined for this instruction");
       <%- else -%>
+      <%- IdlCoverageManifest.set_current_source(inst.name, "inst") if defined?(IdlCoverageManifest) -%>
       <%- if !inst.base.nil? -%>
         <%- pruned_ast = inst.pruned_operation_ast(inst.base) -%>
         <%- symtab = inst.fill_symtab(inst.base, pruned_ast) -%>
