@@ -4,7 +4,7 @@
   "title": "Instruction Opcode Schema",
   "description": "Schema for instruction opcode definitions",
   "type": "object",
-  "required": ["$schema", "kind", "data"],
+  "required": ["$schema", "kind", "name", "data"],
   "properties": {
     "$schema": {
       "const": "inst_opcode_schema.json#"

@@ -5,6 +5,7 @@
   "required": [
     "$schema",
     "kind",
+    "name",
     "description",
     "long_name",
     "definedBy",
