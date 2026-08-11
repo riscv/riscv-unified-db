@@ -169,6 +169,7 @@ tests:
           - conditions
           - cli
           - yaml_loader
+          - yaml_resolver
           - cfg_arch
           - cfg
           - mmr
