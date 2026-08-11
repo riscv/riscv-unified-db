@@ -11732,9 +11732,9 @@ Encoding::
 ....
 
 Description::
-Adds a zero-extended non-zero immediate, scaled by 4, to the stack pointer, x2, and writes the result to rd'.
+Adds a zero-extended non-zero immediate, scaled by 4, to the stack pointer, x2, and writes the result to xd'.
 This instruction is used to generate pointers to stack-allocated variables.
-It expands to `addi rd', x2, nzuimm[9:2]`.
+It expands to `addi xd', x2, nzuimm[9:2]`.
 C.ADDI4SPN is only valid when nzuimm ≠ 0; the code points with nzuimm=0 are reserved.
 
 
@@ -15025,7 +15025,7 @@ Description::
 Stores a 32-bit value in register xs2 to memory.
 It computes an effective address by adding the zero-extended offset, scaled by 4,
 to the base address in register xs1.
-It expands to xref:insts:sw.adoc#udb:doc:inst:sw[sw] `rs2, offset(xs1)`.
+It expands to xref:insts:sw.adoc#udb:doc:inst:sw[sw] `xs2, offset(xs1)`.
 
 
 Decode Variables::
@@ -34262,7 +34262,7 @@ RV64::
 ....
 
 Description::
-Reverses the order of the bytes in rs1.
+Reverses the order of the bytes in xs1.
 
 [NOTE]
 The rev8 mnemonic corresponds to different instruction encodings in RV32 and RV64.
@@ -40528,7 +40528,7 @@ Encoding::
 ....
 
 Description::
-Adds elements from vector register vs2 to scalar register rs1 according to mask vm and stores results in vector register vd. Element width is determined by SEW setting.
+Adds elements from vector register vs2 to scalar register xs1 according to mask vm and stores results in vector register vd. Element width is determined by SEW setting.
 
 
 Decode Variables::
@@ -59263,7 +59263,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 equal scalar in rs1, according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 equal scalar in xs1, according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -59369,7 +59369,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are greater than scalar in rs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are greater than scalar in xs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -59475,7 +59475,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are greater than scalar in rs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are greater than scalar in xs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -59686,7 +59686,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are less than or equal to scalar in rs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are less than or equal to scalar in xs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -59845,7 +59845,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are less than or equal to scalar in rs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are less than or equal to scalar in xs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -59951,7 +59951,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are less than scalar in rs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are less than scalar in xs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -60057,7 +60057,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are less than scalar in rs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are less than scalar in xs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -60216,7 +60216,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 do not equal scalar in rs1, according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 do not equal scalar in xs1, according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -64430,7 +64430,7 @@ Encoding::
 ....
 
 Description::
-Set the vtype and vl CSRs, and write the new value of vl into rd.
+Set the vtype and vl CSRs, and write the new value of vl into xd.
 
 Decode Variables::
 [width="100%", cols="1,2", options="header"]
@@ -64481,7 +64481,7 @@ Encoding::
 ....
 
 Description::
-Set the vtype and vl CSRs, and write the new value of vl into rd.
+Set the vtype and vl CSRs, and write the new value of vl into xd.
 
 Decode Variables::
 [width="100%", cols="1,2", options="header"]
@@ -65320,7 +65320,7 @@ Encoding::
 ....
 
 Description::
-Performs logical left shift on elements from vs2 using shift amount from rs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
+Performs logical left shift on elements from vs2 using shift amount from xs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -67590,7 +67590,7 @@ Encoding::
 ....
 
 Description::
-Performs arithmetic right shift on elements from vs2 using shift amount from rs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
+Performs arithmetic right shift on elements from vs2 using shift amount from xs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -67749,7 +67749,7 @@ Encoding::
 ....
 
 Description::
-Performs logical right shift on elements from vs2 using shift amount from rs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
+Performs logical right shift on elements from vs2 using shift amount from xs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -71537,7 +71537,7 @@ Encoding::
 ....
 
 Description::
-Subtracts elements of vs2 from scalar rs1 according to mask vm and stores results in vd. Element width is determined by SEW setting.
+Subtracts elements of vs2 from scalar xs1 according to mask vm and stores results in vd. Element width is determined by SEW setting.
 
 
 Decode Variables::
