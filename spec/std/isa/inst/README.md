@@ -62,7 +62,7 @@ operation(): |
   - **`name`**: Name of the field (e.g., `xs1`, `xs2`).
   - **`location`**: Bit positions of the field in the instruction encoding.
 - **`access`**: Specifies the privilege mode access for the instruction (`always`, `sometimes`, or `never`).
-- **`data_independent_timing`**: Indicates whether the execution timing is data-independent.
+- **`data_independent_timing`**: Indicates whether the execution timing is data-independent. A boolean (`true`/`false`) indicates if the instruction always or never has data-independent timing. A string indicates the extension (e.g., `Zkt` or `Zvkt`) that requires the instruction to have data-independent timing. A boolean (`true`/`false`) indicates if the instruction always or never has data-independent timing. A string indicates the extension (e.g., `Zkt` or `Zvkt`) that requires the instruction to have data-independent timing. A boolean (`true`/`false`) indicates if the instruction always or never has data-independent timing. A string indicates the extension (e.g., `Zkt` or `Zvkt`) that requires the instruction to have data-independent timing.
 - **`operation()`**: Optional field for IDL description. Leave empty if unused.
 
 ## JSON Schema

@@ -32,5 +32,5 @@ access:
 pseudoinstructions:
   - when: xs1 == 0
     to: vwcvtu.x.x.v vd, vs2, vm
-data_independent_timing: true
+data_independent_timing: Zvkt
 operation(): |

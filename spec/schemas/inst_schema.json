@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "v0.2",
+  "$id": "v0.3",
   "$defs": {
     "fully_resolved_opcodes": {
       "type": "object",
@@ -391,8 +391,15 @@
       "description": "Assembly format of the instruction. Can use decode variables"
     },
     "data_independent_timing": {
-      "type": "boolean",
-      "description": "Whether or not the instruction must execute with data-independent timing when the Zkt extension is supported",
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Whether the instruction always has data-independent timing (true), never does (false), or does when a specific extension is implemented (e.g., 'Zkt' or 'Zvkt')",
       "default": false
     },
     "pseudoinstructions": {
