@@ -524,6 +524,11 @@ jobs:
           - z3_extensions
           - z3_finite_array
           - z3_parameter_constraints
+          - csr
+          - gem_install
+          - register_file_obj
+          - schema_defs_pow2
+          - yaml_resolver
   regress-gen-go:
     runs-on: ubuntu-latest
     steps:

@@ -6,17 +6,10 @@
 
 require_relative "test_helper"
 
-require_relative "test_cfg"
-require_relative "test_cfg_arch"
-require_relative "test_cli"
-require_relative "test_conditions"
-require_relative "test_csr"
-require_relative "test_gem_install"
-require_relative "test_instruction"
-require_relative "test_logic"
-require_relative "test_mmr"
-require_relative "test_mmr_schema"
-require_relative "test_schema_defs_pow2"
-require_relative "test_yaml_loader"
-require_relative "test_z3"
-require_relative "test_register_file_obj"
+# Load every test file in this directory. Enumerating them by hand meant a new
+# test file silently never ran here until someone remembered to add it.
+Dir.children(__dir__).grep(/\Atest_.+\.rb\z/).sort.each do |test_file|
+  next if test_file == "test_helper.rb"
+
+  require_relative test_file
+end
