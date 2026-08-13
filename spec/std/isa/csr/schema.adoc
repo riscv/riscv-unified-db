@@ -72,12 +72,12 @@ Indirect::
 | *key*         | indirect
 | *value type*  | Boolean
 | *default*     | false
-| *description* | Whether or not the CSR is accessible through the indirect CSRs of the `Smcdrind`/`Sscdrind` extensions.
+| *description* | Whether or not the CSR is accessible through the indirect CSRs of the `Smcsrind`/`Sscsrind` extensions.
 |===
 
 Address::
 
-[IMPORTANT] `address` is a required key *unless* the CSR is only accessible through the indirect registers of the `Smcsrind`/`Sscrind` extensions, in which case `indirect_address` is required. Both `address` and `indirect_address` may be specified when a CSR is accessible directly and indirectly.
+[IMPORTANT] `address` is a required key *unless* the CSR is only accessible through the indirect registers of the `Smcsrind`/`Sscsrind` extensions, in which case `indirect_address` is required. Both `address` and `indirect_address` may be specified when a CSR is accessible directly and indirectly.
 
 |===
 | *key*         | address
@@ -88,7 +88,7 @@ Address::
 |===
 | *key*         | indirect_address
 | *value type*  | Integer
-| *description* | Indirect sddress of the CSR, as given to the indirect CSRs of the `Smcsrind`/`Sscdrind` extensions
+| *description* | Indirect address of the CSR, as given to the indirect CSRs of the `Smcsrind`/`Sscsrind` extensions
 |===
 
 Virtual Address::

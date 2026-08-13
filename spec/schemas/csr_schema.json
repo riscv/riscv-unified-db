@@ -225,7 +225,7 @@
     },
     "indirect_address": {
       "type": "integer",
-      "description": "Indirect address of the CSR, as given to the indirect CSRs of the `Smcsrind`/`Sscdrind` extensions"
+      "description": "Indirect address of the CSR, as given to the indirect CSRs of the `Smcsrind`/`Sscsrind` extensions"
     },
     "indirect_slot": {
       "type": "integer",
