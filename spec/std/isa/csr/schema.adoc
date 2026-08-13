@@ -53,7 +53,7 @@ Privilege Mode::
 |===
 | *key*         | priv_mode
 | *value type*  | one of ["M", "S", "U", or "VS"]
-| *description* | The least-privilege mode that can access this CSR
+| *description* | The least-privilege mode that can access this CSR. For an indirect CSR, this also identifies the target indirect CSR address space.
 |===
 
 Length::
@@ -89,6 +89,12 @@ Address::
 | *key*         | indirect_address
 | *value type*  | Integer
 | *description* | Indirect address of the CSR, as given to the indirect CSRs of the `Smcsrind`/`Sscsrind` extensions
+|===
+
+|===
+| *key*         | indirect_slot
+| *value type*  | Integer between 1-6
+| *description* | "Indirect window slot of the CSR, corresponding to its appearance in *ireg<slot>"
 |===
 
 Virtual Address::
