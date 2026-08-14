@@ -261,6 +261,7 @@ add_dependencies(test_bits_random ${RANDOM_TESTS})
 
 add_executable(test_util
   ${CMAKE_SOURCE_DIR}/test/test_util.cpp
+  ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
 )
 target_include_directories(test_util PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_util PRIVATE hart Catch2::Catch2WithMain)
@@ -304,6 +305,7 @@ include(CTest)
 include(Catch)
 catch_discover_tests(test_bits_directed)
 catch_discover_tests(test_regfile)
+catch_discover_tests(test_util)
 
 foreach (random_test IN LISTS RANDOM_TESTS)
   catch_discover_tests(${random_test})
