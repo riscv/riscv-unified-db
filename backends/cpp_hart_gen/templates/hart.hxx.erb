@@ -251,7 +251,7 @@ namespace udb {
           csr_handle.valid = false;
           return csr_handle;
         } else {
-          csr_handle.valid = true;
+          csr_handle.valid = csr->second->defined();
           csr_handle.name = csr->second->name();
           csr_handle.addr_type = CsrAddressType::Indirect;
           csr_handle.address = csr_indirect_addr;
