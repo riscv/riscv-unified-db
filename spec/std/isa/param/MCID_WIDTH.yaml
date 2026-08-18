@@ -9,7 +9,7 @@ name: MCID_WIDTH
 description: |
   Number of bits used for the Monitoring Counter ID field (MCID).
   Default is 12.
-long_name: TODO
+long_name: Width of the Monitoring Counter ID (MCID) field
 schema:
   type: integer
   minimum: 1

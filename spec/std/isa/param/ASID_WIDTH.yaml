@@ -9,7 +9,7 @@ name: ASID_WIDTH
 description:
   Number of implemented ASID bits. Maximum is 16 for XLEN==64, and 9 for
   XLEN==32
-long_name: TODO
+long_name: Width of satp.ASID
 schema:
   type: integer
   minimum: 0

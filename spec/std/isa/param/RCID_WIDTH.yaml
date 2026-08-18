@@ -9,7 +9,7 @@ name: RCID_WIDTH
 description: |
   Number of bits used for the Resource Control ID field (RCID).
   Default is 12.
-long_name: TODO
+long_name: Width of the Resource Control ID (RCID) field
 schema:
   type: integer
   minimum: 1
