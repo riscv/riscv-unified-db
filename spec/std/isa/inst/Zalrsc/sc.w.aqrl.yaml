@@ -134,10 +134,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  if (implemented?(ExtensionName::A) && MISA_CSR_IMPLEMENTED && (CSR[misa].A == 1'b0)) {
-    reserved_instruction($encoding);
-  }
-
   XReg virtual_address = X[xs1];
   XReg value = X[xs2];
 

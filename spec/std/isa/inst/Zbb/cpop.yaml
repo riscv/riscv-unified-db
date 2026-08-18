@@ -38,10 +38,6 @@ access:
   vs: always
   vu: always
 operation(): |
-  if (implemented?(ExtensionName::B) && MISA_CSR_IMPLEMENTED && (CSR[misa].B == 1'b0)) {
-    reserved_instruction($encoding);
-  }
-
   XReg bitcount = 0;
   XReg xs1_val = X[xs1];
 
