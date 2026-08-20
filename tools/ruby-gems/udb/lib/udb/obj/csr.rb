@@ -276,11 +276,7 @@ module Udb
       return T.must(base) unless base.nil?
 
       case @data["length"]
-      when "MXLEN", "XLEN"
-        # The effective XLEN of a mode is never larger than MXLEN. The requirements
-        # on SXLEN, UXLEN, VSXLEN and VUXLEN in spec/std/isa/param state this, each
-        # transitively bounding its mode by M-mode. So MXLEN is the widest a CSR can
-        # be whether its length follows M-mode or the executing mode.
+      when "MXLEN"
         cfg_arch.mxlen || 64
       when "SXLEN"
         if cfg_arch.param_values.key?("SXLEN")
@@ -301,6 +297,42 @@ module Udb
           end
         else
           64
+        end
+      when "XLEN"
+        if cfg_arch.possible_extensions.map(&:name).include?("Sm")
+          cfg_arch.mxlen || 64
+        elsif cfg_arch.possible_extensions.map(&:name).include?("S")
+          if cfg_arch.param_values.key?("SXLEN")
+            if cfg_arch.param_values.fetch("SXLEN").size > 1
+              cfg_arch.param_values.fetch("SXLEN").max
+            else
+              cfg_arch.param_values.fetch("SXLEN").fetch(0)
+            end
+          else
+            # SXLEN can never be greater than MXLEN
+            cfg_arch.mxlen || 64
+          end
+        elsif cfg_arch.possible_extensions.map(&:name).include?("H")
+          if cfg_arch.param_values.key?("VSXLEN")
+            if cfg_arch.param_values["VSXLEN"].size > 1
+              cfg_arch.param_values["VSXLEN"].max
+            else
+              cfg_arch.param_values["VSXLEN"][0]
+            end
+          else
+            # VSXLEN can never be greater than MXLEN or SXLEN
+            if cfg_arch.param_values.key?("SXLEN")
+              if cfg_arch.param_values.fetch("SXLEN").size > 1
+                cfg_arch.param_values.fetch("SXLEN").max
+              else
+                cfg_arch.param_values.fetch("SXLEN").fetch(0)
+              end
+            else
+              cfg_arch.mxlen || 64
+            end
+          end
+        else
+          raise "Unexpected"
         end
       when Integer
         @data["length"]
