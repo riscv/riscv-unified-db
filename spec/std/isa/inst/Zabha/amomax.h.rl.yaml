@@ -38,6 +38,6 @@ access:
   vu: always
 operation(): |
   XReg virtual_address = X[xs1];
-  X[xd] = amo(16, virtual_address, X[xs2][15:0], AmoOperation::Max, 1'b0, 1'b1, $encoding);
+  X[xd] = sext(amo(16, virtual_address, X[xs2][15:0], AmoOperation::Max, 1'b0, 1'b1, $encoding), 16);
 
   memory_model_release();

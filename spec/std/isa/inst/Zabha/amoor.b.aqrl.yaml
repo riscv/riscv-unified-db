@@ -40,6 +40,6 @@ operation(): |
   memory_model_acquire();
 
   XReg virtual_address = X[xs1];
-  X[xd] = amo(8, virtual_address, X[xs2][7:0], AmoOperation::Or, 1'b1, 1'b1, $encoding);
+  X[xd] = sext(amo(8, virtual_address, X[xs2][7:0], AmoOperation::Or, 1'b1, 1'b1, $encoding), 8);
 
   memory_model_release();
