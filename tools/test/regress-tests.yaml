@@ -172,6 +172,7 @@ tests:
           - yaml_loader
           - cfg_arch
           - cfg
+          - csr
           - mmr
           - mmr_schema
           - schema_versioning
