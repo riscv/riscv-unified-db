@@ -147,4 +147,38 @@ class TestCsr < Minitest::Test
     assert_equal 3, pretty.scan("== 0").size
     assert_equal 3, pretty.scan("== 1").size
   end
+
+  # The fixed-width lengths name one field and do not consult the mode list.
+  def test_length_cond_for_fixed_width_lengths
+    arch = make_cfg_arch(dynamic_modes: %w[M S U VS VU])
+
+    mxlen = make_csr(arch, length: "MXLEN", priv_mode: "M")
+    assert_equal "CSR[misa].MXL == 0", mxlen.length_cond32
+    assert_equal "CSR[misa].MXL == 1", mxlen.length_cond64
+
+    sxlen = make_csr(arch, length: "SXLEN", priv_mode: "S")
+    assert_equal "CSR[mstatus].SXL == 0", sxlen.length_cond32
+    assert_equal "CSR[mstatus].SXL == 1", sxlen.length_cond64
+
+    vsxlen = make_csr(arch, length: "VSXLEN", priv_mode: "VS")
+    assert_equal "CSR[hstatus].VSXL == 0", vsxlen.length_cond32
+    assert_equal "CSR[hstatus].VSXL == 1", vsxlen.length_cond64
+  end
+
+  # A CSR of fixed integer width has no xlen condition to report.
+  def test_length_cond_raises_for_integer_length
+    csr = make_csr(make_cfg_arch(dynamic_modes: %w[M]), length: 32, priv_mode: "M")
+
+    err = assert_raises(RuntimeError) { csr.length_cond32 }
+    assert_match(/Unexpected length/, err.message)
+  end
+
+  # Asking for the condition when nothing can vary is a caller error, not an
+  # empty string. The templates only reach it when some mode does vary.
+  def test_length_cond_raises_when_no_mode_varies
+    csr = make_csr(make_cfg_arch(dynamic_modes: []), length: "XLEN", priv_mode: "U")
+
+    err = assert_raises(RuntimeError) { csr.length_cond32 }
+    assert_match(/has a dynamic XLEN/, err.message)
+  end
 end
