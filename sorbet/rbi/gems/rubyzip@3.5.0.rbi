@@ -289,7 +289,7 @@ class Zip::Entry
   def ftype; end
   def gather_fileinfo_from_srcpath(src_path); end
   def get_extra_attributes_from_path(path); end
-  def get_input_stream(&block); end
+  def get_input_stream(decrypter: T.unsafe(nil), &block); end
   def get_raw_input_stream(&block); end
   def gp_flags; end
   def gp_flags=(param); end
