@@ -11,7 +11,7 @@ uv = "0.12.5"
 cmake = "4.4.2"
 make = "4.4.1"
 shellcheck = "0.11.0"
-"github-cli" = "2.97.0"
+"github-cli" = "2.98.0"
 
 [env]
 RUBY_YJIT_ENABLE = "1"
