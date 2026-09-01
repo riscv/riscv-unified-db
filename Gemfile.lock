@@ -25,7 +25,7 @@ PATH
 PATH
   remote: tools/ruby-gems/udb-gen
   specs:
-    udb-gen (0.1.15)
+    udb-gen (0.1.16)
       asciidoctor
       asciidoctor-diagram
       asciidoctor-pdf
@@ -35,7 +35,7 @@ PATH
       tty-option
       tty-progressbar
       tty-table
-      udb (= 0.1.16)
+      udb (= 0.1.17)
       write_xlsx
 
 PATH
@@ -46,7 +46,7 @@ PATH
 PATH
   remote: tools/ruby-gems/udb
   specs:
-    udb (0.1.16)
+    udb (0.1.17)
       activesupport
       asciidoctor
       awesome_print
