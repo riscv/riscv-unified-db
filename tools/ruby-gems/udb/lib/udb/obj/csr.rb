@@ -21,9 +21,8 @@ module Udb
     BITS128_TYPE = Idl::Type.new(:bits, width: 128).freeze
     ENCODING_SIZE_VAR = Idl::Var.new("__instruction_encoding_size", BITS6_TYPE, 32).freeze
     # Privilege mode => IDL expression naming the field that selects the effective
-    # XLEN in that mode. Mirrors the mode dispatch in `base32?` in globals.isa.
-    # Debug mode executes at MXLEN, so it shares M-mode's field.
-    XLEN_FIELD_BY_MODE = {
+    # XLEN in that mode. Debug mode executes at MXLEN, so it shares M-mode's field.
+    MODE_TO_XLEN_FIELD = {
       "M" => "CSR[misa].MXL",
       "D" => "CSR[misa].MXL",
       "S" => "CSR[mstatus].SXL",
@@ -31,6 +30,7 @@ module Udb
       "VS" => "CSR[hstatus].VSXL",
       "VU" => "CSR[vsstatus].UXL"
     }.freeze
+    XLEN_TO_ENCODING = { 32 => 0, 64 => 1 }.freeze
     # Add all methods in this module to this type of database object.
     include HasFields
 
@@ -204,9 +204,6 @@ module Udb
         # dynamic if either we don't know VSXLEN or VSXLEN is explicitly mutable
         !cfg_arch.param_values.key?("VSXLEN") || cfg_arch.param_values["VSXLEN"].size > 1
       when "XLEN"
-        # The effective XLEN follows whichever mode is executing, so the length is
-        # dynamic when any mode that can reach this CSR has a variable XLEN.
-        # CsrField#dynamic_location? already asks the question this way.
         modes_with_dynamic_xlen.any?
       else
         raise "Unexpected length"
@@ -354,22 +351,23 @@ module Udb
       modes_with_access.select { |mode| cfg_arch.multi_xlen_in_mode?(mode) }
     end
 
-    # @param encoding [String] "0" for 32-bit, "1" for 64-bit
-    # @return [String] IDL condition of when the effective xlen has the given encoding
-    def length_cond(encoding)
+    # @param xlen [Integer] 32 or 64
+    # @return [String] IDL condition of when the effective xlen is +xlen+
+    def length_cond(xlen)
+      encoding = XLEN_TO_ENCODING.fetch(xlen)
       case @data["length"]
       when "MXLEN"
-        "CSR[misa].MXL == #{encoding}"
+        "#{MODE_TO_XLEN_FIELD['M']} == #{encoding}"
       when "SXLEN"
-        "CSR[mstatus].SXL == #{encoding}"
+        "#{MODE_TO_XLEN_FIELD['S']} == #{encoding}"
       when "VSXLEN"
-        "CSR[hstatus].VSXL == #{encoding}"
+        "#{MODE_TO_XLEN_FIELD['VS']} == #{encoding}"
       when "XLEN"
         modes = modes_with_dynamic_xlen
         raise "No mode with access to #{name} has a dynamic XLEN" if modes.empty?
 
         modes.map { |mode|
-          "(priv_mode() == PrivilegeMode::#{mode} && #{XLEN_FIELD_BY_MODE.fetch(mode)} == #{encoding})"
+          "(priv_mode() == PrivilegeMode::#{mode} && #{MODE_TO_XLEN_FIELD.fetch(mode)} == #{encoding})"
         }.join(" || ")
       else
         raise "Unexpected length #{@data['length']} for #{name}"
@@ -377,10 +375,10 @@ module Udb
     end
 
     # @return [String] IDL condition of when the effective xlen is 32
-    def length_cond32 = length_cond("0")
+    def length_cond32 = length_cond(32)
 
     # @return [String] IDL condition of when the effective xlen is 64
-    def length_cond64 = length_cond("1")
+    def length_cond64 = length_cond(64)
 
     # @param effective_xlen [Integer or nil] 32 or 64 for fixed xlen, nil for dynamic
     # @return [String] Pretty-printed length string
@@ -389,8 +387,8 @@ module Udb
       if dynamic_length?
         if effective_xlen.nil?
           [
-            "* #{length(32)} when #{length_cond('0')}",
-            "* #{length(64)} when #{length_cond('1')}"
+            "* #{length(32)} when #{length_cond(32)}",
+            "* #{length(64)} when #{length_cond(64)}"
           ].join("\n")
         else
           "#{length(effective_xlen)}-bit"

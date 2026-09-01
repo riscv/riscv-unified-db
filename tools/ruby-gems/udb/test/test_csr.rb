@@ -16,10 +16,7 @@ require "udb/cfg_arch"
 # Csr#length_cond64 and Csr#length_pretty in the "XLEN" case.
 #
 # An XLEN-length CSR is dynamic when the effective XLEN can vary in ANY privilege
-# mode that can reach it, which is exactly
-#   modes_with_access.any? { |mode| cfg_arch.multi_xlen_in_mode?(mode) }
-# The per-mode judgement belongs to ConfiguredArchitecture#multi_xlen_in_mode? and
-# is tested there, so these tests stub it and pin how Csr consults it.
+# mode that can reach it.
 class TestCsr < Minitest::Test
   include Udb
 
@@ -57,28 +54,32 @@ class TestCsr < Minitest::Test
   # S-mode alone makes the effective XLEN variable, so the CSR IS dynamic.
   # (Regression pin: the buggy `A || B && C` precedence returns false here.)
   def test_xlen_dynamic_when_only_sxlen_mutable
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[S]), length: "XLEN", priv_mode: "S")
+    arch = make_cfg_arch(dynamic_modes: %w[S])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "S")
     assert csr.dynamic_length?,
       "XLEN CSR must be dynamic when S-mode is possible and SXLEN is mutable, even without H"
   end
 
   # VS-mode alone makes the effective XLEN variable, so the CSR IS dynamic.
   def test_xlen_dynamic_when_only_vsxlen_mutable
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[VS]), length: "XLEN", priv_mode: "S")
+    arch = make_cfg_arch(dynamic_modes: %w[VS])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "S")
     assert csr.dynamic_length?,
       "XLEN CSR must be dynamic when H-mode is possible and VSXLEN is mutable, even without S"
   end
 
   # Both S and VS vary -> still dynamic.
   def test_xlen_dynamic_when_both_conditions_hold
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[S VS]), length: "XLEN", priv_mode: "S")
+    arch = make_cfg_arch(dynamic_modes: %w[S VS])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "S")
     assert csr.dynamic_length?,
       "XLEN CSR must be dynamic when both SXLEN and VSXLEN are mutable"
   end
 
   # MXLEN unknown -> M-mode varies -> dynamic regardless of S/H.
   def test_xlen_dynamic_when_mxlen_unknown
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[M]), length: "XLEN", priv_mode: "M")
+    arch = make_cfg_arch(dynamic_modes: %w[M])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "M")
     assert csr.dynamic_length?,
       "XLEN CSR must be dynamic when MXLEN is unknown"
   end
@@ -86,35 +87,40 @@ class TestCsr < Minitest::Test
   # No mode with access varies -> NOT dynamic.
   # Guards against an over-broad fix that makes everything dynamic.
   def test_xlen_not_dynamic_when_fully_pinned
-    csr = make_csr(make_cfg_arch(dynamic_modes: []), length: "XLEN", priv_mode: "S")
+    arch = make_cfg_arch(dynamic_modes: [])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "S")
     refute csr.dynamic_length?,
       "XLEN CSR must not be dynamic when no mode with access can change XLEN"
   end
 
   # U-mode is reachable for a priv_mode: U CSR, so UXLEN alone makes it dynamic.
   def test_xlen_dynamic_when_only_umode_varies
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[U]), length: "XLEN", priv_mode: "U")
+    arch = make_cfg_arch(dynamic_modes: %w[U])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "U")
     assert csr.dynamic_length?,
       "XLEN CSR readable in U-mode must be dynamic when UXLEN is mutable"
   end
 
   # VU-mode likewise.
   def test_xlen_dynamic_when_only_vumode_varies
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[VU]), length: "XLEN", priv_mode: "U")
+    arch = make_cfg_arch(dynamic_modes: %w[VU])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "U")
     assert csr.dynamic_length?,
       "XLEN CSR readable in VU-mode must be dynamic when VUXLEN is mutable"
   end
 
   # A varying mode that cannot reach the CSR must not make it dynamic.
   def test_xlen_not_dynamic_when_varying_mode_has_no_access
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[U VU]), length: "XLEN", priv_mode: "M")
+    arch = make_cfg_arch(dynamic_modes: %w[U VU])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "M")
     refute csr.dynamic_length?,
       "M-mode-only CSR must not be dynamic because U-mode XLEN varies"
   end
 
   # The emitted condition must name every reachable mode that can vary, U and VU included.
   def test_length_cond_covers_u_and_vu
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[M S U VS VU]), length: "XLEN", priv_mode: "U")
+    arch = make_cfg_arch(dynamic_modes: %w[M S U VS VU])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "U")
 
     assert_equal(
       "(priv_mode() == PrivilegeMode::M && CSR[misa].MXL == 0) || " \
@@ -130,7 +136,8 @@ class TestCsr < Minitest::Test
 
   # ...and must name only those modes. An M-mode CSR gets the M disjunct alone.
   def test_length_cond_is_limited_to_modes_with_access
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[M S U VS VU]), length: "XLEN", priv_mode: "M")
+    arch = make_cfg_arch(dynamic_modes: %w[M S U VS VU])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "M")
 
     assert_equal "(priv_mode() == PrivilegeMode::M && CSR[misa].MXL == 0)", csr.length_cond32
     refute_includes csr.length_cond32, "SXL"
@@ -140,7 +147,8 @@ class TestCsr < Minitest::Test
   # Every disjunct must carry the xlen encoding. The previous String#sub filled in
   # only the first, leaving a literal "%%" in the rendered docs.
   def test_length_pretty_fills_every_disjunct
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[M S VS]), length: "XLEN", priv_mode: "S")
+    arch = make_cfg_arch(dynamic_modes: %w[M S VS])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "S")
 
     pretty = csr.length_pretty
     refute_includes pretty, "%%", "length_pretty must not leak the substitution placeholder"
@@ -167,7 +175,8 @@ class TestCsr < Minitest::Test
 
   # A CSR of fixed integer width has no xlen condition to report.
   def test_length_cond_raises_for_integer_length
-    csr = make_csr(make_cfg_arch(dynamic_modes: %w[M]), length: 32, priv_mode: "M")
+    arch = make_cfg_arch(dynamic_modes: %w[M])
+    csr = make_csr(arch, length: 32, priv_mode: "M")
 
     err = assert_raises(RuntimeError) { csr.length_cond32 }
     assert_match(/Unexpected length/, err.message)
@@ -176,7 +185,8 @@ class TestCsr < Minitest::Test
   # Asking for the condition when nothing can vary is a caller error, not an
   # empty string. The templates only reach it when some mode does vary.
   def test_length_cond_raises_when_no_mode_varies
-    csr = make_csr(make_cfg_arch(dynamic_modes: []), length: "XLEN", priv_mode: "U")
+    arch = make_cfg_arch(dynamic_modes: [])
+    csr = make_csr(arch, length: "XLEN", priv_mode: "U")
 
     err = assert_raises(RuntimeError) { csr.length_cond32 }
     assert_match(/has a dynamic XLEN/, err.message)
