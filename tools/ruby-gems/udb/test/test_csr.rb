@@ -6,7 +6,6 @@
 
 require_relative "test_helper"
 
-require "ostruct"
 require "concurrent"
 require "sorbet-runtime"
 require "udb/obj/csr"
