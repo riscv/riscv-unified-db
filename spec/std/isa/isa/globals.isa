@@ -2978,8 +2978,10 @@ function amo {
       return atomic_read_modify_write_16(physical_address, value, op);
     } else if (N == 32) {
       return atomic_read_modify_write_32(physical_address, value, op);
-    } else {
+    } else if (N == 64) {
       return atomic_read_modify_write_64(physical_address, value, op);
+    } else {
+      unreachable();
     }
 
   }
