@@ -118,11 +118,13 @@ namespace udb {
             <%- end -%>
           },
           <%- if cfg_arch.not_prohibited_csrs.any?(&:indirect?) -%>
-          <%- duplicate_indirect_keys = cfg_arch.not_prohibited_csrs.select(&:indirect?).group_by { |csr| [csr.priv_mode, csr.indirect_address, csr.indirect_slot] }.select { |_key, csrs| csrs.size > 1 } -%>
-          <%- unless duplicate_indirect_keys.empty? -%>
-          <%- duplicate_indirect_key_details = duplicate_indirect_keys.map { |(mode, addr, slot), csrs| "#{mode}:#{addr}:#{slot} => #{csrs.map(&:name).join(', ')}" }.join("; ") -%>
-          <%- raise "Duplicate indirect CSR keys: #{duplicate_indirect_key_details}" -%>
-          <%- end -%>
+          <%-
+            duplicate_indirect_keys = cfg_arch.not_prohibited_csrs.select(&:indirect?).group_by { |csr| [csr.priv_mode, csr.indirect_address, csr.indirect_slot] }.select { |_key, csrs| csrs.size > 1 }
+            unless duplicate_indirect_keys.empty?
+              duplicate_indirect_key_details = duplicate_indirect_keys.map { |(mode, addr, slot), csrs| "#{mode}:#{addr}:#{slot} => #{csrs.map(&:name).join(', ')}" }.join("; ")
+              raise "Duplicate indirect CSR keys: #{duplicate_indirect_key_details}"
+            end
+          -%>
           m_csr_indirect_addr_map{
             <%- cfg_arch.not_prohibited_csrs.map do |csr| -%>
               <%- if csr.indirect? -%>
