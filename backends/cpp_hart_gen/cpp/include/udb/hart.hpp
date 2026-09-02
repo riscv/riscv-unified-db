@@ -3,6 +3,7 @@
 #include <array>
 #include <map>
 #include <memory>
+#include <print>
 #include <set>
 #include <string>
 #include <tuple>
@@ -355,16 +356,16 @@ namespace udb {
         const ExtensionName& ext, const VersionRequirement& req) const = 0;
 
     [[noreturn]] void unpredictable(const char* why) {
-      fmt::print(stderr, "Encountered unpredictable behavior: {}\n", why);
+      std::print(stderr, "Encountered unpredictable behavior: {}\n", why);
       throw UnpredictableBehaviorException();
     }
     [[noreturn]] void unpredictable(const std::string_view& why) {
-      fmt::print(stderr, "Encountered unpredictable behavior: {}\n", why);
+      std::print(stderr, "Encountered unpredictable behavior: {}\n", why);
       throw UnpredictableBehaviorException();
     }
 
     [[noreturn]] void unreachable() {
-      fmt::print(stderr, "FATAL: Executing unreachable IDL line\n");
+      std::print(stderr, "FATAL: Executing unreachable IDL line\n");
       std::abort();
     }
 
