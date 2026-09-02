@@ -17,9 +17,28 @@ LOGGER = logging.getLogger(__name__)
 def check_requirement(req, exts):
     if isinstance(req, str):
         return req in exts
-    elif isinstance(req, dict) and "name" in req:
-        # If it has a name field, just match the extension name and ignore version
-        return req["name"] in exts
+    elif isinstance(req, dict):
+        if "extension" in req and req["extension"] is not None:
+            # UDB wraps requirements in an {extension: ...} term
+            return check_requirement(req["extension"], exts)
+        if "anyOf" in req:
+            alternatives = req["anyOf"] if isinstance(req["anyOf"], list) else [req["anyOf"]]
+            return any(check_requirement(alt, exts) for alt in alternatives)
+        if "oneOf" in req:
+            alternatives = req["oneOf"] if isinstance(req["oneOf"], list) else [req["oneOf"]]
+            return any(check_requirement(alt, exts) for alt in alternatives)
+        if "allOf" in req:
+            required = req["allOf"] if isinstance(req["allOf"], list) else [req["allOf"]]
+            return all(check_requirement(r, exts) for r in required)
+        if "not" in req and isinstance(req["not"], dict):
+            # A "not" term requires the nested requirement to be absent
+            return not check_requirement(req["not"], exts)
+        if isinstance(req.get("name"), str):
+            # If it has a name field, just match the extension name and ignore version
+            return req["name"] in exts
+        if "xlen" in req or "param" in req:
+            # xlen and param terms are not extension requirements
+            return True
     return False
 
 
@@ -134,6 +153,10 @@ def parse_extension_requirements(extensions_spec):
             return lambda enabled_exts: any(ext_part in enabled_exts for ext_part in ext_parts)
         return lambda exts: extension in exts
 
+    if "extension" in extensions_spec and extensions_spec["extension"] is not None:
+        # UDB wraps requirements in an {extension: ...} term
+        extensions_spec = extensions_spec["extension"]
+
     # Handle complex cases with allOf/oneOf/anyOf
     if "allOf" in extensions_spec:
         required = extensions_spec["allOf"]
@@ -149,14 +172,7 @@ def parse_extension_requirements(extensions_spec):
             alternatives = [alternatives]
 
         # Process each alternative, which could be a string or a dict with name/version
-        def check_alternative_one_of(alt, exts):
-            if isinstance(alt, str):
-                return alt in exts
-            elif isinstance(alt, dict) and "name" in alt:
-                return alt["name"] in exts
-            return False
-
-        return lambda exts: any(check_alternative_one_of(alt, exts) for alt in alternatives)
+        return lambda exts: any(check_requirement(alt, exts) for alt in alternatives)
 
     # Handle anyOf case (most common in the error output)
     if "anyOf" in extensions_spec:
@@ -165,23 +181,10 @@ def parse_extension_requirements(extensions_spec):
             alternatives = [alternatives]
 
         # Process each alternative, which could be a string, dict with name/version, or nested allOf
-        def check_alternative(alt, exts):
-            if isinstance(alt, str):
-                return alt in exts
-            elif isinstance(alt, dict):
-                if "allOf" in alt:
-                    reqs = alt["allOf"]
-                    if isinstance(reqs, str):
-                        reqs = [reqs]
-                    return all(check_requirement(r, exts) for r in reqs)
-                elif "name" in alt:
-                    return alt["name"] in exts
-            return False
-
-        return lambda exts: any(check_alternative(alt, exts) for alt in alternatives)
+        return lambda exts: any(check_requirement(alt, exts) for alt in alternatives)
 
     # Handle direct name/version specification
-    if "name" in extensions_spec and "version" in extensions_spec:
+    if isinstance(extensions_spec.get("name"), str):
         extension = extensions_spec["name"]
         # We don't actually check the version, just the extension name
         return lambda exts: extension in exts
