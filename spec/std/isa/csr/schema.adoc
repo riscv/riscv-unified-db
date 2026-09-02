@@ -94,7 +94,7 @@ Address::
 |===
 | *key*         | indirect_slot
 | *value type*  | Integer between 1-6
-| *description* | "Indirect window slot of the CSR, corresponding to its appearance in *ireg<slot>"
+| *description* | Indirect window slot of the CSR, corresponding to its appearance in *ireg<slot>
 |===
 
 Virtual Address::
