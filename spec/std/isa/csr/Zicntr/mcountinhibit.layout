@@ -87,7 +87,7 @@ fields:
       When set, `hpmcounter<%= hpm_num %>.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[<%= hpm_num %>] == false"]
-      Since hpmcounter<%= hpm_num %> is not implemented, this field is read-only zero.
+      Since `hpmcounter<%= hpm_num %>` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[<%= hpm_num %>] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |

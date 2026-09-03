@@ -11,6 +11,7 @@ implemented_extensions:
   - [I, "2.1"]
   - [C, "2.0"]
   - [M, "2.0"]
+  - [Zmmul, "1.0"]
   - [Zicsr, "2.0"]
   - [Zicntr, "2.0"]
   - [Smrnmi, "1.0"]

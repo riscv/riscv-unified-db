@@ -39618,9 +39618,9 @@ h! `XReg`
 
 [source,idl,subs="specialchars,macros"]
 ----
-for pass:[(]Bits<8> i = xref:#udb-function-xlen[xlen]pass:[(]) - 1; i >= 0; i--) {
-  if pass:[(]value[i] == 1) {
-    return i;
+for pass:[(]Bits<8> i = xref:#udb-function-xlen[xlen]pass:[(]); i > 0; i--) {
+  if pass:[(]value[i - 1] == 1) {
+    return i - 1;
   }
 }
 return -'sd1;

@@ -88,7 +88,7 @@ FetchContent_Declare(
     cli11_proj
     QUIET
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-    GIT_TAG v2.6.2
+    GIT_TAG v2.7.2
 )
 
 FetchContent_MakeAvailable(cli11_proj)
@@ -96,7 +96,7 @@ FetchContent_MakeAvailable(cli11_proj)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.15.2
+  GIT_TAG        v3.16.0
 )
 
 FetchContent_MakeAvailable(Catch2)

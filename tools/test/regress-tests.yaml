@@ -167,10 +167,12 @@ tests:
         test:
           - logic
           - conditions
+          - database_obj_compare
           - cli
           - yaml_loader
           - cfg_arch
           - cfg
+          - csr
           - mmr
           - mmr_schema
           - schema_versioning
@@ -488,7 +490,5 @@ tests:
       - smoke
       - artifacts
     test:
-      - name: Install Node dependencies
-        run: ./bin/npm ci
       - name: Build Docusaurus site
-        run: ./bin/npm run build --workspace=doc
+        run: ./bin/aubr -C doc --frozen-lockfile build
