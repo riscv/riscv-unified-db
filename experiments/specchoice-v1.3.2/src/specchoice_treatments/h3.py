@@ -1271,9 +1271,7 @@ _V4_AUTHORITY_FIELDS = frozenset(
 )
 _V4_DECISION_PATH = "reviews/h3-branch-decision-v4.json"
 _V4_AUTHORITY_PATH = "phase4/branch-authority-v4.json"
-_V3_HUMAN_APPROVAL_SOURCE = Path(
-    "/Users/zhdeng/.codex/attachments/b0c0b467-0d6c-405a-8c3b-2b9afe4b678a/pasted-text.txt"
-)
+_V3_APPROVAL_EVIDENCE_PATH = "fixtures/h3/h3-v3-human-approval-source.txt"
 
 
 def _load_h3_v1_historical_chain(*, root: Path) -> dict[str, object]:
@@ -1367,7 +1365,7 @@ def load_phase4_freeze_inputs_v4(
     root = inputs.get("_experiment_root")
     if not isinstance(root, Path):
         raise H3ValidationError("H3_FREEZE_INVENTORY_INVALID")
-    source = approval_source or _V3_HUMAN_APPROVAL_SOURCE
+    source = approval_source or root / _V3_APPROVAL_EVIDENCE_PATH
     return {
         **inputs,
         "predecessor_v1": _load_h3_v1_historical_chain(root=root),
@@ -1896,7 +1894,6 @@ _V5_AUTHORITY_FIELDS = _V4_AUTHORITY_FIELDS | frozenset(
 )
 _V5_DECISION_PATH = "reviews/h3-branch-decision-v5.json"
 _V5_AUTHORITY_PATH = "phase4/branch-authority-v5.json"
-_V3_APPROVAL_EVIDENCE_PATH = "fixtures/h3/h3-v3-human-approval-source.txt"
 _V3_APPROVAL_SOURCE_LOCATOR = (
     "codex-attachment:b0c0b467-0d6c-405a-8c3b-2b9afe4b678a/pasted-text.txt"
 )
