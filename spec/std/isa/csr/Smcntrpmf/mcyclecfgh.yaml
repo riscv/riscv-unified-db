@@ -30,7 +30,7 @@ fields:
     description: If set, then counting of events in M-mode is inhibited.
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
-      CSR[mcyclecfg].MINH = csr_value.MINH;
+      CSR[mcyclecfg][62] = csr_value.MINH;
       return csr_value.MINH;
 
   SINH:
