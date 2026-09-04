@@ -39597,6 +39597,7 @@ return sp;
 === highest_set_bit
 Returns the position of the highest (nearest MSB) bit that is '1',
 or -1 if value is zero.
+Callers should cast the return value with $signed().
   
 
 [cols="1,4"]
