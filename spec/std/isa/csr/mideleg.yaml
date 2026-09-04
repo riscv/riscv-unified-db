@@ -121,8 +121,9 @@ fields:
     description: |
       *Machine Software interrupt delegation*
 
-      Since M-mode interrupts cannot be delegated, this field is read-only zero.
-    type: RO
+      When 1, Machine Software interrupts are delegated to HS/S-mode.
+      This is unusual but permitted. See https://github.com/riscv/riscv-isa-manual/issues/3162.
+    type: RW
     reset_value: 0
   STI:
     location: 5
@@ -150,8 +151,9 @@ fields:
     description: |
       *Machine Timer interrupt delegation*
 
-      Since M-mode interrupts cannot be delegated, this field is read-only zero.
-    type: RO
+      When 1, Machine Timer interrupts are delegated to HS/S-mode.
+      This is unusual but permitted. See https://github.com/riscv/riscv-isa-manual/issues/3162.
+    type: RW
     reset_value: 0
   SEI:
     location: 9
@@ -177,8 +179,9 @@ fields:
     description: |
       *Machine External interrupt delegation*
 
-      Since M-mode interrupts cannot be delegated, this field is read-only zero.
-    type: RO
+      When 1, Machine External interrupts are delegated to HS/S-mode.
+      This is unusual but permitted. See https://github.com/riscv/riscv-isa-manual/issues/3162.
+    type: RW
     reset_value: 0
   SGEI:
     location: 12
