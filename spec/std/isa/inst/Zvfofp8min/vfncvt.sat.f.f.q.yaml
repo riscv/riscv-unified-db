@@ -1,20 +1,21 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
-
 # yaml-language-server: $schema=../../../../schemas/inst_schema.json
-
 $schema: "inst_schema.json#"
 kind: instruction
-name: vrev8.v
-long_name: Vector byte reverse
+name: vfncvt.sat.f.f.q
+long_name: Vector floating-point FP32 saturating conversion to OFP8
 description: |
-  Reverses the byte order within each element of vector register vs2, storing results in vector register vd according to mask vm. This is equivalent to a byte-level reversal of each element.
+  Converts FP32 floating-point elements in vector register vs2 to OFP8
+  elements and stores the results in vector register vd according to mask vm.
+  Infinite results are converted to the maximum-magnitude finite value of the
+  same sign.
 definedBy:
   extension:
-    name: Zvbb
+    name: Zvfofp8min
 assembly: vd, vs2, vm
 encoding:
-  match: 010010------01001010-----1010111
+  match: 010010------11011001-----1010111
   variables:
     - name: vm
       location: 25-25
@@ -27,5 +28,5 @@ access:
   u: always
   vs: always
   vu: always
-data_independent_timing: true
+data_independent_timing: false
 operation(): |

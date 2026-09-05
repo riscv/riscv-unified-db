@@ -13,9 +13,9 @@ runs:
     - name: Pre-initialize GPG
       shell: bash
       run: mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
-    - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4
+    - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
       with:
-        version: 2026.7.14
+        version: 2026.8.14
     # Write toolchain preference to .toolchain-local so bin/setup (section 7)
     # finds it and section 8 behaves correctly without prompting.
     - name: Configure toolchain
@@ -32,10 +32,10 @@ runs:
     # section 8 may call _pull_or_build_toolchain_image which uses buildx in CI.
     - name: Set up Docker Buildx
       if: inputs.toolchain == 'true'
-      uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
     - name: Login to GHCR
       if: inputs.toolchain == 'true'
-      uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
+      uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
       with:
         registry: ghcr.io
         username: ${{ github.actor }}

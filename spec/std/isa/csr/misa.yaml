@@ -27,9 +27,6 @@ fields:
     location: 0
     description: |
       Indicates support for the `A` (atomic) extension.
-
-      [when,"MUTABLE_MISA_A == true"]
-      Writing 0 to this field will cause all atomic instructions to raise an `IllegalInstruction` exception.
     type(): |
       return (implemented?(ExtensionName::A) && MUTABLE_MISA_A) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -41,9 +38,6 @@ fields:
     location: 1
     description: |
       Indicates support for the `B` (bitmanip) extension.
-
-      [when,"MUTABLE_MISA_B == true"]
-      Writing 0 to this field will cause all bitmanip instructions to raise an `IllegalInstruction` exception.
     type(): |
       return (implemented?(ExtensionName::B) && MUTABLE_MISA_B) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -157,7 +151,9 @@ fields:
       Indicates support for the `M` (integer multiply/divide) extension.
 
       [when,"MUTABLE_MISA_M == true"]
-      Writing 0 to this field will cause all attempts to execute an integer multiply or divide instruction to raise an `IllegalInstruction` exception.
+      Writing 0 to this field will cause all attempts to execute an integer divide or
+      remainder instruction to raise an `IllegalInstruction` exception. The multiply
+      instructions are provided by `Zmmul` and are unaffected.
     type(): |
       return (implemented?(ExtensionName::M) && MUTABLE_MISA_M) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |

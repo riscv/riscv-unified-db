@@ -5,23 +5,23 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: vrol.vx
-long_name: Vector rotate left by scalar
+name: vror.vi
+long_name: Vector rotate right by immediate
 description: |
-  Rotates each element in vector register vs2 left by the amount specified in scalar register xs1, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
+  Rotates each element in vector register vs2 right by the immediate shift amount, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
 definedBy:
   extension:
-    name: Zvbb
-assembly: vd, vs2, xs1, vm
+    name: Zvkb
+assembly: vd, vs2, imm, vm
 encoding:
-  match: 010101-----------100-----1010111
+  match: 01010------------011-----1010111
   variables:
+    - name: imm
+      location: 26|19-15
     - name: vm
       location: 25-25
     - name: vs2
       location: 24-20
-    - name: xs1
-      location: 19-15
     - name: vd
       location: 11-7
 access:

@@ -14358,7 +14358,7 @@ RV64::
 ....
 
 Description::
-Stores a 64-bit value in register rs2 to memory.
+Stores a 64-bit value in register xs2 to memory.
 It computes an effective address by adding the zero-extended offset, scaled by 8,
 to the stack pointer, x2.
 It expands to xref:insts:sd.adoc#udb:doc:inst:sd[sd] `xs2, offset(x2)`.
@@ -15540,7 +15540,7 @@ The table below summarizes the options.
 xref:insts:cbo_inval.adoc#udb:doc:inst:cbo_inval[cbo.inval] is ordered by `FENCE` instructions but not `FENCE.I` or `SFENCE.VMA`.
 
 <%- if CACHE_BLOCK_SIZE.bit_length > [PMP_GRANULARITY, PMA_GRANULARITY].min -%>
-Both PMP and PMA access control must be the same for all bytes in the block; otherwise, xref:insts:cbo_zero.adoc#udb:doc:inst:cbo_zero[cbo.zero] has UNSPECIFIED behavior.
+Both PMP and PMA access control must be the same for all bytes in the block; otherwise, xref:insts:cbo_inval.adoc#udb:doc:inst:cbo_inval[cbo.inval] has UNSPECIFIED behavior.
 <%- end -%>
 
 Invalidate operations are treated as stores for page and access permissions. If permission checks fail,
@@ -27873,8 +27873,8 @@ Included in::
 
 This instruction requires the following:
 
-xref:exts:I.adoc#udb:doc:ext:I[I]
-xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd]
+++(++xlen+++()+++ == 64 && xref:exts:I.adoc#udb:doc:ext:I[I])
+++(++xlen+++()+++ == 32 && xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd])
 
 
 [#udb:doc:inst:ld_aq]
@@ -32928,10 +32928,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulh]
@@ -32985,10 +32990,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulhsu]
@@ -33042,10 +33052,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulhu]
@@ -33099,10 +33114,15 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-xref:exts:M.adoc#udb:doc:ext:M[M]
-xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul]
+| *Zmmul*
+| any
+|===
+
+
 
 
 [#udb:doc:inst:mulw]
@@ -33155,10 +33175,18 @@ Decode Variables::
 Included in::
 
 
-This instruction requires the following:
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
 
-++(++xlen+++()+++ == 64 && xref:exts:M.adoc#udb:doc:ext:M[M])
-++(++xlen+++()+++ == 64 && xref:exts:Zmmul.adoc#udb:doc:ext:Zmmul[Zmmul])
+| *Zmmul*
+| any
+|===
+
+
+Additionally, this instruction requires the following:
+
+xlen+++()+++ == 64
 
 
 [#udb:doc:inst:ntl_all]
@@ -36093,8 +36121,8 @@ Included in::
 
 This instruction requires the following:
 
-xref:exts:I.adoc#udb:doc:ext:I[I]
-xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd]
+++(++xlen+++()+++ == 64 && xref:exts:I.adoc#udb:doc:ext:I[I])
+++(++xlen+++()+++ == 32 && xref:exts:Zilsd.adoc#udb:doc:ext:Zilsd[Zilsd])
 
 
 [#udb:doc:inst:sd_aqrl]
@@ -39253,7 +39281,7 @@ Base::
 |===
 
 Assembly::
-ssamoswap.d xd, xs2, xs1
+ssamoswap.d xd, xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -39307,7 +39335,7 @@ Base::
 |===
 
 Assembly::
-ssamoswap.w xd, xs2, xs1
+ssamoswap.w xd, xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -39344,11 +39372,11 @@ Included in::
 
 
 
-[#udb:doc:inst:sspopchk_x1]
-== sspopchk.x1
+[#udb:doc:inst:sspopchk]
+== sspopchk
 
 Synopsis::
-No synopsis available
+Shadow Stack Pop and Check
 
 Base::
 
@@ -39361,20 +39389,27 @@ Base::
 |===
 
 Assembly::
-sspopchk.x1 sspopchk_x1
+sspopchk xs1
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name": 0xcdc0c073,"type":2}]}
+{"reg":[{"bits":15,"name": 0x4073,"type":2},{"bits":5,"name": "xs1 != {0,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}","type":4},{"bits":12,"name": 0xcdc,"type":2}]}
 ....
 
 Description::
-No description available.
+SSPOPCHK pops a value from the shadow stack and checks it against link
+register `xs1`. The encoding restricts `xs1` to `x1` or `x5`.
+
+This instruction uses the xref:insts:mop_r_28.adoc#udb:doc:inst:mop_r_28[mop.r.28] codepoint provided by Zimop.
 
 
 Decode Variables::
-sspopchk.x1 has no decode variables.
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|xs1 |$encoding[19:15]
+|===
 
 Included in::
 
@@ -39390,11 +39425,11 @@ Included in::
 
 
 
-[#udb:doc:inst:sspopchk_x5]
-== sspopchk.x5
+[#udb:doc:inst:sspush]
+== sspush
 
 Synopsis::
-No synopsis available
+Shadow Stack Push
 
 Base::
 
@@ -39407,112 +39442,27 @@ Base::
 |===
 
 Assembly::
-sspopchk.x5 sspopchk_x5
+sspush xs2
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":32,"name": 0xcdc2c073,"type":2}]}
+{"reg":[{"bits":20,"name": 0x4073,"type":2},{"bits":5,"name": "xs2 != {0,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}","type":4},{"bits":7,"name": 0x67,"type":2}]}
 ....
 
 Description::
-No description available.
+SSPUSH pushes the value of link register `xs2` to the shadow stack.
+The encoding restricts `xs2` to `x1` or `x5`.
+
+This instruction uses the xref:insts:mop_rr_7.adoc#udb:doc:inst:mop_rr_7[mop.rr.7] codepoint provided by Zimop.
 
 
 Decode Variables::
-sspopchk.x5 has no decode variables.
-
-Included in::
-
-
-[width="100%",cols="1,2",options="header"]
+[width="100%", cols="1,2", options="header"]
 |===
-| Extension | Version
-
-| *Zicfiss*
-| any
+|Variable Name |Location
+|xs2 |$encoding[24:20]
 |===
-
-
-
-
-[#udb:doc:inst:sspush_x1]
-== sspush.x1
-
-Synopsis::
-No synopsis available
-
-Base::
-
-[cols="1,1"]
-|===
-| RV32 | RV64
-
-| &#x2713;
-| &#x2713;
-|===
-
-Assembly::
-sspush.x1 sspush_x1
-
-Encoding::
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":32,"name": 0xce104073,"type":2}]}
-....
-
-Description::
-No description available.
-
-
-Decode Variables::
-sspush.x1 has no decode variables.
-
-Included in::
-
-
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
-
-| *Zicfiss*
-| any
-|===
-
-
-
-
-[#udb:doc:inst:sspush_x5]
-== sspush.x5
-
-Synopsis::
-No synopsis available
-
-Base::
-
-[cols="1,1"]
-|===
-| RV32 | RV64
-
-| &#x2713;
-| &#x2713;
-|===
-
-Assembly::
-sspush.x5 sspush_x5
-
-Encoding::
-[wavedrom, ,svg,subs='attributes',width="100%"]
-....
-{"reg":[{"bits":32,"name": 0xce504073,"type":2}]}
-....
-
-Description::
-No description available.
-
-
-Decode Variables::
-sspush.x5 has no decode variables.
 
 Included in::
 
@@ -41373,7 +41323,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -41426,7 +41376,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -41742,7 +41692,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -43009,6 +42959,64 @@ Included in::
 
 
 
+[#udb:doc:inst:vfext_vf2]
+== vfext.vf2
+
+Synopsis::
+Vector OFP4 to OFP8 widening conversion
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vfext.vf2 vd, vs2, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":8,"name": 0xb2,"type":2},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x12,"type":2}]}
+....
+
+Description::
+Converts a vector of OFP4 E2M1 values in vector register vs2 (EEW=4,
+EMUL=LMUL/2) to a vector of OFP8 E4M3 values in vector register vd
+(EEW=8, EMUL=LMUL), according to mask vm. Defined only for SEW=8,
+altfmt=0, and LMUL >= 1/4. No rounding occurs, and no floating-point
+exception flags are set. This instruction does not access the fcsr
+and is not considered a floating-point instruction for the purposes
+of the floating-point context status (FS) setting.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvfofp4min*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:vfirst_m]
 == vfirst.m
 
@@ -44008,6 +44016,60 @@ Included in::
 
 
 
+[#udb:doc:inst:vfncvt_f_f_q]
+== vfncvt.f.f.q
+
+Synopsis::
+Vector floating-point FP32 conversion to OFP8
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vfncvt.f.f.q vd, vs2, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":8,"name": 0xc9,"type":2},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x12,"type":2}]}
+....
+
+Description::
+Converts FP32 floating-point elements in vector register vs2 to OFP8
+elements and stores the results in vector register vd according to mask vm.
+Results are rounded using the dynamic floating-point rounding mode.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvfofp8min*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:vfncvt_f_f_w]
 == vfncvt.f.f.w
 
@@ -44320,6 +44382,61 @@ Included in::
 
 
 
+[#udb:doc:inst:vfncvt_sat_f_f_q]
+== vfncvt.sat.f.f.q
+
+Synopsis::
+Vector floating-point FP32 saturating conversion to OFP8
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vfncvt.sat.f.f.q vd, vs2, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":8,"name": 0xd9,"type":2},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x12,"type":2}]}
+....
+
+Description::
+Converts FP32 floating-point elements in vector register vs2 to OFP8
+elements and stores the results in vector register vd according to mask vm.
+Infinite results are converted to the maximum-magnitude finite value of the
+same sign.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvfofp8min*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:vfncvt_x_f_w]
 == vfncvt.x.f.w
 
@@ -44465,11 +44582,61 @@ Decode Variables::
 Included in::
 
 
+This instruction requires the following:
+
+xref:exts:Zvfbfmin.adoc#udb:doc:ext:Zvfbfmin[Zvfbfmin]
+xref:exts:Zvfofp8min.adoc#udb:doc:ext:Zvfofp8min[Zvfofp8min]
+
+
+[#udb:doc:inst:vfncvtbf16_sat_f_f_w]
+== vfncvtbf16.sat.f.f.w
+
+Synopsis::
+Vector saturating narrowing BFloat16 to OFP8 conversion
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vfncvtbf16.sat.f.f.w vd, vs2, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":8,"name": 0xf9,"type":2},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x12,"type":2}]}
+....
+
+Description::
+Converts BFloat16 floating-point elements in vector register vs2 to OFP8
+elements and stores the results in vector register vd according to mask vm.
+Infinite results are converted to the maximum-magnitude finite value of the
+same sign.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
 [width="100%",cols="1,2",options="header"]
 |===
 | Extension | Version
 
-| *Zvfbfmin*
+| *Zvfofp8min*
 | any
 |===
 
@@ -46521,15 +46688,10 @@ Decode Variables::
 Included in::
 
 
-[width="100%",cols="1,2",options="header"]
-|===
-| Extension | Version
+This instruction requires the following:
 
-| *Zvfbfmin*
-| any
-|===
-
-
+xref:exts:Zvfbfmin.adoc#udb:doc:ext:Zvfbfmin[Zvfbfmin]
+xref:exts:Zvfofp8min.adoc#udb:doc:ext:Zvfofp8min[Zvfofp8min]
 
 
 [#udb:doc:inst:vfwmacc_vf]
@@ -63030,7 +63192,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63295,7 +63457,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63348,7 +63510,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63401,7 +63563,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63454,7 +63616,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 
@@ -63507,7 +63669,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zvbb*
+| *Zvkb*
 | any
 |===
 

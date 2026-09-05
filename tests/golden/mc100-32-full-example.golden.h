@@ -34,6 +34,8 @@
 #define ZICNTR2P0_SUPPORTED
 #define ZICSR_SUPPORTED
 #define ZICSR2P0_SUPPORTED
+#define ZMMUL_SUPPORTED
+#define ZMMUL1P0_SUPPORTED
 
 /* Configuration parameters */
 #define UDB_ARCH_ID_VALUE 1

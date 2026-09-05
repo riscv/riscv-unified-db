@@ -5,19 +5,17 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: vror.vi
-long_name: Vector rotate right by immediate
+name: vrev8.v
+long_name: Vector byte reverse
 description: |
-  Rotates each element in vector register vs2 right by the immediate shift amount, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
+  Reverses the byte order within each element of vector register vs2, storing results in vector register vd according to mask vm. This is equivalent to a byte-level reversal of each element.
 definedBy:
   extension:
-    name: Zvbb
-assembly: vd, vs2, imm, vm
+    name: Zvkb
+assembly: vd, vs2, vm
 encoding:
-  match: 01010------------011-----1010111
+  match: 010010------01001010-----1010111
   variables:
-    - name: imm
-      location: 26|19-15
     - name: vm
       location: 25-25
     - name: vs2

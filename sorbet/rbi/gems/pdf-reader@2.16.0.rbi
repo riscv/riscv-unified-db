@@ -17,12 +17,6 @@ class PDF::Reader
   sig { params(input: T.any(::IO, ::String, ::StringIO, ::Tempfile), opts: T::Hash[T.untyped, T.untyped]).void }
   def initialize(input, opts = T.unsafe(nil)); end
 
-  sig { params(obj: T.untyped).returns(T.untyped) }
-  def doc_strings_to_utf8(obj); end
-
-  sig { params(str: ::String).returns(T::Boolean) }
-  def has_utf16_bom?(str); end
-
   sig { returns(T.nilable(T::Hash[T.untyped, T.untyped])) }
   def info; end
 
@@ -44,14 +38,8 @@ class PDF::Reader
   sig { returns(::Float) }
   def pdf_version; end
 
-  sig { params(obj: ::String).returns(::String) }
-  def pdfdoc_to_utf8(obj); end
-
   sig { returns(T::Hash[::Symbol, T.untyped]) }
   def root; end
-
-  sig { params(obj: ::String).returns(::String) }
-  def utf16_to_utf8(obj); end
 
   class << self
     sig do
@@ -186,6 +174,9 @@ class PDF::Reader::Buffer
   sig { returns(T::Boolean) }
   def in_content_stream?; end
 
+  sig { params(str: ::String, regexp: ::Regexp).returns(T::Boolean) }
+  def match?(str, regexp); end
+
   sig { void }
   def merge_indirect_reference; end
 
@@ -234,6 +225,7 @@ PDF::Reader::Buffer::ID = T.let(T.unsafe(nil), String)
 PDF::Reader::Buffer::LEFT_PAREN = T.let(T.unsafe(nil), String)
 PDF::Reader::Buffer::LESS_THAN = T.let(T.unsafe(nil), String)
 PDF::Reader::Buffer::LF = T.let(T.unsafe(nil), String)
+PDF::Reader::Buffer::NAME_TERMINATOR_BYTES = T.let(T.unsafe(nil), Array)
 PDF::Reader::Buffer::NULL_BYTE = T.let(T.unsafe(nil), String)
 PDF::Reader::Buffer::STREAM = T.let(T.unsafe(nil), String)
 PDF::Reader::Buffer::TOKEN_DELIMITER = T.let(T.unsafe(nil), Array)
@@ -277,6 +269,7 @@ class PDF::Reader::CMap
 end
 
 PDF::Reader::CMap::CMAP_KEYWORDS = T.let(T.unsafe(nil), Hash)
+PDF::Reader::CMap::EMPTY_CODEPOINTS = T.let(T.unsafe(nil), Array)
 PDF::Reader::CMap::HIGH_SURROGATE_RANGE = T.let(T.unsafe(nil), Range)
 
 class PDF::Reader::CidWidths
@@ -302,11 +295,11 @@ class PDF::Reader::Encoding
   sig { params(enc: T.nilable(T.any(::Symbol, T::Hash[::Symbol, T.untyped]))).void }
   def initialize(enc); end
 
+  sig { params(file: ::String).returns(T::Hash[::Integer, ::Integer]) }
+  def build_file_mapping(file); end
+
   sig { params(str: ::String).returns(::String) }
   def convert_to_utf8(str); end
-
-  sig { returns(T::Hash[::Integer, ::Integer]) }
-  def default_mapping; end
 
   sig { returns(T::Hash[::Integer, ::Integer]) }
   def differences; end
@@ -335,9 +328,6 @@ class PDF::Reader::Encoding
   sig { params(times: ::Integer).returns(::String) }
   def little_boxes(times); end
 
-  sig { params(file: ::String).void }
-  def load_mapping(file); end
-
   sig { params(str: ::String).returns(::String) }
   def to_utf8(str); end
 
@@ -346,10 +336,43 @@ class PDF::Reader::Encoding
 
   sig { returns(T::Boolean) }
   def utf8_conversion_impossible?; end
+
+  sig { params(codepoint: ::Integer).returns(T::Boolean) }
+  def valid_unicode_scalar?(codepoint); end
 end
 
 PDF::Reader::Encoding::CONTROL_CHARS = T.let(T.unsafe(nil), Array)
+PDF::Reader::Encoding::DEFAULT_MAPPING = T.let(T.unsafe(nil), Hash)
+PDF::Reader::Encoding::FILE_MAPPINGS = T.let(T.unsafe(nil), Hash)
 PDF::Reader::Encoding::UNKNOWN_CHAR = T.let(T.unsafe(nil), Integer)
+
+class PDF::Reader::EncodingUtils
+  sig { params(str: ::String).returns(T::Boolean) }
+  def has_utf16_bom?(str); end
+
+  sig { params(obj: T.untyped).returns(T.untyped) }
+  def obj_to_utf8(obj); end
+
+  sig { params(str: ::String).returns(::String) }
+  def pdfdoc_to_utf8(str); end
+
+  sig { params(str: ::String).returns(::String) }
+  def string_to_utf8(str); end
+
+  sig { params(obj: ::String).returns(::String) }
+  def utf16_to_utf8(obj); end
+
+  class << self
+    sig { params(obj: T.untyped).returns(T.untyped) }
+    def obj_to_utf8(obj); end
+
+    sig { params(str: ::String).returns(::String) }
+    def string_to_utf8(str); end
+  end
+end
+
+PDF::Reader::EncodingUtils::PDFDOC_CODEPOINTS = T.let(T.unsafe(nil), Hash)
+PDF::Reader::EncodingUtils::UTF16_BOM = T.let(T.unsafe(nil), Array)
 class PDF::Reader::EncryptedPDFError < ::PDF::Reader::UnsupportedFeatureError; end
 
 class PDF::Reader::Error
@@ -366,10 +389,10 @@ class PDF::Reader::Error
     sig { params(object: ::Object, name: ::String).void }
     def validate_not_nil(object, name); end
 
-    sig { params(object: ::Object, name: ::String, klass: ::Module).void }
+    sig { params(object: ::Object, name: ::String, klass: T::Module[T.untyped]).void }
     def validate_type(object, name, klass); end
 
-    sig { params(object: ::Object, name: ::String, klass: ::Module).void }
+    sig { params(object: ::Object, name: ::String, klass: T::Module[T.untyped]).void }
     def validate_type_as_malformed(object, name, klass); end
   end
 end
@@ -515,8 +538,8 @@ class PDF::Reader::Font
   sig { returns(T.nilable(::PDF::Reader::FontDescriptor)) }
   def font_descriptor; end
 
-  sig { params(x: ::Numeric, y: ::Numeric).returns([::Numeric, ::Numeric]) }
-  def font_matrix_transform(x, y); end
+  sig { params(pt: ::PDF::Reader::Point).returns(::PDF::Reader::Point) }
+  def font_matrix_transform(pt); end
 
   sig { params(code_point: T.any(::Integer, ::String)).returns(::Numeric) }
   def glyph_width(code_point); end
@@ -791,7 +814,10 @@ class PDF::Reader::ObjectCache
 
   def [](key); end
   def []=(key, value); end
+
+  sig { params(obj: T.untyped).returns(T.nilable(T::Boolean)) }
   def cacheable?(obj); end
+
   def each(&block); end
   def each_key(&block); end
   def each_pair(&block); end
@@ -801,21 +827,29 @@ class PDF::Reader::ObjectCache
   def has_key?(key); end
   def has_value?(value); end
 
-  sig { returns(T.untyped) }
+  sig { returns(::Integer) }
   def hits; end
 
   def include?(key); end
   def key?(key); end
+
+  sig { returns(T::Array[T.untyped]) }
   def keys; end
+
   def length; end
   def member?(key); end
 
-  sig { returns(T.untyped) }
+  sig { returns(::Integer) }
   def misses; end
 
   def size; end
+
+  sig { returns(::String) }
   def to_s; end
+
   def update_stats(key); end
+
+  sig { returns(T::Array[T.untyped]) }
   def values; end
 end
 
@@ -824,7 +858,7 @@ PDF::Reader::ObjectCache::CACHEABLE_TYPES = T.let(T.unsafe(nil), Array)
 class PDF::Reader::ObjectHash
   include ::Enumerable
 
-  sig { params(input: T.any(::IO, ::String, ::StringIO, ::Tempfile), opts: T::Hash[::Symbol, T.untyped]).void }
+  sig { params(input: T.untyped, opts: T::Hash[::Symbol, T.untyped]).void }
   def initialize(input, opts = T.unsafe(nil)); end
 
   sig { params(key: T.any(::Integer, ::PDF::Reader::Reference)).returns(T.untyped) }
@@ -913,7 +947,7 @@ class PDF::Reader::ObjectHash
   sig { returns(T::Boolean) }
   def encrypted?; end
 
-  sig { params(input: T.any(::IO, ::String, ::StringIO, ::Tempfile)).returns(T.any(::IO, ::StringIO, ::Tempfile)) }
+  sig { params(input: T.untyped).returns(T.untyped) }
   def extract_io_from(input); end
 
   sig { params(key: T.untyped, local_default: T.untyped).returns(T.untyped) }
@@ -1208,7 +1242,13 @@ class PDF::Reader::PageState
   def clone_state; end
   def concatenate_matrix(a, b, c, d, e, f); end
   def ctm; end
+
+  sig { params(x: ::Numeric, y: ::Numeric).returns([::Numeric]) }
   def ctm_transform(x, y); end
+
+  sig { params(pt: T.any(::Numeric, ::PDF::Reader::Point), opt_y: ::Numeric).returns(::PDF::Reader::Point) }
+  def ctm_transform_point(pt, opt_y = T.unsafe(nil)); end
+
   def current_font; end
   def end_text_object; end
   def find_color_space(label); end
@@ -1242,7 +1282,12 @@ class PDF::Reader::PageState
   def stack_depth; end
   def state; end
   def text_rendering_matrix; end
+
+  sig { params(x: ::Numeric, y: ::Numeric).returns(T::Array[::Numeric]) }
   def trm_transform(x, y); end
+
+  sig { params(pt: T.any(::Numeric, ::PDF::Reader::Point), opt_y: ::Numeric).returns(::PDF::Reader::Point) }
+  def trm_transform_point(pt, opt_y = T.unsafe(nil)); end
 end
 
 PDF::Reader::PageState::DEFAULT_GRAPHICS_STATE = T.let(T.unsafe(nil), Hash)
@@ -1250,16 +1295,29 @@ PDF::Reader::PageState::DEFAULT_GRAPHICS_STATE = T.let(T.unsafe(nil), Hash)
 class PDF::Reader::PageTextReceiver
   extend ::Forwardable
 
-  def apply_rotation(x, y); end
+  sig { params(pt: ::PDF::Reader::Point).returns(::PDF::Reader::Point) }
+  def apply_rotation(pt); end
+
+  def begin_marked_content_with_pl(tag, properties); end
   def begin_text_object(*args, **_arg1, &block); end
   def concatenate_matrix(*args, **_arg1, &block); end
+
+  sig { returns(::String) }
   def content; end
+
+  def end_marked_content; end
   def end_text_object(*args, **_arg1, &block); end
   def font_size(*args, **_arg1, &block); end
   def group_chars_into_runs(chars); end
+
+  sig { params(string: ::String).void }
   def internal_show_text(string); end
+
   def invoke_xobject(label); end
+
+  sig { params(runs: T::Array[::PDF::Reader::TextRun]).returns(T::Array[::PDF::Reader::TextRun]) }
   def merge_runs(runs); end
+
   def move_text_position(*args, **_arg1, &block); end
   def move_text_position_and_set_leading(*args, **_arg1, &block); end
   def move_to_next_line_and_show_text(str); end
@@ -1293,8 +1351,15 @@ class PDF::Reader::PagesStrategy; end
 PDF::Reader::PagesStrategy::OPERATORS = T.let(T.unsafe(nil), Hash)
 
 class PDF::Reader::Parser
-  sig { params(buffer: ::PDF::Reader::Buffer, objects: T.nilable(::PDF::Reader::ObjectHash)).void }
-  def initialize(buffer, objects = T.unsafe(nil)); end
+  sig do
+    params(
+      buffer: ::PDF::Reader::Buffer,
+      operators: T::Hash[T.any(::PDF::Reader::Token, ::String), ::Symbol],
+      objects: T.nilable(::PDF::Reader::ObjectHash),
+      relaxed_dictionaries: T::Boolean
+    ).void
+  end
+  def initialize(buffer, operators: T.unsafe(nil), objects: T.unsafe(nil), relaxed_dictionaries: T.unsafe(nil)); end
 
   sig { returns(T::Array[T.untyped]) }
   def array; end
@@ -1305,6 +1370,9 @@ class PDF::Reader::Parser
   sig { returns(::String) }
   def hex_string; end
 
+  sig { params(str: ::String, regexp: ::Regexp).returns(T::Boolean) }
+  def match?(str, regexp); end
+
   sig do
     params(
       id: ::Integer,
@@ -1314,11 +1382,9 @@ class PDF::Reader::Parser
   def object(id, gen); end
 
   sig do
-    params(
-      operators: T::Hash[T.any(::PDF::Reader::Token, ::String), ::Symbol]
-    ).returns(T.nilable(T.any(::Numeric, ::PDF::Reader::Reference, ::PDF::Reader::Token, ::String, ::Symbol, T::Array[T.untyped], T::Hash[T.untyped, T.untyped])))
+    returns(T.nilable(T.any(::Numeric, ::PDF::Reader::Reference, ::PDF::Reader::Token, ::String, ::Symbol, T::Array[T.untyped], T::Hash[T.untyped, T.untyped])))
   end
-  def parse_token(operators = T.unsafe(nil)); end
+  def parse_token; end
 
   sig { returns(::Symbol) }
   def pdf_name; end
@@ -1330,6 +1396,7 @@ class PDF::Reader::Parser
   def string; end
 end
 
+PDF::Reader::Parser::INTERNED_TOKENS = T.let(T.unsafe(nil), Hash)
 PDF::Reader::Parser::MAPPING = T.let(T.unsafe(nil), Hash)
 PDF::Reader::Parser::STRATEGIES = T.let(T.unsafe(nil), Hash)
 PDF::Reader::Parser::TOKEN_STRATEGY = T.let(T.unsafe(nil), Proc)
@@ -1348,12 +1415,25 @@ class PDF::Reader::Point
   def y; end
 end
 
+PDF::Reader::Point::ONE_ONE = T.let(T.unsafe(nil), PDF::Reader::Point)
+PDF::Reader::Point::ZERO_ZERO = T.let(T.unsafe(nil), PDF::Reader::Point)
+
 class PDF::Reader::PrintReceiver
   sig { params(methodname: ::Symbol, args: T.untyped).void }
   def method_missing(methodname, *args); end
 
   sig { params(meth: T.untyped).returns(T::Boolean) }
   def respond_to?(meth); end
+end
+
+class PDF::Reader::Rc4
+  sig { params(key: ::String).void }
+  def initialize(key); end
+
+  sig { params(data: ::String).returns(::String) }
+  def decrypt(data); end
+
+  def encrypt(*args, **_arg1, &blk); end
 end
 
 class PDF::Reader::Rc4SecurityHandler
@@ -1382,6 +1462,9 @@ class PDF::Reader::Rectangle
 
   sig { params(point: ::PDF::Reader::Point).returns(T::Boolean) }
   def contains?(point); end
+
+  sig { params(x: ::Numeric, y: ::Numeric).returns(T::Boolean) }
+  def contains_xy?(x, y); end
 
   sig { returns(::Numeric) }
   def height; end
@@ -1700,6 +1783,9 @@ class PDF::Reader::TransformationMatrix
   end
   def multiply!(a, b, c, d, e, f); end
 
+  sig { params(tx: ::Numeric, ty: ::Numeric).void }
+  def prepend_translation!(tx, ty); end
+
   sig { params(a2: ::Numeric, b2: ::Numeric, c2: ::Numeric, d2: ::Numeric, e2: ::Numeric, f2: ::Numeric).void }
   def regular_multiply!(a2, b2, c2, d2, e2, f2); end
 
@@ -1730,7 +1816,7 @@ class PDF::Reader::TypeCheck
     sig { params(string: T.untyped).returns(::String) }
     def cast_to_string!(string); end
 
-    sig { params(obj: T.untyped).returns(::Symbol) }
+    sig { params(obj: T.untyped).returns(T.nilable(::Symbol)) }
     def cast_to_symbol(obj); end
 
     sig { params(obj: T.untyped).returns(::Symbol) }

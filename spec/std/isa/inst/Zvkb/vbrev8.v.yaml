@@ -5,23 +5,21 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: vrol.vv
-long_name: Vector rotate left by vector
+name: vbrev8.v
+long_name: Vector byte reverse within elements
 description: |
-  Rotates each element in vector register vs2 left by the amount specified in vector register vs1, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
+  Reverses the byte order within each element of vector register vs2, storing results in vector register vd according to mask vm. Similar to vrev8.v but with different encoding.
 definedBy:
   extension:
-    name: Zvbb
-assembly: vd, vs2, vs1, vm
+    name: Zvkb
+assembly: vd, vs2, vm
 encoding:
-  match: 010101-----------000-----1010111
+  match: 010010------01000010-----1010111
   variables:
     - name: vm
       location: 25-25
     - name: vs2
       location: 24-20
-    - name: vs1
-      location: 19-15
     - name: vd
       location: 11-7
 access:

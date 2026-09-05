@@ -89,7 +89,7 @@ fields:
       When set, `hpmcounter3.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[3] == false"]
-      Since hpmcounter3 is not implemented, this field is read-only zero.
+      Since `hpmcounter3` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[3] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -109,7 +109,7 @@ fields:
       When set, `hpmcounter4.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[4] == false"]
-      Since hpmcounter4 is not implemented, this field is read-only zero.
+      Since `hpmcounter4` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[4] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -129,7 +129,7 @@ fields:
       When set, `hpmcounter5.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[5] == false"]
-      Since hpmcounter5 is not implemented, this field is read-only zero.
+      Since `hpmcounter5` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[5] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -149,7 +149,7 @@ fields:
       When set, `hpmcounter6.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[6] == false"]
-      Since hpmcounter6 is not implemented, this field is read-only zero.
+      Since `hpmcounter6` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[6] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -169,7 +169,7 @@ fields:
       When set, `hpmcounter7.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[7] == false"]
-      Since hpmcounter7 is not implemented, this field is read-only zero.
+      Since `hpmcounter7` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[7] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -189,7 +189,7 @@ fields:
       When set, `hpmcounter8.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[8] == false"]
-      Since hpmcounter8 is not implemented, this field is read-only zero.
+      Since `hpmcounter8` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[8] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -209,7 +209,7 @@ fields:
       When set, `hpmcounter9.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[9] == false"]
-      Since hpmcounter9 is not implemented, this field is read-only zero.
+      Since `hpmcounter9` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[9] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -229,7 +229,7 @@ fields:
       When set, `hpmcounter10.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[10] == false"]
-      Since hpmcounter10 is not implemented, this field is read-only zero.
+      Since `hpmcounter10` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[10] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -249,7 +249,7 @@ fields:
       When set, `hpmcounter11.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[11] == false"]
-      Since hpmcounter11 is not implemented, this field is read-only zero.
+      Since `hpmcounter11` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[11] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -269,7 +269,7 @@ fields:
       When set, `hpmcounter12.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[12] == false"]
-      Since hpmcounter12 is not implemented, this field is read-only zero.
+      Since `hpmcounter12` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[12] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -289,7 +289,7 @@ fields:
       When set, `hpmcounter13.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[13] == false"]
-      Since hpmcounter13 is not implemented, this field is read-only zero.
+      Since `hpmcounter13` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[13] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -309,7 +309,7 @@ fields:
       When set, `hpmcounter14.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[14] == false"]
-      Since hpmcounter14 is not implemented, this field is read-only zero.
+      Since `hpmcounter14` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[14] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -329,7 +329,7 @@ fields:
       When set, `hpmcounter15.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[15] == false"]
-      Since hpmcounter15 is not implemented, this field is read-only zero.
+      Since `hpmcounter15` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[15] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -349,7 +349,7 @@ fields:
       When set, `hpmcounter16.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[16] == false"]
-      Since hpmcounter16 is not implemented, this field is read-only zero.
+      Since `hpmcounter16` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[16] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -369,7 +369,7 @@ fields:
       When set, `hpmcounter17.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[17] == false"]
-      Since hpmcounter17 is not implemented, this field is read-only zero.
+      Since `hpmcounter17` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[17] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -389,7 +389,7 @@ fields:
       When set, `hpmcounter18.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[18] == false"]
-      Since hpmcounter18 is not implemented, this field is read-only zero.
+      Since `hpmcounter18` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[18] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -409,7 +409,7 @@ fields:
       When set, `hpmcounter19.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[19] == false"]
-      Since hpmcounter19 is not implemented, this field is read-only zero.
+      Since `hpmcounter19` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[19] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -429,7 +429,7 @@ fields:
       When set, `hpmcounter20.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[20] == false"]
-      Since hpmcounter20 is not implemented, this field is read-only zero.
+      Since `hpmcounter20` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[20] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -449,7 +449,7 @@ fields:
       When set, `hpmcounter21.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[21] == false"]
-      Since hpmcounter21 is not implemented, this field is read-only zero.
+      Since `hpmcounter21` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[21] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -469,7 +469,7 @@ fields:
       When set, `hpmcounter22.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[22] == false"]
-      Since hpmcounter22 is not implemented, this field is read-only zero.
+      Since `hpmcounter22` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[22] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -489,7 +489,7 @@ fields:
       When set, `hpmcounter23.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[23] == false"]
-      Since hpmcounter23 is not implemented, this field is read-only zero.
+      Since `hpmcounter23` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[23] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -509,7 +509,7 @@ fields:
       When set, `hpmcounter24.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[24] == false"]
-      Since hpmcounter24 is not implemented, this field is read-only zero.
+      Since `hpmcounter24` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[24] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -529,7 +529,7 @@ fields:
       When set, `hpmcounter25.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[25] == false"]
-      Since hpmcounter25 is not implemented, this field is read-only zero.
+      Since `hpmcounter25` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[25] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -549,7 +549,7 @@ fields:
       When set, `hpmcounter26.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[26] == false"]
-      Since hpmcounter26 is not implemented, this field is read-only zero.
+      Since `hpmcounter26` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[26] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -569,7 +569,7 @@ fields:
       When set, `hpmcounter27.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[27] == false"]
-      Since hpmcounter27 is not implemented, this field is read-only zero.
+      Since `hpmcounter27` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[27] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -589,7 +589,7 @@ fields:
       When set, `hpmcounter28.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[28] == false"]
-      Since hpmcounter28 is not implemented, this field is read-only zero.
+      Since `hpmcounter28` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[28] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -609,7 +609,7 @@ fields:
       When set, `hpmcounter29.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[29] == false"]
-      Since hpmcounter29 is not implemented, this field is read-only zero.
+      Since `hpmcounter29` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[29] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -629,7 +629,7 @@ fields:
       When set, `hpmcounter30.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[30] == false"]
-      Since hpmcounter30 is not implemented, this field is read-only zero.
+      Since `hpmcounter30` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[30] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -649,7 +649,7 @@ fields:
       When set, `hpmcounter31.COUNT` stops counting in all privilege modes.
 
       [when="COUNTINHIBIT_EN[31] == false"]
-      Since hpmcounter31 is not implemented, this field is read-only zero.
+      Since `hpmcounter31` cannot be inhibited, this field is read-only zero.
     type(): |
       return COUNTINHIBIT_EN[31] ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |

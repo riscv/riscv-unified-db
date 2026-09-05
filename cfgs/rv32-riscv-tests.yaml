@@ -12,6 +12,7 @@ implemented_extensions:
   - [C, "2.0"]
   - [Zca, "1.0.0"]
   - [M, "2.0"]
+  - [Zmmul, "1.0"]
   - [Zicsr, "2.0"]
   - [Zicntr, "2.0"]
   - [Smrnmi, "1.0"]

@@ -5,16 +5,16 @@
 
 $schema: "inst_schema.json#"
 kind: instruction
-name: vandn.vx
-long_name: Vector AND-NOT with scalar
+name: vrol.vx
+long_name: Vector rotate left by scalar
 description: |
-  Performs a bitwise AND operation between vector register vs2 and the bitwise NOT of scalar register xs1, storing results in vector register vd according to mask vm.
+  Rotates each element in vector register vs2 left by the amount specified in scalar register xs1, storing results in vector register vd according to mask vm. The rotation amount is taken modulo the element width.
 definedBy:
   extension:
-    name: Zvbb
+    name: Zvkb
 assembly: vd, vs2, xs1, vm
 encoding:
-  match: 000001-----------100-----1010111
+  match: 010101-----------100-----1010111
   variables:
     - name: vm
       location: 25-25

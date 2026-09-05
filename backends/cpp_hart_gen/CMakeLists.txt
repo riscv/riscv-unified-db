@@ -88,7 +88,7 @@ FetchContent_Declare(
     cli11_proj
     QUIET
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-    GIT_TAG v2.6.2
+    GIT_TAG v2.7.2
 )
 
 FetchContent_MakeAvailable(cli11_proj)
@@ -96,7 +96,7 @@ FetchContent_MakeAvailable(cli11_proj)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.15.3
+  GIT_TAG        v3.16.0
 )
 
 FetchContent_MakeAvailable(Catch2)
@@ -261,6 +261,7 @@ add_dependencies(test_bits_random ${RANDOM_TESTS})
 
 add_executable(test_util
   ${CMAKE_SOURCE_DIR}/test/test_util.cpp
+  ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
 )
 target_include_directories(test_util PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_util PRIVATE hart Catch2::Catch2WithMain)
@@ -304,6 +305,7 @@ include(CTest)
 include(Catch)
 catch_discover_tests(test_bits_directed)
 catch_discover_tests(test_regfile)
+catch_discover_tests(test_util)
 
 foreach (random_test IN LISTS RANDOM_TESTS)
   catch_discover_tests(${random_test})

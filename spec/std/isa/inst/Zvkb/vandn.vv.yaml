@@ -11,7 +11,7 @@ description: |
   Performs a bitwise AND operation between vector register vs2 and the bitwise NOT of vector register vs1, storing results in vector register vd according to mask vm.
 definedBy:
   extension:
-    name: Zvbb
+    name: Zvkb
 assembly: vd, vs2, vs1, vm
 encoding:
   match: 000001-----------000-----1010111

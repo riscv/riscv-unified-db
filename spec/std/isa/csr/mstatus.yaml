@@ -71,7 +71,7 @@ fields:
         - extension:
             name: Smdbltrp
     type: RW-H
-    reset_value: UNDEFINED_LEGAL
+    reset_value: 1
   MPELP:
     location: 41
     long_name: M-mode Previous Expected Landing Pad state
