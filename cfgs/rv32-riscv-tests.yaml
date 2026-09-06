@@ -25,6 +25,7 @@ implemented_extensions:
 
 params:
   MXLEN: 32
+  WFI_FINITE: true
   MARCHID_IMPLEMENTED: true
   ARCH_ID_VALUE: 1
   MIMPID_IMPLEMENTED: true
