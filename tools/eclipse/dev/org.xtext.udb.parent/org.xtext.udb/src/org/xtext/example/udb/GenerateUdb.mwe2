@@ -55,6 +55,12 @@ Workflow {
 			junitSupport = {
 				junitVersion = "6"
 			}
+			parserGenerator = {
+				options = {
+					backtrack = true
+					skipUnusedRules = true
+				}
+			}
 		}
 	}
 }
