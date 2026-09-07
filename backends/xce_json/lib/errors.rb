@@ -7,6 +7,7 @@ module XceJson
   class InstructionNotFoundError < Error; end
   class InvalidEncodingError < Error; end
   class OutputError < Error; end
+  class TestError < Error; end
 
   class NoInstructionsGeneratedError < Error
     attr_reader :skipped

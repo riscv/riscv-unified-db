@@ -2,6 +2,7 @@
 
 require_relative "lib/errors"
 require_relative "lib/exporter"
+require_relative "lib/test_runner"
 
 module XceJson
   module TaskOptions
@@ -56,6 +57,19 @@ namespace :gen do
   rescue XceJson::NoInstructionsGeneratedError => e
     XceJson::TaskOutput.print_skipped(e.skipped)
     abort "ERROR: #{e.message}"
+  rescue XceJson::Error => e
+    abort "ERROR: #{e.message}"
+  end
+end
+namespace :test do
+  desc "Run XCE JSON tests"
+  task :xce_json do
+    test_root = File.expand_path("test", __dir__)
+    cases = XceJson::TestRunner.load_manifest(File.join(test_root, "manifest.yaml"))
+    XceJson::TestRunner.verify(cases, test_root) do |**options|
+      XceJson::Exporter.generate(**options)
+    end
+    puts "PASS: #{cases.size} XCE JSON test(s)"
   rescue XceJson::Error => e
     abort "ERROR: #{e.message}"
   end
