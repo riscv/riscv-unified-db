@@ -945,12 +945,116 @@ function xlen {
   }
 }
 
+enum Endian {
+  Little  0
+  Big     1
+}
+
+function endianness {
+  returns Endian
+  description {
+    Returns the effective endianness for the current privilege mode.
+  }
+  body {
+    if (mode() == PrivilegeMode::M) {
+      if (M_MODE_ENDIANNESS == "little") {
+        return Endian::Little;
+      } else if (M_MODE_ENDIANNESS == "big") {
+        return Endian::Big;
+      } else if (M_MODE_ENDIANNESS == "dynamic") {
+        if (CSR[mstatus].MBE == 1'b1) {
+          return Endian::Big;
+        } else {
+          return Endian::Little;
+        }
+      } else {
+        assert(false, "Invalid M_MODE_ENDIANNESS value");
+        unreachable();
+      }
+    } else if (implemented?(ExtensionName::S) && mode() == PrivilegeMode::S) {
+      if (S_MODE_ENDIANNESS == "little") {
+        return Endian::Little;
+      } else if (S_MODE_ENDIANNESS == "big") {
+        return Endian::Big;
+      } else if (S_MODE_ENDIANNESS == "dynamic") {
+        if (CSR[mstatus].SBE == 1'b1) {
+          return Endian::Big;
+        } else {
+          return Endian::Little;
+        }
+      } else {
+        assert(false, "Invalid S_MODE_ENDIANNESS value");
+        unreachable();
+      }
+    } else if (implemented?(ExtensionName::U) && mode() == PrivilegeMode::U) {
+      if (U_MODE_ENDIANNESS == "little") {
+        return Endian::Little;
+      } else if (U_MODE_ENDIANNESS == "big") {
+        return Endian::Big;
+      } else if (U_MODE_ENDIANNESS == "dynamic") {
+        if (CSR[mstatus].UBE == 1'b1) {
+          return Endian::Big;
+        } else {
+          return Endian::Little;
+        }
+      } else {
+        assert(false, "Invalid U_MODE_ENDIANNESS value");
+        unreachable();
+      }
+    } else if (implemented?(ExtensionName::H)) {
+      if (mode() == PrivilegeMode::VS) {
+        if (VS_MODE_ENDIANNESS == "little") {
+          return Endian::Little;
+        } else if( VS_MODE_ENDIANNESS == "big") {
+          return Endian::Big;
+        } else if (VS_MODE_ENDIANNESS == "dynamic") {
+          if(CSR[hstatus].VSBE == 1'b1) {
+            return Endian::Big;
+          } else {
+            return Endian::Little;
+          }
+        }
+        else {
+          assert(false, "Invalid VS_MODE_ENDIANNESS value");
+          unreachable();
+        }
+      } else if (mode() == PrivilegeMode::VU) {
+        if (VU_MODE_ENDIANNESS == "little") {
+          return Endian::Little;
+        } else if( VU_MODE_ENDIANNESS == "big") {
+          return Endian::Big;
+        } else if (VU_MODE_ENDIANNESS == "dynamic") {
+          if(CSR[vsstatus].UBE == 1'b1) {
+            return Endian::Big;
+          } else {
+            return Endian::Little;
+          }
+        }
+        else {
+          assert(false, "Invalid VS_MODE_ENDIANNESS value");
+          unreachable();
+        }
+      } else {
+        assert(false, "Invalid configuration value");
+        unreachable();
+      }
+    } else {
+      assert(false, "Invalid configuration value");
+      unreachable();
+    }
+  }
+}
+
 function virtual_mode? {
   returns Boolean
   description {
     Returns True if the current mode is virtual (VS or VU).
   }
   body {
+    if(endianness() == Endian::Big) {
+     return false;
+    }
+
     return (mode() == PrivilegeMode::VS) || (mode() == PrivilegeMode::VU);
   }
 }
@@ -2627,9 +2731,19 @@ function read_memory {
   body {
     Boolean aligned = is_naturally_aligned(LEN, virtual_address);
     XReg physical_address;
+    XReg result;
 
     if (aligned) {
-      return read_memory_aligned(LEN, virtual_address, encoding, 1'b0, 1'b0);
+      result =  read_memory_aligned(LEN, virtual_address, encoding, 1'b0, 1'b0);
+      if(LEN > 8 && endianness() == Endian::Big ) {
+        U32 tmp;
+        for (U32 i=0; i < LEN/2; i = i+8) {
+          tmp = result[(i+7):i];
+          result[(i+7):i] = result[(LEN-1-i):(LEN-8-i)];
+          result[(LEN-1-i):(LEN-8-i)] = tmp[7:0];
+        }
+      }
+      return result;
     }
 
     # access isn't naturally aligned, but it still might be atomic if this hart supports
@@ -2646,7 +2760,16 @@ function read_memory {
 
       if (misaligned_is_atomic?(LEN, physical_address)) {
         access_check(physical_address, LEN, virtual_address, MemoryOperation::Read, ExceptionCode::LoadAccessFault, effective_ldst_mode());
-        return read_physical_memory(LEN, physical_address);
+        result = read_physical_memory(LEN, physical_address);
+        if(LEN > 8 && endianness() == Endian::Big ) {
+          U32 tmp;
+          for (U32 i=0; i < LEN/2; i = i+8) {
+            tmp = result[(i+7):i];
+            result[(i+7):i] = result[(LEN-1-i):(LEN-8-i)];
+            result[(LEN-1-i):(LEN-8-i)] = tmp[7:0];
+          }
+        }
+        return result;
       }
     }
 
@@ -2666,9 +2789,17 @@ function read_memory {
 
       # misaligned, must break into multiple reads
       if (MISALIGNED_SPLIT_STRATEGY == "sequential_bytes") {
-        XReg result = 0;
+        result = 0;
         for (U32 I = 0; I < (LEN/8); I++) {
           result = result | (read_memory_aligned(8, virtual_address + I, encoding, 1'b0, 1'b0) `<< (8*I));
+        }
+        if(LEN > 8 && endianness() == Endian::Big) {
+          U32 tmp;
+          for (U32 i=0; i < LEN/2; i = i+8) {
+            tmp = result[(i+7):i];
+            result[(i+7):i] = result[(LEN-1-i):(LEN-8-i)];
+            result[(LEN-1-i):(LEN-8-i)] = tmp[7:0];
+          }
         }
         return result;
       } else if (MISALIGNED_SPLIT_STRATEGY == "custom") {
@@ -3032,6 +3163,15 @@ function write_memory {
   body {
     Boolean aligned = is_naturally_aligned(LEN, virtual_address);
     XReg physical_address;
+
+    if(LEN > 8 && endianness() == Endian::Big) {
+      U32 tmp;
+      for (U32 i=0; i < LEN/2; i = i+8) {
+        tmp = value[(i+7):i];
+        value[(i+7):i] = value[(LEN-1-i):(LEN-8-i)];
+        value[(LEN-1-i):(LEN-8-i)] = tmp[7:0];
+      }
+    }
 
     if (aligned) {
       write_memory_aligned(LEN, virtual_address, value, encoding, 1'b0, 1'b0);
