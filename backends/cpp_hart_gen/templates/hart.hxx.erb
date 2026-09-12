@@ -228,16 +228,16 @@ namespace udb {
         if (csr == m_csr_addr_map.end()) {
           csr_handle.valid = false;
           return csr_handle;
-        } else {
-          csr_handle.valid = csr->second->defined();
-          csr_handle.name = csr->second->name();
-          csr_handle.addr_type = CsrAddressType::Direct;
-          csr_handle.address = csr_addr;
-          csr_handle.indirect_slot = 0_b;
-          csr_handle.mode = csr->second->mode();
-          csr_handle.writable = csr->second->writable();
-          return csr_handle;
         }
+
+        csr_handle.valid = csr->second->defined();
+        csr_handle.name = csr->second->name();
+        csr_handle.addr_type = CsrAddressType::Direct;
+        csr_handle.address = csr_addr;
+        csr_handle.indirect_slot = 0_b;
+        csr_handle.mode = csr->second->mode();
+        csr_handle.writable = csr->second->writable();
+        return csr_handle;
       }
 
       <%= name_of(:struct, cfg_arch, "Csr") %> indirect_csr_lookup(const PrivilegeMode& target_mode, const PossiblyUnknownBits<64>& csr_indirect_addr, const Bits<4>& window_slot) {
@@ -250,16 +250,16 @@ namespace udb {
         if (csr == m_csr_indirect_addr_map.end()) {
           csr_handle.valid = false;
           return csr_handle;
-        } else {
-          csr_handle.valid = csr->second->defined();
-          csr_handle.name = csr->second->name();
-          csr_handle.addr_type = CsrAddressType::Indirect;
-          csr_handle.address = csr_indirect_addr;
-          csr_handle.indirect_slot = window_slot;
-          csr_handle.mode = csr->second->mode();
-          csr_handle.writable = csr->second->writable();
-          return csr_handle;
         }
+
+        csr_handle.valid = csr->second->defined();
+        csr_handle.name = csr->second->name();
+        csr_handle.addr_type = CsrAddressType::Indirect;
+        csr_handle.address = csr_indirect_addr;
+        csr_handle.indirect_slot = window_slot;
+        csr_handle.mode = csr->second->mode();
+        csr_handle.writable = csr->second->writable();
+        return csr_handle;
         <%- else -%>
         csr_handle.valid = false;
         return csr_handle;
