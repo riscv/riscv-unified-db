@@ -229,6 +229,16 @@ namespace :test do
             warn "CSRs #{csr.name} and #{other_csr.name} have conflicting addresses (#{csr.address})"
             failed = true
           end
+
+          if csr.indirect? && other_csr.indirect? &&
+              csr.priv_mode == other_csr.priv_mode &&
+              csr.indirect_address == other_csr.indirect_address &&
+              csr.indirect_slot == other_csr.indirect_slot
+            warn "Indirect CSRs #{csr.name} and #{other_csr.name} have conflicting keys in RV#{xlen} " \
+              "(priv_mode: #{csr.priv_mode}, indirect_address: 0x#{csr.indirect_address.to_s(16)}, " \
+              "indirect_slot: #{csr.indirect_slot})"
+            failed = true
+          end
         end
       end
     end
