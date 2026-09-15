@@ -2967,7 +2967,10 @@ module Idl
 
       value_result = value_try do
         idx_value = idx.value(symtab)
-        type_error "Array index (#{idx.text_value} = #{idx_value}) out of range (< #{lhs.type(symtab).width})" if idx_value >= lhs.type(symtab).width
+        lhs_width = lhs.type(symtab).width
+        if lhs_width != :unknown && idx_value >= lhs_width
+          type_error "Array index (#{idx.text_value} = #{idx_value}) out of range (< #{lhs_width})"
+        end
       end
       # OK, doesn't need to be known
 
