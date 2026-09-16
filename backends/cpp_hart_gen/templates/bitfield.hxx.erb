@@ -24,9 +24,10 @@ namespace udb {
 
     <%= bitfield.name %>& operator=(const <%= bitfield.name %>& other)
     {
-      <%- bitfield.element_names.each do |element_name| -%>
-      <%= element_name %> = other.<%= element_name %>;
-      <%- end -%>
+      if (this != &other) {
+        Bitfield<<%= bitfield.size(cfg_arch.symtab) %>>::operator=(
+            static_cast<PossiblyUnknownBits<<%= bitfield.size(cfg_arch.symtab) %>>>(other));
+      }
 
       return *this;
     }
