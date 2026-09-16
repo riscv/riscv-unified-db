@@ -22,13 +22,14 @@ implemented_extensions:
   - [I, "2.1"]
   - [C, "2.0"]
   - [M, "2.0"]
+  - [Zmmul, "1.0"]
   - [Zicsr, "2.0"]
   - [Zicntr, "2.0"]
   - [Smrnmi, "1.0"]
   - [S, "1.11.0"]
   - [U, "1.0.0"]
   - [Zifencei, "2.0.0"]
-  - [Sv39, "1.11.0"]
+  - [Sv39, "1.0.0"]
   - [Zca, "1.0.0"]
   - [F, "2.2.0"]
 
@@ -115,6 +116,12 @@ params:
   MUTABLE_MISA_F: false
   HPM_COUNTER_EN: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
   MCOUNTINHIBIT_IMPLEMENTED: true
+  MEI_INTR_IMPL: false
+  MSI_INTR_IMPL: false
+  MTI_INTR_IMPL: false
+  SEI_INTR_IMPL: false
+  SSI_INTR_IMPL: false
+  STI_INTR_IMPL: false
 )";
 
 // ---------------------------------------------------------------------------

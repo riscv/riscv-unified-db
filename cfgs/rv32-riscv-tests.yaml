@@ -248,3 +248,9 @@ params:
   # MSTATEEN_JVT_TYPE: rw
   HW_MSTATUS_FS_DIRTY_UPDATE: precise
   MUTABLE_MISA_F: false
+  MEI_INTR_IMPL: false
+  MSI_INTR_IMPL: false
+  MTI_INTR_IMPL: false
+  SEI_INTR_IMPL: false
+  SSI_INTR_IMPL: false
+  STI_INTR_IMPL: false

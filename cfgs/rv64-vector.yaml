@@ -281,3 +281,9 @@ params:
       false,
       false,
     ]
+  MEI_INTR_IMPL: false
+  MSI_INTR_IMPL: false
+  MTI_INTR_IMPL: false
+  SEI_INTR_IMPL: false
+  SSI_INTR_IMPL: false
+  STI_INTR_IMPL: false

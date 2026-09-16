@@ -162,3 +162,6 @@ params:
       false,
       false,
     ]
+  MEI_INTR_IMPL: false
+  MSI_INTR_IMPL: false
+  MTI_INTR_IMPL: false
