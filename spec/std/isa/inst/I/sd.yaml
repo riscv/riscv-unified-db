@@ -52,17 +52,15 @@ access:
   vs: always
   vu: always
 operation(): |
-  Bits<64> data;
   XReg virtual_address = X[xs1] + $signed(imm);
 
   if (xlen() == 32) {
     if (implemented?(ExtensionName::Zilsd)) {
-      data = {X[xs2 + 1], X[xs2]};
+      write_memory(32, virtual_address, X[xs2], $encoding);
+      write_memory(32, virtual_address + 4, X[xs2 + 1], $encoding);
     } else {
       raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
     }
   } else {
-    data = X[xs2];
+    write_memory(64, virtual_address, X[xs2], $encoding);
   }
-
-  write_memory(64, virtual_address, data, $encoding);
