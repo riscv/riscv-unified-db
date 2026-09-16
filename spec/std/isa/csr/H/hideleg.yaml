@@ -33,11 +33,6 @@ fields:
     reset_value: 0
     long_name: Virtual Supervisor Software Interrupt
     description: Virtual Supervisor Software Interrupt
-    sw_write(csr_value): |
-      if (CSR[mideleg].VSSI == 0) {
-         return 0;
-      }
-      return csr_value.VSSI;
 
   STI:
     location: 5
@@ -52,11 +47,6 @@ fields:
     reset_value: 0
     long_name: Virtual Supervisor Timer Interrupt
     description: Virtual Supervisor Timer Interrupt
-    sw_write(csr_value): |
-      if (CSR[mideleg].VSTI == 0) {
-         return 0;
-      }
-      return csr_value.VSTI;
 
   SEI:
     location: 9
@@ -71,11 +61,6 @@ fields:
     reset_value: 0
     long_name: Virtual Supervisor External Interrupt
     description: Virtual Supervisor External Interrupt
-    sw_write(csr_value): |
-      if (CSR[mideleg].VSEI == 0) {
-         return 0;
-      }
-      return csr_value.VSEI;
 
   SGEI:
     location: 12
