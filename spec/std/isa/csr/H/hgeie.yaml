@@ -32,7 +32,7 @@ fields:
     location_rv64: 63-1
     type(): |
       return NUM_EXTERNAL_GUEST_INTERRUPTS > 0 ? CsrFieldType::RW : CsrFieldType::RO;
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     description: Enable bits; see description of hgeie
     sw_write(csr_value): |
       return ((MXLEN'1 << NUM_EXTERNAL_GUEST_INTERRUPTS) - 1) & csr_value.GEI_ENABLE;

@@ -19,34 +19,36 @@ definedBy:
     name: H
 length: SXLEN
 fields:
+  # TODO: For each writable bit in sie, the corresponding bit shall be read-only zero in both hip and hie.
+
   SGEIE:
     location: 12
-    type: RW-H
-    reset_value: 0
+    type: RW
+    reset_value: UNDEFINED_LEGAL
     description: |
       Hypervisor guest external interrupt enable bit. When set, allows external interrupts to be delivered
       to VS-mode based on the `hgeie` setting.
 
   VSEIE:
     location: 10
-    type: RW-H
-    reset_value: 0
+    type: RW
+    reset_value: UNDEFINED_LEGAL
     description: |
       VS-level external interrupt enable bit. When set, allows external interrupts directed to VS-level
       to be processed based on the configuration in `hvip` and other platform-specific sources.
 
   VSTIE:
     location: 6
-    type: RW-H
-    reset_value: 0
+    type: RW
+    reset_value: UNDEFINED_LEGAL
     description: |
       VS-level timer interrupt enable bit. When set, allows VS-level timer interrupts to be processed
       based on the `hvip` configuration and any platform-specific timer interrupts.
 
   VSSIE:
     location: 2
-    type: RW-H
-    reset_value: 0
+    type: RW
+    reset_value: UNDEFINED_LEGAL
     description: |
       VS-level software interrupt enable bit. When set, allows software interrupts directed to VS-level
       to be processed, based on the configuration in `hvip`.

@@ -30,7 +30,7 @@ fields:
   VSSI:
     location: 2
     type: RW
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     long_name: Virtual Supervisor Software Interrupt
     description: Virtual Supervisor Software Interrupt
 
@@ -44,7 +44,7 @@ fields:
   VSTI:
     location: 6
     type: RW
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     long_name: Virtual Supervisor Timer Interrupt
     description: Virtual Supervisor Timer Interrupt
 
@@ -58,7 +58,7 @@ fields:
   VSEI:
     location: 10
     type: RW
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     long_name: Virtual Supervisor External Interrupt
     description: Virtual Supervisor External Interrupt
 
@@ -75,7 +75,7 @@ fields:
       extension:
         name: Sscofpmf
     type: RW
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     long_name: Local-Counter-Overfloat Interrupt
     description: Local-Counter-Overfloat Interrupt
 

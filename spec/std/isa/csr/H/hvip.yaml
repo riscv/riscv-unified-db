@@ -21,7 +21,7 @@ fields:
   VSEIP:
     location: 10
     type: RW
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     description: |
       Pending interrupt bit for VS-level external interrupts. This bit is writable and
       is set to 1 to assert a VS-level external interrupt.
@@ -29,7 +29,7 @@ fields:
   VSTIP:
     location: 6
     type: RW
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     description: |
       Pending interrupt bit for VS-level timer interrupts. This bit is writable and
       is set to 1 to assert a VS-level timer interrupt.
@@ -37,7 +37,7 @@ fields:
   VSSIP:
     location: 2
     type: RW
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     description: |
       Pending interrupt bit for VS-level software interrupts. This bit is writable and
       is set to 1 to assert a VS-level software interrupt.
