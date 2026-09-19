@@ -6,9 +6,11 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: aes32esmi
-long_name: No synopsis available
+long_name: AES middle round encryption instruction for RV32
 description: |
-  No description available.
+  Selects one byte from `xs2`, applies the forward AES S-box and partial
+  MixColumns transform, rotates it by the selected byte position, and XORs it
+  with `xs1`.
 definedBy:
   allOf:
     - xlen: 32
@@ -33,3 +35,6 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  Bits<8> input = crypto_byte_select32(X[xs2][31:0], bs);
+  Bits<32> mixed = crypto_aes_mixcolumn_byte_fwd(crypto_aes_sbox_fwd(input));
+  X[xd] = sext(X[xs1][31:0] ^ crypto_rol32_by_byte(mixed, bs), 32);

@@ -6,9 +6,10 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: packh
-long_name: No synopsis available
+long_name: Pack low bytes of registers
 description: |
-  No description available.
+  Packs the low byte of `xs1` into bits 7:0 of `xd` and the low byte of
+  `xs2` into bits 15:8; all remaining bits of `xd` are zero.
 definedBy:
   extension:
     name: Zbkb
@@ -29,3 +30,8 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  if (xlen() == 32) {
+    X[xd] = {16'b0, X[xs2][7:0], X[xs1][7:0]};
+  } else {
+    X[xd] = {48'b0, X[xs2][7:0], X[xs1][7:0]};
+  }

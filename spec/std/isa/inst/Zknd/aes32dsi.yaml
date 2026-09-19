@@ -35,3 +35,6 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  Bits<8> input = crypto_byte_select32(X[xs2][31:0], bs);
+  Bits<32> substituted = {24'b0, crypto_aes_sbox_inv(input)};
+  X[xd] = sext(X[xs1][31:0] ^ crypto_rol32_by_byte(substituted, bs), 32);

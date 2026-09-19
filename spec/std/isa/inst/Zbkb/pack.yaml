@@ -6,9 +6,10 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: pack
-long_name: No synopsis available
+long_name: Pack low halves of registers
 description: |
-  No description available.
+  Packs the low half of `xs1` into the low half of `xd` and the low half of
+  `xs2` into the high half of `xd`.
 definedBy:
   extension:
     name: Zbkb
@@ -32,3 +33,8 @@ pseudoinstructions:
   - when: (xs2 == 0) && (xlen() == 32)
     to: zext.h xd, xs1
 operation(): |
+  if (xlen() == 32) {
+    X[xd] = {X[xs2][15:0], X[xs1][15:0]};
+  } else {
+    X[xd] = {X[xs2][31:0], X[xs1][31:0]};
+  }

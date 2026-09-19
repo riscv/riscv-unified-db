@@ -42,6 +42,22 @@ struct Csr {
   Boolean writable;
 }
 
+struct EntropySourceSample {
+  Bits<2> opst;
+  Bits<8> custom;
+  Bits<16> entropy;
+}
+
+builtin function poll_entropy_source {
+  returns EntropySourceSample
+  description {
+    Poll the platform entropy source for one `seed` CSR access.
+
+    The platform owns entropy-source state transitions, including BIST latching,
+    entropy uniqueness, and wipe-on-read behavior.
+  }
+}
+
 # implementation is generated from CSR YAML defintions
 generated function direct_csr_lookup {
   returns Csr

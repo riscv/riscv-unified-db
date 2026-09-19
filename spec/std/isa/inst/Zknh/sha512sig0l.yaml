@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sha512sig0l
-long_name: No synopsis available
+long_name: SHA-2-512 Sigma0 low half
 description: |
-  No description available.
+  Computes the low 32 bits of the SHA-2-512 Sigma0 transform on RV32.
 definedBy:
   allOf:
     - xlen: 32
@@ -31,3 +31,5 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  X[xd] = (X[xs1] >> 1) ^ (X[xs1] >> 7) ^ (X[xs1] >> 8) ^
+          (X[xs2] << 31) ^ (X[xs2] << 25) ^ (X[xs2] << 24);

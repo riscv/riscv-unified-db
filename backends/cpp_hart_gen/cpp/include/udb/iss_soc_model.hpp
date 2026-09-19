@@ -139,12 +139,13 @@ namespace udb {
     IssSocModel(uint64_t size, uint64_t base_addr)
         : m_memory(size, base_addr, this) {}
     IssSocModel() = delete;
-    ~IssSocModel() = default;
+    virtual ~IssSocModel() = default;
 
     uint64_t read_hpm_counter(uint64_t n) { return 0; }
     uint64_t read_mcycle() { return 0; }
     uint64_t read_mtime() { return 0; }
     uint64_t sw_write_mcycle(uint64_t value) { return value; }
+    virtual UdbEntropySourceSample poll_entropy_source() { return {0b01, 0, 0}; }
     void cache_block_zero(uint64_t cache_block_physical_address) {}
     void eei_ecall_from_m() {}
     void eei_ecall_from_s() {}

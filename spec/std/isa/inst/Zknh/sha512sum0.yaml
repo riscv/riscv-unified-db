@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sha512sum0
-long_name: No synopsis available
+long_name: SHA-2-512 Sum0
 description: |
-  No description available.
+  Computes the SHA-2-512 compression-function Sum0 transform on RV64.
 definedBy:
   allOf:
     - xlen: 64
@@ -29,3 +29,4 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  X[xd] = crypto_ror64(X[xs1], 28) ^ crypto_ror64(X[xs1], 34) ^ crypto_ror64(X[xs1], 39);

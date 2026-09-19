@@ -6,9 +6,10 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: packw
-long_name: No synopsis available
+long_name: Pack low halfwords of registers
 description: |
-  No description available.
+  Packs the low halfword of `xs1` into bits 15:0 and the low halfword of
+  `xs2` into bits 31:16, then sign-extends the 32-bit result to `XLEN`.
 definedBy:
   allOf:
     - xlen: 64
@@ -34,3 +35,4 @@ pseudoinstructions:
   - when: (xs2 == 0x0)
     to: zext.h xd, xs1
 operation(): |
+  X[xd] = sext({X[xs2][15:0], X[xs1][15:0]}, 32);

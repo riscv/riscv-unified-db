@@ -31,3 +31,7 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  X[xd] = {
+    crypto_aes_mixcolumn_inv(X[xs1][63:32]),
+    crypto_aes_mixcolumn_inv(X[xs1][31:0])
+  };

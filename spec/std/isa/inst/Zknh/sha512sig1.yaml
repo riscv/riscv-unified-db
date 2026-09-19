@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sha512sig1
-long_name: No synopsis available
+long_name: SHA-2-512 Sigma1
 description: |
-  No description available.
+  Computes the SHA-2-512 message-schedule Sigma1 transform on RV64.
 definedBy:
   allOf:
     - xlen: 64
@@ -29,3 +29,4 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  X[xd] = crypto_ror64(X[xs1], 19) ^ crypto_ror64(X[xs1], 61) ^ (X[xs1] >> 6);

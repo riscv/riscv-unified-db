@@ -395,7 +395,7 @@ xlen+++()+++ == 32
 == aes32esi
 
 Synopsis::
-No synopsis available
+AES final round encryption instruction for RV32
 
 Base::
 
@@ -417,7 +417,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Selects one byte from `xs2`, applies the forward AES S-box, rotates the
+result by the selected byte position, and XORs it with `xs1`.
 
 
 Decode Variables::
@@ -451,7 +452,7 @@ xlen+++()+++ == 32
 == aes32esmi
 
 Synopsis::
-No synopsis available
+AES middle round encryption instruction for RV32
 
 Base::
 
@@ -473,7 +474,9 @@ Encoding::
 ....
 
 Description::
-No description available.
+Selects one byte from `xs2`, applies the forward AES S-box and partial
+MixColumns transform, rotates it by the selected byte position, and XORs it
+with `xs1`.
 
 
 Decode Variables::
@@ -15804,7 +15807,7 @@ Included in::
 |===
 | Extension | Version
 
-| *Zbc*
+| *Zbkc*
 | any
 |===
 
@@ -33597,7 +33600,7 @@ xref:exts:Zbkb.adoc#udb:doc:ext:Zbkb[Zbkb]
 == pack
 
 Synopsis::
-No synopsis available
+Pack low halves of registers
 
 Base::
 
@@ -33619,7 +33622,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Packs the low half of `xs1` into the low half of `xd` and the low half of
+`xs2` into the high half of `xd`.
 
 
 Decode Variables::
@@ -33649,7 +33653,7 @@ Included in::
 == packh
 
 Synopsis::
-No synopsis available
+Pack low bytes of registers
 
 Base::
 
@@ -33671,7 +33675,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Packs the low byte of `xs1` into bits 7:0 of `xd` and the low byte of
+`xs2` into bits 15:8; all remaining bits of `xd` are zero.
 
 
 Decode Variables::
@@ -33701,7 +33706,7 @@ Included in::
 == packw
 
 Synopsis::
-No synopsis available
+Pack low halfwords of registers
 
 Base::
 
@@ -33723,7 +33728,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Packs the low halfword of `xs1` into bits 15:0 and the low halfword of
+`xs2` into bits 31:16, then sign-extends the 32-bit result to `XLEN`.
 
 
 Decode Variables::
@@ -37206,7 +37212,7 @@ xlen+++()+++ == 64
 == sha256sig0
 
 Synopsis::
-No synopsis available
+SHA-2-256 Sigma0
 
 Base::
 
@@ -37228,7 +37234,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the SHA-2-256 message-schedule Sigma0 transform. On RV64, the
+32-bit result is sign-extended to `XLEN`.
 
 
 Decode Variables::
@@ -37257,7 +37264,7 @@ Included in::
 == sha256sig1
 
 Synopsis::
-No synopsis available
+SHA-2-256 Sigma1
 
 Base::
 
@@ -37279,7 +37286,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the SHA-2-256 message-schedule Sigma1 transform. On RV64, the
+32-bit result is sign-extended to `XLEN`.
 
 
 Decode Variables::
@@ -37308,7 +37316,7 @@ Included in::
 == sha256sum0
 
 Synopsis::
-No synopsis available
+SHA-2-256 Sum0
 
 Base::
 
@@ -37330,7 +37338,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the SHA-2-256 compression-function Sum0 transform. On RV64, the
+32-bit result is sign-extended to `XLEN`.
 
 
 Decode Variables::
@@ -37359,7 +37368,7 @@ Included in::
 == sha256sum1
 
 Synopsis::
-No synopsis available
+SHA-2-256 Sum1
 
 Base::
 
@@ -37381,7 +37390,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the SHA-2-256 compression-function Sum1 transform. On RV64, the
+32-bit result is sign-extended to `XLEN`.
 
 
 Decode Variables::
@@ -37410,7 +37420,7 @@ Included in::
 == sha512sig0
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sigma0
 
 Base::
 
@@ -37432,7 +37442,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the SHA-2-512 message-schedule Sigma0 transform on RV64.
 
 
 Decode Variables::
@@ -37464,7 +37474,7 @@ xlen+++()+++ == 64
 == sha512sig0h
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sigma0 high half
 
 Base::
 
@@ -37486,7 +37496,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the high 32 bits of the SHA-2-512 Sigma0 transform on RV32.
 
 
 Decode Variables::
@@ -37519,7 +37529,7 @@ xlen+++()+++ == 32
 == sha512sig0l
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sigma0 low half
 
 Base::
 
@@ -37541,7 +37551,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the low 32 bits of the SHA-2-512 Sigma0 transform on RV32.
 
 
 Decode Variables::
@@ -37574,7 +37584,7 @@ xlen+++()+++ == 32
 == sha512sig1
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sigma1
 
 Base::
 
@@ -37596,7 +37606,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the SHA-2-512 message-schedule Sigma1 transform on RV64.
 
 
 Decode Variables::
@@ -37628,7 +37638,7 @@ xlen+++()+++ == 64
 == sha512sig1h
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sigma1 high half
 
 Base::
 
@@ -37650,7 +37660,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the high 32 bits of the SHA-2-512 Sigma1 transform on RV32.
 
 
 Decode Variables::
@@ -37683,7 +37693,7 @@ xlen+++()+++ == 32
 == sha512sig1l
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sigma1 low half
 
 Base::
 
@@ -37705,7 +37715,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the low 32 bits of the SHA-2-512 Sigma1 transform on RV32.
 
 
 Decode Variables::
@@ -37738,7 +37748,7 @@ xlen+++()+++ == 32
 == sha512sum0
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sum0
 
 Base::
 
@@ -37760,7 +37770,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the SHA-2-512 compression-function Sum0 transform on RV64.
 
 
 Decode Variables::
@@ -37792,7 +37802,7 @@ xlen+++()+++ == 64
 == sha512sum0r
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sum0 for RV32
 
 Base::
 
@@ -37814,7 +37824,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes one half of the SHA-2-512 Sum0 transform on RV32. Reversing the
+source operands computes the other half.
 
 
 Decode Variables::
@@ -37847,7 +37858,7 @@ xlen+++()+++ == 32
 == sha512sum1
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sum1
 
 Base::
 
@@ -37869,7 +37880,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the SHA-2-512 compression-function Sum1 transform on RV64.
 
 
 Decode Variables::
@@ -37901,7 +37912,7 @@ xlen+++()+++ == 64
 == sha512sum1r
 
 Synopsis::
-No synopsis available
+SHA-2-512 Sum1 for RV32
 
 Base::
 
@@ -37923,7 +37934,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes one half of the SHA-2-512 Sum1 transform on RV32. Reversing the
+source operands computes the other half.
 
 
 Decode Variables::
@@ -38515,7 +38527,7 @@ Included in::
 == sm3p0
 
 Synopsis::
-No synopsis available
+SM3 P0 transform
 
 Base::
 
@@ -38537,7 +38549,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the P0 permutation used by the SM3 hash function. On RV64, the
+32-bit result is sign-extended to `XLEN`.
 
 
 Decode Variables::
@@ -38566,7 +38579,7 @@ Included in::
 == sm3p1
 
 Synopsis::
-No synopsis available
+SM3 P1 transform
 
 Base::
 
@@ -38588,7 +38601,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Computes the P1 permutation used by the SM3 hash function. On RV64, the
+32-bit result is sign-extended to `XLEN`.
 
 
 Decode Variables::
@@ -38617,7 +38631,7 @@ Included in::
 == sm4ed
 
 Synopsis::
-No synopsis available
+SM4 encryption/decryption instruction
 
 Base::
 
@@ -38639,7 +38653,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Selects one byte from `xs2`, applies the SM4 S-box and encryption linear
+transform, rotates it by the selected byte position, and XORs it with `xs1`.
 
 
 Decode Variables::
@@ -38670,7 +38685,7 @@ Included in::
 == sm4ks
 
 Synopsis::
-No synopsis available
+SM4 key schedule instruction
 
 Base::
 
@@ -38692,7 +38707,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+Selects one byte from `xs2`, applies the SM4 S-box and key-schedule linear
+transform, rotates it by the selected byte position, and XORs it with `xs1`.
 
 
 Decode Variables::

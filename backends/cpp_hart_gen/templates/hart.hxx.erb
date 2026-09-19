@@ -221,6 +221,15 @@ namespace udb {
         return m_csr_addr_map.count(csr_addr) == 1;
       }
 
+      <%= name_of(:struct, cfg_arch, "EntropySourceSample") %> poll_entropy_source() {
+        const UdbEntropySourceSample source = this->m_soc.poll_entropy_source();
+        <%= name_of(:struct, cfg_arch, "EntropySourceSample") %> sample;
+        sample.opst = Bits<2>{source.opst};
+        sample.custom = Bits<8>{source.custom};
+        sample.entropy = Bits<16>{source.entropy};
+        return sample;
+      }
+
       <%= name_of(:struct, cfg_arch, "Csr") %> direct_csr_lookup(const PossiblyUnknownBits<12>& csr_addr) {
         <%= name_of(:struct, cfg_arch, "Csr") %> csr_handle;
 
