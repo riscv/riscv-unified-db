@@ -356,8 +356,24 @@ module Idl
         "String"
       when :boolean
         "Boolean"
+      when :void
+        "void"
+      when :array
+        if @width == :unknown || @width.nil?
+          "array of #{@sub_type&.to_idl || 'untyped'}"
+        else
+          "#{@sub_type&.to_idl || 'untyped'}[#{@width}]"
+        end
+      when :struct
+        T.cast(self, StructType).type_name
+      when :enum
+        @name || "enum"
+      when :enum_ref
+        T.must(@enum_class).name
+      when :tuple
+        "(#{T.must(@tuple_types).map(&:to_idl).join(', ')})"
       else
-        raise "TODO"
+        raise "Unrecognized or unsupported IDL type kind: #{@kind.inspect}"
       end
     end
 
