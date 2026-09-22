@@ -25,6 +25,7 @@ fields:
     description: |
       Pending interrupt bit for VS-level external interrupts. This bit is writable and
       is set to 1 to assert a VS-level external interrupt.
+      TODO: assert the interrupt
 
   VSTIP:
     location: 6
@@ -33,6 +34,7 @@ fields:
     description: |
       Pending interrupt bit for VS-level timer interrupts. This bit is writable and
       is set to 1 to assert a VS-level timer interrupt.
+      TODO: assert the interrupt
 
   VSSIP:
     location: 2
@@ -41,3 +43,4 @@ fields:
     description: |
       Pending interrupt bit for VS-level software interrupts. This bit is writable and
       is set to 1 to assert a VS-level software interrupt.
+      TODO: assert the interrupt

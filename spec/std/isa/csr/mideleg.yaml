@@ -104,6 +104,11 @@ fields:
     type(): |
       return SSI_INTR_IMPL ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value: 0
+    sw_write(csr_value): |
+      if (csr_value.SSI == 0 && implemented?(ExtensionName::H)) {
+        CSR[hideleg].SSI = 0;
+      }
+      return csr_value.SSI;
   VSSI:
     location: 2
     description: |
@@ -117,6 +122,13 @@ fields:
     definedBy:
       extension:
         name: H
+    sw_write(csr_value): |
+      if (csr_value.VSSI == 0) {
+        CSR[hie].VSSIE = 0;
+        CSR[hip].VSSIP = 0;
+        CSR[hideleg].VSSI = 0;
+      }
+      return csr_value.VSSI;
   MSI:
     location: 3
     description: |
@@ -149,6 +161,13 @@ fields:
     definedBy:
       extension:
         name: H
+    sw_write(csr_value): |
+      if (csr_value.VSTI == 0) {
+        CSR[hie].VSTIE = 0;
+        CSR[hip].VSTIP = 0;
+        CSR[hideleg].VSTI = 0;
+      }
+      return csr_value.VSTI;
   MTI:
     location: 7
     description: |
@@ -179,6 +198,13 @@ fields:
     definedBy:
       extension:
         name: H
+    sw_write(csr_value): |
+      if (csr_value.VSEI == 0) {
+        CSR[hie].VSEIE = 0;
+        CSR[hip].VSEIP = 0;
+        CSR[hideleg].VSEI = 0;
+      }
+      return csr_value.VSEI;
   MEI:
     location: 11
     description: |
@@ -200,6 +226,12 @@ fields:
     definedBy:
       extension:
         name: H
+    sw_write(csr_value): |
+      if (csr_value.SGEI == 0) {
+        CSR[hie].SGEIE = 0;
+        CSR[hip].SGEIP = 0;
+      }
+      return csr_value.SGEI;
   LCOFI:
     location: 13
     description: |
@@ -211,3 +243,8 @@ fields:
     definedBy:
       extension:
         name: Sscofpmf
+    sw_write(csr_value): |
+      if (csr_value.LCOFI == 0) {
+        CSR[hideleg].LCOFI = 0;
+      }
+      return csr_value.LCOFI;

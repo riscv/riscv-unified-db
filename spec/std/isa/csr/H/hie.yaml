@@ -28,6 +28,11 @@ fields:
     description: |
       Hypervisor guest external interrupt enable bit. When set, allows external interrupts to be delivered
       to VS-mode based on the `hgeie` setting.
+    sw_write(csr_value): |
+      if (CSR[mideleg].SGEI == 0) {
+        return 0;
+      }
+      return csr_value.SGEIE;
 
   VSEIE:
     location: 10
@@ -36,6 +41,11 @@ fields:
     description: |
       VS-level external interrupt enable bit. When set, allows external interrupts directed to VS-level
       to be processed based on the configuration in `hvip` and other platform-specific sources.
+    sw_write(csr_value): |
+      if (CSR[mideleg].VSEI == 0) {
+        return 0;
+      }
+      return csr_value.VSEIE;
 
   VSTIE:
     location: 6
@@ -44,6 +54,11 @@ fields:
     description: |
       VS-level timer interrupt enable bit. When set, allows VS-level timer interrupts to be processed
       based on the `hvip` configuration and any platform-specific timer interrupts.
+    sw_write(csr_value): |
+      if (CSR[mideleg].VSTI == 0) {
+        return 0;
+      }
+      return csr_value.VSTIE;
 
   VSSIE:
     location: 2
@@ -52,3 +67,8 @@ fields:
     description: |
       VS-level software interrupt enable bit. When set, allows software interrupts directed to VS-level
       to be processed, based on the configuration in `hvip`.
+    sw_write(csr_value): |
+      if (CSR[mideleg].VSSI == 0) {
+        return 0;
+      }
+      return csr_value.VSSIE;
