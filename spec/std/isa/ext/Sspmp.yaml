@@ -35,5 +35,9 @@ requirements:
   allOf:
     - extension:
         name: Sscsrind
-    - extension:
-        name: Smpmpdeleg
+    - if:
+        extension:
+          name: Sm
+      then:
+        extension:
+          name: Smpmpdeleg
