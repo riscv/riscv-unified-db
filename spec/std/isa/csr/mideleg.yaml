@@ -105,8 +105,10 @@ fields:
       return SSI_INTR_IMPL ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value: 0
     sw_write(csr_value): |
-      if (csr_value.SSI == 0 && implemented?(ExtensionName::H)) {
-        CSR[hideleg].SSI = 0;
+      if (csr_value.SSI == 0) {
+        if (implemented?(ExtensionName::H)) {
+          CSR[hideleg].SSI = 0;
+        }
       }
       return csr_value.SSI;
   VSSI:
