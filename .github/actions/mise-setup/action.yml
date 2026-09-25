@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 name: mise setup
-description: Set up mise environment and install Ruby gems, Python packages, and aube packages
+description: Set up mise environment and install project dependencies
 inputs:
   toolchain:
     description: Whether to pull/build the RISC-V toolchain container (for C++ jobs)
@@ -10,14 +10,10 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Pre-initialize GPG
-      shell: bash
-      run: mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
     - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
       with:
         version: 2026.9.1
-    # Write toolchain preference to .toolchain-local so bin/setup (section 7)
-    # finds it and section 8 behaves correctly without prompting.
+    # Write the toolchain preference before bin/setup runs.
     - name: Configure toolchain
       shell: bash
       run: |
@@ -28,8 +24,8 @@ runs:
           echo "UDB_TOOLCHAIN_NONE=1" > .toolchain-local
           echo "UDB_TOOLCHAIN_NONE=1" >> "$GITHUB_ENV"
         fi
-    # Docker Buildx must be available before bin/setup runs, because bin/setup
-    # section 8 may call _pull_or_build_toolchain_image which uses buildx in CI.
+    # Docker Buildx must be available before bin/setup runs. The setup script
+    # can call _pull_or_build_toolchain_image, which uses buildx in CI.
     - name: Set up Docker Buildx
       if: inputs.toolchain == 'true'
       uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
