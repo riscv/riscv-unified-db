@@ -124,6 +124,7 @@ params:
   STI_INTR_IMPL: false
   WFI_U_MODE: false
   WFI_FINITE: true
+  NON_STANDARD_EXTENSION_IMPLEMENTED: false
 )";
 
 // ---------------------------------------------------------------------------
