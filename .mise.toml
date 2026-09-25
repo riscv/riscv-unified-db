@@ -33,7 +33,6 @@ run = "git submodule update --init ext/rbi-central"
 
 [deps.prek]
 auto = true
-depends = ["uv"]
 sources = [".pre-commit-config.yaml"]
 run = "prek install --prepare-hooks"
 
