@@ -38,35 +38,6 @@ access:
   vu: always
 operation(): |
   check_f_ok($encoding);
-
-  Bits<16> hp_value = F[fs1][15:0];
-
-  Bits<1> sign = hp_value[15];
-  Bits<5> exp = hp_value[14:10];
-  Bits<10> frac = hp_value[9:0];
-
-  if (exp == 0x1F) {
-    if (frac != 0) {
-      if ((hp_value & 0x0200) != 0) {
-        set_fp_flag(FpFlag::NV);
-      }
-      F[fd] = HP_CANONICAL_NAN;
-    } else {
-      F[fd] = packToF32UI(sign, 0xFF, 0);
-    }
-  } else {
-    if (exp != 0) {
-      if (frac != 0) {
-        F[fd] = packToF32UI(sign, 0, 0);
-      } else {
-        Bits<6> norm_exp;
-        (norm_exp, frac) = softfloat_normSubnormalF16Sig( frac );
-        exp = norm_exp - 1;
-        F[fd] = packToF32UI(sign, exp + 0x70, frac << 13);
-      }
-    } else {
-      F[fd] = packToF32UI(sign, exp + 0x70, frac << 13);
-    }
-  }
-
+  RoundingMode mode = rm_to_mode(rm, $encoding);
+  F[fd] = f16_result(f32_to_f16(f32_operand(F[fs1]), mode));
   mark_f_state_dirty();
