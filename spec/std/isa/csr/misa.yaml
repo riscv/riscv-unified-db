@@ -225,9 +225,17 @@ fields:
     definedBy:
       extension:
         name: Zvl32b
+  X:
+    location: 23
+    description: |
+      The `X` bit will be set if there are any non-standard extensions.
+    type: RO
+    reset_value(): |
+      return NON_STANDARD_EXTENSION_IMPLEMENTED ? 1 : 0;
 sw_read(): |
   return (
     (CSR[misa].MXL `<< (xlen() - 2)) |
+    (CSR[misa].X `<< 23) |
     (CSR[misa].V `<< 21) |
     (CSR[misa].U `<< 20) |
     (CSR[misa].S `<< 18) |
