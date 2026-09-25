@@ -367,16 +367,20 @@ do_gen_udb_gen_fixtures() {
 # Generate all development artifacts
 #
 do_gen_all() {
-  do_gen_regress
-  do_gen_vscode_idl
-  do_gen_gem_versions
-  do_ruby_type_def all
-  do_gen_profile_cfgs
-  do_gen_xqci_golden
-  do_gen_instruction_appendix_golden
-  do_gen_schema_docs
-  do_gen_cfg_headers_golden
-  do_gen_udb_gen_fixtures
+    local status=0
+
+    do_gen_regress || status=$?
+    do_gen_vscode_idl || status=$?
+    do_gen_gem_versions || status=$?
+    do_ruby_type_def all || status=$?
+    do_gen_profile_cfgs || status=$?
+    do_gen_xqci_golden || status=$?
+    do_gen_instruction_appendix_golden || status=$?
+    do_gen_schema_docs || status=$?
+    do_gen_cfg_headers_golden || status=$?
+    do_gen_udb_gen_fixtures || status=$?
+
+    return $status
 }
 
 #
@@ -402,7 +406,7 @@ do_gen_profile_cfgs() {
     before_hash=$(find "$cfgs_dir" -type f -name "*.yaml" -exec md5sum {} \; | sort | md5sum | awk '{print $1}')
   fi
 
-  "${UDB_ROOT}"/bin/bundle exec rake gen:cfg
+  "${UDB_ROOT}"/bin/bundle exec rake gen:cfg || return $?
 
   if [ $fail_on_change -eq 1 ]; then
     local after_hash=""
@@ -461,8 +465,8 @@ do_gen_cfg_headers_golden() {
   fi
 
   mkdir -p "$gen_dir" "$golden_dir"
-  "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-c-header -c "$cfg" -o "${gen_dir}/${cfg}.h"
-  "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-svh-header -c "$cfg" -o "${gen_dir}/${cfg}.svh"
+  "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-c-header -c "$cfg" -o "${gen_dir}/${cfg}.h" || return $?
+  "${UDB_ROOT}"/bin/bundle exec udb-gen cfg-svh-header -c "$cfg" -o "${gen_dir}/${cfg}.svh" || return $?
   cp "${gen_dir}/${cfg}.h" "${golden_dir}/${cfg}.golden.h"
   cp "${gen_dir}/${cfg}.svh" "${golden_dir}/${cfg}.golden.svh"
 
@@ -655,7 +659,7 @@ case "$subcommand" in
     case "$target" in
       all )
         do_gen_all
-        exit 0
+        exit $?
         ;;
       smoke )
         do_gen_smoke
