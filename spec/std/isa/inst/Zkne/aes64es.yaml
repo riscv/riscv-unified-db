@@ -32,3 +32,5 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  Bits<64> shifted = crypto_aes_rv64_shiftrows_fwd(X[xs2], X[xs1]);
+  X[xd] = crypto_aes_subbytes_fwd64(shifted);

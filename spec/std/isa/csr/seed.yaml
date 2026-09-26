@@ -1,0 +1,64 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/csr_schema.json
+
+$schema: "csr_schema.json#"
+kind: csr
+name: seed
+long_name: Entropy Seed Register
+address: 0x015
+writable: true
+priv_mode: U
+length: 32
+definedBy:
+  extension:
+    name: Zkr
+description: |
+  The `seed` CSR exposes up to 16 bits of entropy supplied by the platform.
+  Software must use a CSR instruction with write capability to poll the
+  entropy source; all write values are ignored.
+sw_read(): |
+  validate_seed_access($encoding);
+
+  EntropySourceSample sample = poll_entropy_source();
+  Bits<16> entropy = 0;
+  if (sample.opst == 2'b10) {
+    entropy = sample.entropy;
+  }
+
+  return {sample.opst, 6'b000000, sample.custom, entropy};
+fields:
+  OPST:
+    location: 31-30
+    type: RO-H
+    reset_value: 0
+    description: Entropy source operational status.
+    sw_write(csr_value): |
+      return 2'b00;
+  RESERVED:
+    location: 29-24
+    type: RO-H
+    reset_value: 0
+    description: Reserved for future RISC-V use.
+    sw_write(csr_value): |
+      return 6'b000000;
+  CUSTOM:
+    location: 23-16
+    type: RO-H
+    reset_value: 0
+    description: Custom and experimental entropy-source status bits.
+    sw_write(csr_value): |
+      return 8'b00000000;
+  ENTROPY:
+    location: 15-0
+    type: RO-H
+    reset_value: 0
+    description: Entropy bits, valid only when `OPST` is `ES16`.
+    sw_write(csr_value): |
+      Bits<3> funct3 = $encoding[14:12];
+      if ((funct3 == 3'b001 || funct3 == 3'b101) && $encoding[11:7] == 0) {
+        validate_seed_access($encoding);
+        poll_entropy_source();
+      }
+      return 16'b0000000000000000;

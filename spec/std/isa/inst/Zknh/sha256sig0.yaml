@@ -6,9 +6,10 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sha256sig0
-long_name: No synopsis available
+long_name: SHA-2-256 Sigma0
 description: |
-  No description available.
+  Computes the SHA-2-256 message-schedule Sigma0 transform. On RV64, the
+  32-bit result is sign-extended to `XLEN`.
 definedBy:
   extension:
     name: Zknh
@@ -27,3 +28,5 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  Bits<32> input = X[xs1][31:0];
+  X[xd] = sext(crypto_ror32(input, 7) ^ crypto_ror32(input, 18) ^ (input >> 3), 32);

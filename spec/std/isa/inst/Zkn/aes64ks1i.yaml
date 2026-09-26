@@ -35,3 +35,11 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  if (rnum > 0xA) {
+    raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
+  }
+
+  Bits<32> input = X[xs1][63:32];
+  Bits<32> rotated = rnum == 0xA ? input : crypto_ror32(input, 8);
+  Bits<32> word = crypto_aes_subword_fwd(rotated) ^ crypto_aes_rcon(rnum);
+  X[xd] = {word, word};

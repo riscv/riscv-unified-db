@@ -34,3 +34,6 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  Bits<32> w0 = X[xs1][63:32] ^ X[xs2][31:0];
+  Bits<32> w1 = w0 ^ X[xs2][63:32];
+  X[xd] = {w1, w0};

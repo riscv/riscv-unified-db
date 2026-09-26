@@ -6,9 +6,10 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sha512sum1r
-long_name: No synopsis available
+long_name: SHA-2-512 Sum1 for RV32
 description: |
-  No description available.
+  Computes one half of the SHA-2-512 Sum1 transform on RV32. Reversing the
+  source operands computes the other half.
 definedBy:
   allOf:
     - xlen: 32
@@ -31,3 +32,5 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  X[xd] = (X[xs1] << 23) ^ (X[xs1] >> 14) ^ (X[xs1] >> 18) ^
+          (X[xs2] >> 9) ^ (X[xs2] << 18) ^ (X[xs2] << 14);

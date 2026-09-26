@@ -7,6 +7,7 @@ include "builtin_functions.idl"
 include "interrupts.idl"
 include "fetch.idl"
 include "util.idl"
+include "crypto.idl"
 include "fp.idl"
 include "vec.idl"
 

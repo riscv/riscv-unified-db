@@ -6,9 +6,10 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sm4ks
-long_name: No synopsis available
+long_name: SM4 key schedule instruction
 description: |
-  No description available.
+  Selects one byte from `xs2`, applies the SM4 S-box and key-schedule linear
+  transform, rotates it by the selected byte position, and XORs it with `xs1`.
 definedBy:
   extension:
     name: Zksed
@@ -31,3 +32,8 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  Bits<8> input = crypto_byte_select32(X[xs2][31:0], bs);
+  Bits<32> x = {24'b0, crypto_sm4_sbox(input)};
+  Bits<32> y = x ^ ((x & 0x00000007) << 29) ^ ((x & 0x000000fe) << 7) ^
+               ((x & 0x00000001) << 23) ^ ((x & 0x000000f8) << 13);
+  X[xd] = sext(crypto_rol32_by_byte(y, bs) ^ X[xs1][31:0], 32);

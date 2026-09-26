@@ -6,9 +6,10 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: aes32esi
-long_name: No synopsis available
+long_name: AES final round encryption instruction for RV32
 description: |
-  No description available.
+  Selects one byte from `xs2`, applies the forward AES S-box, rotates the
+  result by the selected byte position, and XORs it with `xs1`.
 definedBy:
   allOf:
     - xlen: 32
@@ -33,3 +34,6 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  Bits<8> input = crypto_byte_select32(X[xs2][31:0], bs);
+  Bits<32> substituted = {24'b0, crypto_aes_sbox_fwd(input)};
+  X[xd] = sext(X[xs1][31:0] ^ crypto_rol32_by_byte(substituted, bs), 32);

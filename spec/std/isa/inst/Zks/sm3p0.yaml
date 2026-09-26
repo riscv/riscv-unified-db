@@ -6,9 +6,10 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sm3p0
-long_name: No synopsis available
+long_name: SM3 P0 transform
 description: |
-  No description available.
+  Computes the P0 permutation used by the SM3 hash function. On RV64, the
+  32-bit result is sign-extended to `XLEN`.
 definedBy:
   extension:
     name: Zksh
@@ -27,3 +28,5 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  Bits<32> input = X[xs1][31:0];
+  X[xd] = sext(input ^ crypto_rol32(input, 9) ^ crypto_rol32(input, 17), 32);

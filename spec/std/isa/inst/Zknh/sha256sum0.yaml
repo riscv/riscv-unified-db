@@ -6,9 +6,10 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: sha256sum0
-long_name: No synopsis available
+long_name: SHA-2-256 Sum0
 description: |
-  No description available.
+  Computes the SHA-2-256 compression-function Sum0 transform. On RV64, the
+  32-bit result is sign-extended to `XLEN`.
 definedBy:
   extension:
     name: Zknh
@@ -27,3 +28,5 @@ access:
   vu: always
 data_independent_timing: true
 operation(): |
+  Bits<32> input = X[xs1][31:0];
+  X[xd] = sext(crypto_ror32(input, 2) ^ crypto_ror32(input, 13) ^ crypto_ror32(input, 22), 32);
