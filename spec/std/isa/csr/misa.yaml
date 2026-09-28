@@ -78,6 +78,16 @@ fields:
     definedBy:
       extension:
         name: D
+  E:
+    location: 4
+    description: |
+      Indicates support for the `E` (base) extension.
+    type: RO
+    definedBy:
+      extension:
+        name: E
+    reset_value(): |
+      return implemented?(ExtensionName::E) ? 1 : 0;
   F:
     location: 5
     description: |
@@ -125,7 +135,8 @@ fields:
     definedBy:
       extension:
         name: I
-    reset_value: 1
+    reset_value(): |
+      return implemented?(ExtensionName::I) ? 1 : 0;
   M:
     location: 12
     description: |
@@ -225,6 +236,7 @@ sw_read(): |
     (CSR[misa].I `<< 8) |
     (CSR[misa].H `<< 7) |
     (CSR[misa].F `<< 5) |
+    (CSR[misa].E `<< 4) |
     (CSR[misa].D `<< 3) |
     (CSR[misa].C `<< 2) |
     (CSR[misa].B `<< 1) |
