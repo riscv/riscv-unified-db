@@ -13,26 +13,26 @@ priv_mode: M
 length: 64
 description: |
   Controls exception delegation from M-mode to (H)S-mode
-  <%- if ext?(:H) -%>
+  {%- if extensions.H -%}
   or, in conjunction with `hedeleg`, to VS-mode
-  <%- end -%>
+  {%- endif -%}
   .
 
   An exception cause is delegated to (H)S-mode when all of the following hold:
 
   * The corresponding field in `medeleg` is set.
   * The current privilege level is not M-mode.
-  <%- if ext?(:H) -%>
+  {%- if extensions.H -%}
   * The same field in `hedeleg` is clear.
-  <%- end -%>
+  {%- endif -%}
 
-  <%- if ext?(:H) -%>
+  {%- if extensions.H -%}
   An exception cause is delegated to VS-mode when all of the following hold:
 
   * The corresponding field in `medeleg` is set.
   * The corresponding field in `hedeleg` is set.
   * The current privilege level is not M-mode or HS-mode.
-  <%- end -%>
+  {%- endif -%}
 
   Otherwise, an exception cause is handled by M-mode.
 
@@ -47,15 +47,15 @@ fields:
       *Instruction Address Misaligned*
 
       Delegates Instruction Address Misaligned exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Instruction Address Misaligned exceptions may be further delegated to VS-mode if `hedeleg.IAM` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.IAM`# .2+! [.rotate]#`hedeleg.IAM`# 4+^.>! Current Mode
@@ -66,7 +66,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.IAM`# 2+^.>! Current Mode
@@ -75,7 +75,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
     type: RW
     reset_value: UNDEFINED_LEGAL
   IAF:
@@ -84,15 +84,15 @@ fields:
       *Instruction Access Fault*
 
       Delegates Instruction Access Fault exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Instruction Access Fault exceptions may be further delegated to VS-mode if `hedeleg.IAM` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.IAF`# .2+! [.rotate]#`hedeleg.IAF`# 4+^.>! Current Mode
@@ -103,7 +103,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.IAF`# 2+^.>! Current Mode
@@ -112,7 +112,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
 
     type: RW
     reset_value: UNDEFINED_LEGAL
@@ -122,15 +122,15 @@ fields:
       *Illegal Instruction*
 
       Delegates Illegal Instruction exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Illegal Instruction exceptions may be further delegated to VS-mode if `hedeleg.II` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.II`# .2+! [.rotate]#`hedeleg.II`# 4+^.>! Current Mode
@@ -141,7 +141,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.II`# 2+^.>! Current Mode
@@ -150,7 +150,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
     type: RW
     reset_value: UNDEFINED_LEGAL
   B:
@@ -159,15 +159,15 @@ fields:
       *Breakpoint*
 
       Delegates Breakpoint exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Breakpoint exceptions may be further delegated to VS-mode if `hedeleg.B` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.B`# .2+! [.rotate]#`hedeleg.B`# 4+^.>! Current Mode
@@ -178,7 +178,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.B`# 2+^.>! Current Mode
@@ -187,7 +187,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
     type: RW
     reset_value: UNDEFINED_LEGAL
   LAM:
@@ -196,9 +196,9 @@ fields:
       *Load Address Misaligned*
 
       Delegates Load Address Misaligned exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Load Address Misaligned exceptions may be further delegated to VS-mode if `hedeleg.LAM` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
@@ -208,7 +208,7 @@ fields:
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.LAM`# .2+! [.rotate]#`hedeleg.LAM`# 4+^.>! Current Mode
@@ -219,7 +219,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.LAM`# 2+^.>! Current Mode
@@ -228,7 +228,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
 
     type: RW
     reset_value: UNDEFINED_LEGAL
@@ -238,15 +238,15 @@ fields:
       *Load Access Fault*
 
       Delegates Load Access Fault exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Load Access Fault exceptions may be further delegated to VS-mode if `hedeleg.LAF` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.LAF`# .2+! [.rotate]#`hedeleg.LAF`# 4+^.>! Current Mode
@@ -257,7 +257,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.LAF`# 2+^.>! Current Mode
@@ -266,7 +266,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
 
     type: RW
     reset_value: UNDEFINED_LEGAL
@@ -276,9 +276,9 @@ fields:
       *Store/AMO Address Misaligned*
 
       Delegates Store/AMO Address Misaligned exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Store/AMO Address Misaligned exceptions may be further delegated to VS-mode if `hedeleg.SAM` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
@@ -288,7 +288,7 @@ fields:
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.SAM`# .2+! [.rotate]#`hedeleg.SAM`# 4+^.>! Current Mode
@@ -299,7 +299,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.SAM`# 2+^.>! Current Mode
@@ -308,7 +308,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
 
     type: RW
     reset_value: UNDEFINED_LEGAL
@@ -318,15 +318,15 @@ fields:
       *Store/AMO Access Fault*
 
       Delegates Store/AMO Access Fault exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Store/AMO Access Fault exceptions may be further delegated to VS-mode if `hedeleg.SAM` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.SAF`# .2+! [.rotate]#`hedeleg.SAF`# 4+^.>! Current Mode
@@ -337,7 +337,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.SAF`# 2+^.>! Current Mode
@@ -346,7 +346,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
     type: RW
     reset_value: UNDEFINED_LEGAL
   EU:
@@ -355,15 +355,15 @@ fields:
       *Environment Call from U-Mode*
 
       Delegates Environment Call from U-mode exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Environment Call from U-mode exceptions may be further delegated to VS-mode if `hedeleg.EU` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.EU`# .2+! [.rotate]#`hedeleg.EU`# 4+^.>! Current Mode
@@ -374,7 +374,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.EU`# 2+^.>! Current Mode
@@ -383,7 +383,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
 
     type: RW
     reset_value: UNDEFINED_LEGAL
@@ -393,9 +393,9 @@ fields:
       *Environment Call from S-Mode*
 
       Delegates Environment Call from S-mode exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Environment Call from S-mode exceptions _cannot be delegated to VS-mode_.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
@@ -417,9 +417,9 @@ fields:
       *Environment Call from VS-Mode*
 
       Delegates Environment Call from VS-mode exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Environment Call from S-mode exceptions _cannot be delegated to VS-mode_.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
@@ -454,15 +454,15 @@ fields:
       *Instruction Page Fault*
 
       Delegates Instruction Page Fault exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Instruction Page Fault exceptions may be further delegated to VS-mode if `hedeleg.IPF` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.IPF`# .2+! [.rotate]#`hedeleg.IPF`# 4+^.>! Current Mode
@@ -473,7 +473,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.IPF`# 2+^.>! Current Mode
@@ -482,7 +482,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
     type: RW
     reset_value: UNDEFINED_LEGAL
   LPF:
@@ -491,15 +491,15 @@ fields:
       *Load Page Fault*
 
       Delegates Load Page Fault exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Load Page Fault exceptions may be further delegated to VS-mode if `hedeleg.LPF` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.LPF`# .2+! [.rotate]#`hedeleg.LPF`# 4+^.>! Current Mode
@@ -510,7 +510,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.LPF`# 2+^.>! Current Mode
@@ -519,7 +519,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
 
     type: RW
     reset_value: UNDEFINED_LEGAL
@@ -529,15 +529,15 @@ fields:
       *Store/AMO Page Fault*
 
       Delegates Store/AMO Page Fault exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Store/AMO Page Fault exceptions may be further delegated to VS-mode if `hedeleg.SPF` is also set.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
       The handling mode is determined as follows:
 
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.SPF`# .2+! [.rotate]#`hedeleg.SPF`# 4+^.>! Current Mode
@@ -548,7 +548,7 @@ fields:
       ! 1 ! 0 ! M ! HS ! HS ! HS
       ! 1 ! 1 ! M ! HS ! VS ! VS
       !===
-      <%- else -%>
+      {%- else -%}
       [separator="!",%autowidth, %footer]
       !===
       .2+! [.rotate]#`medeleg.LPF`# 2+^.>! Current Mode
@@ -557,7 +557,7 @@ fields:
       ! 0 ! M ! M
       ! 1 ! M ! S
       !===
-      <%- end -%>
+      {%- endif -%}
     type: RW
     reset_value: UNDEFINED_LEGAL
   IGPF:
@@ -566,9 +566,9 @@ fields:
       *Instruction Guest Page Fault*
 
       Delegates Instruction Guest Page Fault exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Instruction Guest Page Fault exceptions _cannot be delegated to VS-mode_.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
@@ -593,9 +593,9 @@ fields:
       *Load Guest Page Fault*
 
       Delegates Load Guest Page Fault exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Load Guest Page Fault exceptions _cannot be delegated to VS-mode_.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
@@ -621,9 +621,9 @@ fields:
       *Virtual Instruction*
 
       Delegates Virtual Instruction exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Virtual Instruction exceptions _cannot be delegated to VS-mode_.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
@@ -649,9 +649,9 @@ fields:
       *Store/AMO Guest Page Fault*
 
       Delegates Store/AMO Guest Page Fault exceptions to (H)S-mode.
-      <%- if ext?(:H) -%>
+      {%- if extensions.H -%}
       Store/AMO Guest Page Fault exceptions _cannot be delegated to VS-mode_.
-      <%- end -%>
+      {%- endif -%}
 
       Exceptions are never taken into a less-privileged mode, regardless of `medeleg`.
 
