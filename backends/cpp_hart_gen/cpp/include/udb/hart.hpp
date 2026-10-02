@@ -250,6 +250,9 @@ namespace udb {
                         PossiblyUnknownBits<64> len) {
       return m_soc.pma_applies_Q_(attr, start_paddr.get(), len.get());
     }
+    PossiblyUnknownBits<32> read_seed() {
+      return Bits<32>{m_soc.read_seed()};
+    }
 
     // external interrupt interface
     virtual void set_mmode_ext_int() = 0;
