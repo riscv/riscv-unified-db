@@ -5,15 +5,15 @@
 
 $schema: param_schema.json#
 kind: parameter
-name: HCONTEXT_AVAILABLE
+name: HCONTEXT_IMPLEMENTED
 description: |
-  Specifies if HCONTEXT is available
-long_name: HCONTEXT Availability
+  Specifies if the hcontext CSR is implemented
+long_name: hcontext CSR is implemented
 schema:
   type: boolean
 definedBy:
   extension:
     name: Sdtrig
 requirements:
-  idl(): HCONTEXT_AVAILABLE -> MCONTEXT_AVAILABLE;
+  idl(): HCONTEXT_IMPLEMENTED -> MCONTEXT_IMPLEMENTED;
   reason: HCONTEXT cannot exist without MCONTEXT

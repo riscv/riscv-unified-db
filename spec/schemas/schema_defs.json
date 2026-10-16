@@ -638,6 +638,9 @@
                     },
                     {
                       "type": "string"
+                    },
+                    {
+                      "type": "boolean"
                     }
                   ]
                 },
