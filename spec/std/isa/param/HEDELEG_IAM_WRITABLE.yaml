@@ -6,7 +6,7 @@
 $schema: param_schema.json#
 kind: parameter
 name: HEDELEG_IAM_WRITABLE
-long_name: Whether `hedeleg.IAM` is writable when IALIGN is always 16
+long_name: Whether `hedeleg.IAM` is writable when IALIGN is 16
 description: |
   Indicates whether the `hedeleg.IAM` field (instruction address misaligned) is writable
   when instruction address misaligned exceptions cannot occur, i.e., when IALIGN=16
