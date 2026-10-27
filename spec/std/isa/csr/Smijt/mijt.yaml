@@ -1,0 +1,72 @@
+# Copyright (c) Revathy M. R.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/csr_schema.json
+
+$schema: "csr_schema.json#"
+kind: csr
+name: mijt
+long_name: Machine Interrupt Jump Table Base Address
+address: 0x307
+writable: true
+priv_mode: M
+length: MXLEN
+description: |
+  Holds the base address of the interrupt jump table used when mtvec.MODE is 0b11.
+definedBy:
+  extension:
+    name: Smijt
+fields:
+  BASE:
+    location_rv32: 31-6
+    location_rv64: 63-6
+    description: |
+      Base address of the interrupt jump table. The table is aligned on a
+      power-of-two boundary of at least 64 bytes. The implemented alignment
+      can be discovered by writing ones to the low-order bits and reading
+      them back.
+    type(): |
+      return CsrFieldType::RWR;
+    sw_write(csr_value): |
+      return csr_value.BASE;
+    reset_value: 0
+  EHV:
+    location: 3-2
+    definedBy:
+      extension:
+        name: Smehv
+    long_name: Exception Hardware Vectoring Enable
+    description: |
+      Controls synchronous exception hardware vectoring for M-mode.
+
+      [separator="!",cols="1,~",%autowidth]
+      !===
+      ! Encoding ! Meaning
+
+      ! 0b00 ! Synchronous exceptions use the standard mtvec-based dispatch.
+      ! 0b01 ! Reserved.
+      ! 0b10 ! Reserved.
+      ! 0b11 ! Synchronous exceptions are vectored from mtvec.BASE using a 4-byte offset per exception cause.
+      !===
+    type(): |
+      return CsrFieldType::RWR;
+    sw_write(csr_value): |
+      if (csr_value.EHV == 0b00 || csr_value.EHV == 0b11) {
+        return csr_value.EHV;
+      }
+      return UNDEFINED_LEGAL_DETERMINISTIC;
+    reset_value: 0
+  reserved:
+    location: 5-4
+    description: Reserved bits.
+    type: RO
+    reset_value: 0
+  SHAMT:
+    location: 1-0
+    description: |
+      Additional shift amount applied to the jump table offset.
+    type(): |
+      return CsrFieldType::RWR;
+    sw_write(csr_value): |
+      return csr_value.SHAMT;
+    reset_value: 0
