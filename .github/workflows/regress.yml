@@ -625,6 +625,18 @@ jobs:
       - name: Run vector riscv-tests
         run: ./do test:riscv_vector_tests CONFIG=rv64-vector IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
 
+  regress-build-rv32-vector-iss:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Github Repo Action
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up mise environment
+        uses: ./.github/actions/mise-setup
+        with:
+          toolchain: true
+      - name: Build RV32 vector ISS
+        run: ./do build:iss CONFIG=rv32-vector IGNOREUNDEFINED=YES JOBS=4 BUILD_TYPE=debug
+
   regress-profile-extensions:
     runs-on: ubuntu-latest
     steps:
@@ -997,6 +1009,7 @@ jobs:
       - regress-riscv-tests-32
       - regress-riscv-tests-64
       - regress-riscv-tests-vector
+      - regress-build-rv32-vector-iss
       - regress-profile-extensions
       - regress-build-udb-gem
       - regress-regress

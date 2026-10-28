@@ -1174,7 +1174,11 @@ function pmp_match_32 {
 
       Bits<12> pmpaddr_idx = pmpaddr0_addr + i;
       Csr pmpaddr_csr = direct_csr_lookup(pmpaddr_idx);
-      Bits<32> pmpaddr_csr_value = csr_sw_read(pmpaddr_csr);
+      # RV32 pmpaddr encodes the physical address in 4-byte units, so its
+      # XLEN-wide value can represent a physical address wider than XLEN.
+      # Widen the encoded address before applying PHYS_ADDR_WIDTH-dependent
+      # slices to the range values.
+      Bits<PHYS_ADDR_WIDTH> pmpaddr_csr_value = csr_sw_read(pmpaddr_csr);
 
       # set up the default range limits, which will result in NoMatch when
       # compared to the access
@@ -1188,7 +1192,8 @@ function pmp_match_32 {
         } else {
           # otherwise, it's the address in the next lowest pmpaddr register
           Csr tor_pmpaddr_csr = direct_csr_lookup(pmpaddr_idx - 1);
-          range_base = csr_sw_read(tor_pmpaddr_csr)[PHYS_ADDR_WIDTH-1:0];
+          Bits<PHYS_ADDR_WIDTH> tor_pmpaddr_csr_value = csr_sw_read(tor_pmpaddr_csr);
+          range_base = tor_pmpaddr_csr_value[PHYS_ADDR_WIDTH-1:0];
         }
         range_limit = (pmpaddr_csr_value)[PHYS_ADDR_WIDTH-1:0] - 1;
 
