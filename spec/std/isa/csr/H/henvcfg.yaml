@@ -193,6 +193,26 @@ fields:
       return (implemented?(ExtensionName::Svadu)) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       return (implemented?(ExtensionName::Svadu)) ? UNDEFINED_LEGAL : 0;
+  DTE:
+    location: 59
+    long_name: Double Trap Enable
+    description: |
+      Enables the Ssdbltrp extension for VS-mode.
+
+      When `DTE` is 0, the implementation behaves as though Ssdbltrp is not
+      implemented for VS-mode, and `vsstatus.SDT` is read-only zero.
+
+      `henvcfg.DTE` is read-only zero when `menvcfg.DTE` is 0.
+    definedBy:
+      extension:
+        name: Ssdbltrp
+    type: RW
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      if (CSR[menvcfg].DTE == 0) {
+        return 0;
+      }
+      return csr_value.DTE;
   CBZE:
     location: 7
     description: |
