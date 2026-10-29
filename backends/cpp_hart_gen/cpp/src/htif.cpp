@@ -44,10 +44,10 @@ int HostTargetInterface::NotificationCallback(void* pUserParam, uint64_t uiModul
         udb::MemAccess* pMemAccess =  (udb::MemAccess*)pData;
         if(pMemAccess->GetAddress() == pThis->m_toHost)
         {
-          HTIFCOMMAND command;
-          pThis->m_pSoC->memcpy_to_host((uint8_t*)&command, pThis->m_toHost, sizeof(command));
-          if(command.value != 0)
+          uint64_t cmdValue = pThis->m_pSoC->read_physical_memory_64(pThis->m_toHost);
+          if(cmdValue != 0)
           {
+            HTIFCOMMAND command(cmdValue);
             result = pThis->HandleCommand(command);
           }
         }
@@ -64,9 +64,9 @@ int HostTargetInterface::NotificationCallback(void* pUserParam, uint64_t uiModul
 
 int HostTargetInterface::HandleCommand(HTIFCOMMAND cmd)
 {
-  if(cmd.device < m_nDevices)
+  if(cmd.device() < m_nDevices)
   {
-    m_devices[cmd.device]->HandleCommand(cmd);
+    m_devices[cmd.device()]->HandleCommand(cmd);
   }
   else
   {
@@ -99,20 +99,24 @@ SysCallDevice::~SysCallDevice()
 int SysCallDevice::HandleCommand(HTIFCOMMAND cmd)
 {
   int result = 0;
-  if(cmd.payload & 1)
+  if(cmd.payload() & 1)
   {
     //Test pass/fail
-    if(cmd.payload >> 1 == 0)
+    if(cmd.payload() >> 1 == 0)
       throw Pass();
     else
-      throw Fail(cmd.payload >> 1);
+      throw Fail(cmd.payload() >> 1);
   }
   else
   {
     SYSCALLBLOCK sysCallBlock;
 
     //Read the syscall from target memory
-    m_pSoC->memcpy_to_host(reinterpret_cast<uint8_t*>(&sysCallBlock), cmd.payload, sizeof(sysCallBlock));
+    sysCallBlock.id = m_pSoC->read_physical_memory_64(cmd.payload());
+    for(size_t i = 0; i < 7; ++i)
+    {
+      sysCallBlock.a[i] = m_pSoC->read_physical_memory_64(cmd.payload() + (i + 1) * sizeof(uint64_t));
+    }
 
     //dispatch to syscall handler
     if(sysCallBlock.id < m_cmdHandlers.size() && m_cmdHandlers[sysCallBlock.id] != nullptr)
@@ -126,7 +130,7 @@ int SysCallDevice::HandleCommand(HTIFCOMMAND cmd)
         sysCallBlock.a[6]);
     }
   }
-  return result;;
+  return result;
 }
 
 int SysCallDevice::exit(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
@@ -148,14 +152,14 @@ BCDDevice::~BCDDevice()
 
 int BCDDevice::HandleCommand(HTIFCOMMAND cmd)
 {
-  switch(cmd.command)
+  switch(cmd.command())
   {
   case READ:
     //TODO:
     break;
   case WRITE:
     //TODO: use deicated console, stdout for now
-    std::putchar(static_cast<int>(cmd.payload));
+    std::putchar(static_cast<int>(cmd.payload()));
     break;
   default:
     break;

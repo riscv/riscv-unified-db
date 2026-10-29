@@ -98,6 +98,12 @@ protected:
   virtual int OnClearBreakWatchPoint(unsigned char type, uint64_t uiAddress, uint64_t uiKind);
   virtual int OnSetBreakWatchPoint(unsigned char type, uint64_t uiAddress, uint64_t uiKind);
 
+  virtual int HandlePacket(GDBPacket& packet);
+  virtual int SendResponse(void* pBuffer, unsigned int len);
+  virtual int SendResponse(GDBPacket& packet);
+  virtual int SendResponse(const std::string& str);
+  virtual int SendError(int error);
+
 private:
   uint64_t m_uiSupport;
   int m_serverSocket;
@@ -111,12 +117,7 @@ private:
   unsigned char m_respBuffer[DBG_MAX_PKT_SIZE];
 
   int HandleSocketEvents(int socket, short events);
-  int HandlePacket(GDBPacket& packet);
   int SendAck(void);
   int SendNak(void);
-  int SendResponse(void* pBuffer, unsigned int len);
-  int SendResponse(GDBPacket& packet);
-  int SendResponse(const std::string& str);
-  int SendError(int error);
   std::string GetSupportedString();
 };
