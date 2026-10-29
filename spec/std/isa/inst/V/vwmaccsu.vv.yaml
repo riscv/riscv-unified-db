@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwmaccsu.vv
-long_name: "Vector widening signed-unsigned multiply-add"
+long_name: "Vector Widening Integer Multiply-Add Signed-Unsigned Vector"
 description: |
-  Performs widening signed-unsigned multiplication on elements from vector registers vs2 (signed) and vs1 (unsigned), adds the result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
+  Widen and multiply signed elements from vector register vs1 by unsigned elements from vector register vs2 to produce a double-width product, add the product to the double-width elements of vector register vd, and store results in vector register vd, using vector mask vm.
 definedBy:
   extension:
     name: Zvl32b

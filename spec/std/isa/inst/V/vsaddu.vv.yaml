@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsaddu.vv
-long_name: "Vector signed addition"
+long_name: "Vector Single-Width Saturating Add Unsigned Vector"
 description: |
-  Performs signed addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+  Performs saturating unsigned addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. If the result would overflow the destination, the result is replaced with the closest representable value, and the `vxsat` bit is set.
 definedBy:
   extension:
     name: Zvl32b

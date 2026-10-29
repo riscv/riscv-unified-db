@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vwaddu.vx
-long_name: "Vector widening signed addition with scalar"
+long_name: "Vector Widening Integer Add Unsigned with Scalar"
 description: |
-  Performs signed addition on elements from vector register vs2 and scalar register xs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+  Widen and zero-extend unsigned elements from vector register vs2 and scalar register xs1, add to produce a double-width sum, and store results in vector register vd, using vector mask vm.
 definedBy:
   extension:
     name: Zvl32b
