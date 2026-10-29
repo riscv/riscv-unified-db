@@ -101,5 +101,39 @@ fields:
       <%- end -%>
       !===
 
-    type: RW-H
+    type(): |
+      if (
+        !REPORT_VA_IN_MTVAL_ON_BREAKPOINT &&
+        !REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION &&
+        !REPORT_VA_IN_MTVAL_ON_LOAD_MISALIGNED &&
+        !REPORT_VA_IN_MTVAL_ON_STORE_AMO_MISALIGNED &&
+        !REPORT_VA_IN_MTVAL_ON_INSTRUCTION_MISALIGNED &&
+        !REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT &&
+        !REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT &&
+        !REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT &&
+        !(implemented?(ExtensionName::S) && (
+          REPORT_VA_IN_MTVAL_ON_LOAD_PAGE_FAULT ||
+          REPORT_VA_IN_MTVAL_ON_STORE_AMO_PAGE_FAULT ||
+          REPORT_VA_IN_MTVAL_ON_INSTRUCTION_PAGE_FAULT
+        )) &&
+        !(implemented?(ExtensionName::Sdtrig) &&
+          $array_includes?(SDTRIG_MCONTROL6_SUPPORTED_TRIGGERS, true) &&
+          (
+            SDTRIG_MCONTROL6_EXECUTE_WRITABLE ||
+            SDTRIG_MCONTROL6_LOAD_WRITABLE ||
+            SDTRIG_MCONTROL6_STORE_WRITABLE
+          ) &&
+          (
+            SDTRIG_M_WRITABLE ||
+            (implemented?(ExtensionName::S) && SDTRIG_S_WRITABLE) ||
+            (implemented?(ExtensionName::U) && SDTRIG_U_WRITABLE) ||
+            (implemented?(ExtensionName::H) && (SDTRIG_VS_WRITABLE || SDTRIG_VU_WRITABLE))
+          )
+        ) &&
+        !(implemented?(ExtensionName::Zicfilp) && REPORT_CAUSE_IN_MTVAL_ON_LANDING_PAD_SOFTWARE_CHECK) &&
+        !(implemented?(ExtensionName::Zicfiss) && REPORT_CAUSE_IN_MTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK)
+      ) {
+        return CsrFieldType::RO;
+      }
+      return CsrFieldType::RWH;
     reset_value: 0
