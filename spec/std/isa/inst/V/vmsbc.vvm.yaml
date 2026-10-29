@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vmsbc.vvm
-long_name: No synopsis available
+long_name: "Vector integer subtract-with-borrow-in-out vector"
 description: |
-  No description available.
+  Subtract from each element of vector register vs2 the respective element from vector register vs1 and the respective borrow-in from vector register v0, and write the respective borrow-out to mask register vd. The borrow is defined to be 1 iff the difference, prior to truncation, is negative. `vd.mask[i] = borrow_out(vs2[i] - vs1[i] - v0.mask[i])`
 definedBy:
   extension:
     name: Zvl32b
