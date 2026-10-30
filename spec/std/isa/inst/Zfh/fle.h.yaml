@@ -6,9 +6,11 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fle.h
-long_name: No synopsis available
+long_name: Floating-Point Less Than or Equal Half-Precision
 description: |
-  No description available.
+  The `fle.h` instruction writes 1 to `xd` if `fs1` is less than or equal to `fs2`, and 0 otherwise.
+  If either operand is NaN, the result is 0. If either operand is a NaN (signaling or quiet),
+  the invalid flag is set. Positive zero and negative zero are considered equal.
 definedBy:
   extension:
     oneOf:

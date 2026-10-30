@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fmadd.h
-long_name: No synopsis available
+long_name: Floating-Point Multiply-Add Half-Precision
 description: |
-  No description available.
+  The `fmadd.h` instruction multiplies the values in `fs1` and `fs2`, adds the value in `fs3`, and writes the final result to `fd`.
 definedBy:
   extension:
     oneOf:

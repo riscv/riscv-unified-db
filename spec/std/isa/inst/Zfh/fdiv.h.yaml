@@ -6,9 +6,10 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fdiv.h
-long_name: No synopsis available
+long_name: Floating-Point Divide Half-Precision
 description: |
-  No description available.
+  The `fdiv.h` instruction performs the half-precision floating-point division of `fs1` by `fs2`, and
+  writes the final result to `fd`.
 definedBy:
   extension:
     oneOf:

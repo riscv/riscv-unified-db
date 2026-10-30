@@ -6,9 +6,10 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fadd.h
-long_name: No synopsis available
+long_name: Floating-Point Add Half-Precision
 description: |
-  No description available.
+  The `fadd.h` instruction performs half-precision floating-point addition of `fs1` and `fs2`
+  and writes the final result to `fd`.
 definedBy:
   extension:
     anyOf:

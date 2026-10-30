@@ -6,9 +6,12 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fcvt.d.h
-long_name: No synopsis available
+long_name: Floating-Point Convert Half-Precision to Double-Precision
 description: |
-  No description available.
+  Converts a half-precision number in floating-point register _fs1_ into a double-precision floating-point number in
+  floating-point register _fd_.
+
+  `fcvt.d.h` will never round, and so the 'rm' field is effectively ignored.
 definedBy:
   extension:
     oneOf:
