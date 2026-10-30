@@ -23,6 +23,97 @@ definedBy:
           - name: Zicfilp
           - name: Smepmp
 fields:
+  MML:
+    location: 0
+    description: |
+      Machine Mode Lockdown.
+
+      MML is a WARL field that changes the interpretation of the `pmpcfg.L` bit.
+      It is a sticky bit: once set, it cannot be cleared until a PMP reset.
+
+      When MML is set:
+
+      . `pmpcfg.L` no longer marks a rule as locked and enforced in all modes.
+        Instead, it marks a rule as M-mode-only when set and S/U-mode-only when clear.
+        The formerly reserved encoding `pmpcfg.RW=01`, and the encoding `pmpcfg.LRWX=1111`,
+        now encode a Shared-Region.
+      . Adding a rule with executable privileges that is either M-mode-only or a locked
+        Shared-Region is not possible, and such `pmpcfg` writes are ignored, unless `mseccfg.RLB` is set.
+      . M-mode can only execute code from regions with a matching M-mode-only rule or a
+        locked Shared-Region rule with executable privileges.
+
+      When MML is clear, the combination `pmpcfg.RW=01` remains reserved.
+    definedBy:
+      extension:
+        name: Smepmp
+    type: RW-R
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      # sticky: once set, MML stays set until a PMP reset
+      if (CSR[mseccfg].MML == 1) {
+        return 1;
+      }
+      return csr_value.MML;
+  MMWP:
+    location: 1
+    description: |
+      Machine-Mode Allowlist Policy.
+
+      MMWP is a WARL field that changes the default PMP policy for M-mode
+      when accessing memory regions that don't have a matching PMP rule.
+      When set, such accesses are denied instead of ignored.
+
+      It is a sticky bit: once set, it cannot be cleared until a PMP reset.
+    definedBy:
+      extension:
+        name: Smepmp
+    type: RW-R
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      # sticky: once set, MMWP stays set until a PMP reset
+      if (CSR[mseccfg].MMWP == 1) {
+        return 1;
+      }
+      return csr_value.MMWP;
+  RLB:
+    location: 2
+    description: |
+      Rule Locking Bypass.
+
+      RLB is a WARL field that provides a mechanism to temporarily modify locked PMP rules.
+      When RLB is 1, locked PMP rules may be removed or modified, and locked PMP entries may be edited.
+
+      When RLB is 0 and `pmpcfg.L` is 1 in any rule or entry (including disabled entries),
+      RLB remains 0 and any further modifications to RLB are ignored until a PMP reset.
+
+      Vendors who don't need this functionality may hardwire this field to 0.
+    definedBy:
+      extension:
+        name: Smepmp
+    type: RW-R
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      if (CSR[mseccfg].RLB == 0) {
+        # RLB stays 0 if any PMP entry, including disabled ones, is locked
+        Bits<12> pmpcfg0_addr = 0x3a0;
+        for (U32 i = 0; i < NUM_PMP_ENTRIES; i++) {
+          Bits<12> pmpcfg_idx;
+          Bits<6> shamt;
+          if (MXLEN == 64) {
+            pmpcfg_idx = pmpcfg0_addr + (i/8)*2;
+            shamt = (i % 8)*8;
+          } else {
+            pmpcfg_idx = pmpcfg0_addr + (i/4);
+            shamt = (i % 4)*8;
+          }
+          Csr pmpcfg_csr = direct_csr_lookup(pmpcfg_idx);
+          PmpCfg cfg = (csr_hw_read(pmpcfg_csr) >> shamt)[7:0];
+          if (cfg.L == 1) {
+            return 0;
+          }
+        }
+      }
+      return csr_value.RLB;
   USEED:
     location: 8
     description: |
