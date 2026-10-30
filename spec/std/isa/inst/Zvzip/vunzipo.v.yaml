@@ -6,11 +6,20 @@ kind: instruction
 name: vunzipo.v
 long_name: Vector unzip odd
 description: |
-  Extracts odd-indexed elements from source vector register group `vs2`,
-  with EMUL=2*LMUL, into destination `vd`, with EMUL=LMUL. For `0 <= i < vl`,
-  `vd[i] = vs2[2*i+1]`; source indices below `2*vl` may be read. `LMUL=8`
-  and masked encodings (`vm=0`) are illegal. Destination/source overlap is
-  allowed only when `vd` equals `vs2`, as for narrowing instructions.
+  Extracts the odd-indexed elements of source vector register group `vs2`,
+  with EMUL=2*LMUL, into destination `vd`, with EMUL=LMUL. For destination
+  element index `i`, `vd[i] = vs2[2*i+1]`. The source is read at indices below
+  `2*vl`; as for `vslidedown` and `vrgather`, source reads are not bounded by
+  `vl`, so the source must hold `2*vl` valid elements.
+
+  Masking, prestart, body, and tail element handling follow the base
+  specification, applied to the destination element indices.
+
+  An illegal-instruction exception is raised when LMUL=8.
+
+  The destination vector register group may overlap the source vector register
+  group only if `vd` equals `vs2`, as for narrowing instructions. Any other
+  overlapping encoding raises an illegal-instruction exception.
 definedBy:
   extension:
     name: Zvzip
