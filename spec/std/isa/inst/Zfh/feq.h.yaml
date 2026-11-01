@@ -6,9 +6,11 @@
 $schema: inst_schema.json#
 kind: instruction
 name: feq.h
-long_name: No synopsis available
+long_name: Floating-Point Equal Half-Precision
 description: |
-  No description available.
+  The `feq.h` instruction writes 1 to `xd` if `fs1` and `fs2` are equal, and 0 otherwise.
+  If either operand is NaN, the result is 0 (not equal). If either operand is a signaling NaN,
+  the invalid flag is set. Positive zero is considered equal to negative zero.
 definedBy:
   extension:
     oneOf:
