@@ -1,6 +1,7 @@
 #pragma once
 
 #include "udb/defines.hpp"
+#include "udb/endian.hpp"
 
 namespace udb {
   class Memory {
@@ -142,25 +143,25 @@ namespace udb {
       return *(uint8_t*)(addr + m_addend);
     }
     uint16_t read2(uint64_t addr) override {
-      return *(uint16_t*)(addr + m_addend);
+      return read_le16(reinterpret_cast<const uint8_t*>(addr + m_addend));
     }
     uint32_t read4(uint64_t addr) override {
-      return *(uint32_t*)(addr + m_addend);
+      return read_le32(reinterpret_cast<const uint8_t*>(addr + m_addend));
     }
     uint64_t read8(uint64_t addr) override {
-      return *(uint64_t*)(addr + m_addend);
+      return read_le64(reinterpret_cast<const uint8_t*>(addr + m_addend));
     }
     void write(uint64_t addr, uint8_t data) override {
       *(uint8_t*)(addr + m_addend) = data;
     }
     void write(uint64_t addr, uint16_t data) override {
-      *(uint16_t*)(addr + m_addend) = data;
+      write_le16(reinterpret_cast<uint8_t*>(addr + m_addend), data);
     }
     void write(uint64_t addr, uint32_t data) override {
-      *(uint32_t*)(addr + m_addend) = data;
+      write_le32(reinterpret_cast<uint8_t*>(addr + m_addend), data);
     }
     void write(uint64_t addr, uint64_t data) override {
-      *(uint64_t*)(addr + m_addend) = data;
+      write_le64(reinterpret_cast<uint8_t*>(addr + m_addend), data);
     }
 
    private:

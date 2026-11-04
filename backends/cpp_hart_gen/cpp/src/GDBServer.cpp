@@ -7,6 +7,7 @@
 #include <sys/param.h>
 
 #include "udb/GDBServer.hpp"
+#include "udb/endian.hpp"
 
 #define GDB_CMD_PACKET_START '$'
 #define GDB_CMD_PACKET_END '#'
@@ -268,7 +269,12 @@ int GDBServer::HandlePacket(GDBPacket& packet)
       if(result >= 0)
       {
         GDBPacket responsePacket(m_respBuffer, 0, sizeof(m_respBuffer));
-        result = responsePacket.Write((const unsigned char*)&regFile.xReg[0],regFile.nXRegs * sizeof(regFile.xReg[0]));
+        uint8_t regBytes[32 * sizeof(uint64_t)];
+        for(int i = 0 ; i < regFile.nXRegs ; i++)
+        {
+          udb::write_le64(&regBytes[i * sizeof(uint64_t)], regFile.xReg[i]);
+        }
+        result = responsePacket.Write(regBytes, regFile.nXRegs * sizeof(uint64_t));
         if(result >= 0)
         {
          result = SendResponse(responsePacket);
@@ -288,8 +294,12 @@ int GDBServer::HandlePacket(GDBPacket& packet)
       regFile.nXRegs = 0;
       for(int i = 0 ; i < NUM_XREGS ; i++)
       {
-        if(packet.ReadData((unsigned char*)&regFile.xReg[i], sizeof(regFile.xReg[i])) < -1)
+        uint8_t regBytes[sizeof(uint64_t)];
+        if(packet.ReadData(regBytes, sizeof(regBytes)) != -1)
+        {
+          regFile.xReg[i] = udb::read_le64(regBytes);
           regFile.nXRegs++;
+        }
         else
           break;
       }
@@ -392,7 +402,9 @@ int GDBServer::HandlePacket(GDBPacket& packet)
       if(result >= 0)
       {
         GDBPacket responsePacket(m_respBuffer, 0, sizeof(m_respBuffer));
-        result = responsePacket.Write((unsigned char*) &regValue, sizeof(regValue));
+        uint8_t regBytes[sizeof(regValue)];
+        udb::write_le64(regBytes, regValue);
+        result = responsePacket.Write(regBytes, sizeof(regBytes));
         if(result >= 0)
         {
           //Send the response
@@ -411,10 +423,11 @@ int GDBServer::HandlePacket(GDBPacket& packet)
       int iReg = packet.Read<int>();
       if(packet.Seek('='))
       {
-        uint64_t regValue;
-        result = packet.ReadData((unsigned char*)&regValue, sizeof(regValue));
+        uint8_t regBytes[sizeof(uint64_t)];
+        result = packet.ReadData(regBytes, sizeof(regBytes));
         if(result >= 0)
         {
+          uint64_t regValue = udb::read_le64(regBytes);
           result = OnWriteSingleRegister(iReg, regValue);
           if(result >= 0)
             result = SendResponse("OK");
@@ -630,7 +643,8 @@ int GDBServer::SendError(int error)
   {
     if(error < 0)
       error = -error;
-    result = response.Write((unsigned char*)&error, sizeof(unsigned char));
+    uint8_t errByte = static_cast<uint8_t>(error & 0xff);
+    result = response.Write(&errByte, sizeof(errByte));
     if(result >= 0)
     {
       result = SendResponse(response);
