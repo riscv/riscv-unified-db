@@ -19,4 +19,3 @@ definedBy:
     anyOf:
       - name: Ssqosid
       - name: Smqosid
-      - name: Smsdqosid
