@@ -56,6 +56,3 @@ fields:
     reset_value: 0
     sw_write(csr_value): |
       return csr_value.QRID & ((1 `<< QRID_WIDTH) - 1);
-
-sw_read(): |
-  return $bits(CSR[mrmcfg]);

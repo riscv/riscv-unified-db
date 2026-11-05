@@ -16,4 +16,7 @@ schema:
   maximum: 12
 definedBy:
   extension:
-    name: Ssqosid
+    anyOf:
+      - name: Ssqosid
+      - name: Smqosid
+      - name: Smsdqosid
