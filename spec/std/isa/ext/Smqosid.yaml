@@ -17,4 +17,5 @@ versions:
     release_date: "2026-08"
     url: "https://github.com/riscv/riscv-smmtt/releases/download/v0.9.0/supervisor-domains.pdf"
 requirements:
-  extension: { name: Sm, version: ~> 1.13 }
+  extension:
+    name: Sm
