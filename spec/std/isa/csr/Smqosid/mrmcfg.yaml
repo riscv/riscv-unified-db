@@ -35,7 +35,7 @@ fields:
     description: |
       The `RCID` is used to determine the resource allocations (e.g., cache occupancy limits,
       memory bandwidth limits, etc.) to enforce.
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
       return csr_value.RCID & ((1 `<< RCID_WIDTH) - 1);
   MCID:
@@ -44,7 +44,7 @@ fields:
     long_name: Monitoring Counter ID
     description: |
       The `MCID` is used to identify a counter to monitor resource usage.
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
       return csr_value.MCID & ((1 `<< MCID_WIDTH) - 1);
   QRID:
@@ -53,6 +53,6 @@ fields:
     long_name: QoS Register Interface ID
     description: |
       The `QRID` is used to identify a QoS Register Interface to monitor resource usage.
-    reset_value: 0
+    reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
       return csr_value.QRID & ((1 `<< QRID_WIDTH) - 1);

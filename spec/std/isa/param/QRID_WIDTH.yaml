@@ -8,7 +8,6 @@ kind: parameter
 name: QRID_WIDTH
 description: |
   Number of bits used for the QoS Register Interface ID field (QRID).
-  Default is 4.
 long_name: QoS Register Interface ID Width
 schema:
   type: integer
