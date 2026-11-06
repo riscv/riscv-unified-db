@@ -30,7 +30,8 @@ module Udb
     def validate(rb_value, udb_resolver:)
       @@ref_resolvers[udb_resolver] ||= TopLevelDatabaseObject.create_json_schemer_resolver(udb_resolver)
       schemer = JSONSchemer.schema(
-        @schema_hash,
+        # Parameter schemas use draft-07 tuple validation (items/additionalItems).
+        { "$schema" => "http://json-schema.org/draft-07/schema#" }.merge(@schema_hash),
         regexp_resolver: "ecma",
         ref_resolver: @@ref_resolvers[udb_resolver],
         insert_property_defaults: true
