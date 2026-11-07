@@ -18,5 +18,6 @@ definedBy:
     - extension:
         name: Sdtrig
     - param:
-        name: HCONTEXT_IMPLEMENTED
+        # Also used by mcontext.HCONTEXT and hcontext depends on mcontext
+        name: MCONTEXT_IMPLEMENTED
         equal: true
