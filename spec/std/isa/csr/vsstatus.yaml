@@ -60,6 +60,29 @@ fields:
       return ($array_size(VUXLEN) > 1) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       return ($array_size(VUXLEN) > 1) ? UNDEFINED_LEGAL : VUXLEN[0];
+  SDT:
+    location: 24
+    long_name: Supervisor Double Trap
+    description: |
+      VS-mode S-mode-disable-trap bit, added by the Ssdbltrp extension to address a
+      double trap in VS-mode. When V=1, `vsstatus` substitutes for `sstatus`, so this
+      field provides the `sstatus.SDT` behavior for VS-mode (see `mstatus.SDT`).
+
+      When `SRET` is executed in VS-mode, `vsstatus.SDT` is set to 0. When `SRET` is
+      executed in HS-mode and the new privilege mode is VU, `vsstatus.SDT` is set to 0.
+      `MRET` and `MNRET` also set `vsstatus.SDT` to 0 when the new privilege mode is VU.
+
+      `vsstatus.SDT` is read-only zero when `henvcfg.DTE` is 0 or `menvcfg.DTE` is 0.
+    definedBy:
+      extension:
+        name: Ssdbltrp
+    type: RW-H
+    reset_value: 0
+    sw_write(csr_value): |
+      if (CSR[menvcfg].DTE == 0 || CSR[henvcfg].DTE == 0) {
+        return 0;
+      }
+      return csr_value.SDT;
   SPELP:
     location: 23
     long_name: VS-mode Previous Expected Landing Pad state

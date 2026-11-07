@@ -269,6 +269,40 @@ fields:
         return 2;
       }
 
+  SDT:
+    location: 24
+    long_name: Supervisor Double Trap
+    description: |
+      S-mode-disable-trap bit. A WARL field added by the Ssdbltrp extension to
+      address a double trap at privilege modes lower than M.
+
+      When a trap is to be taken into S-mode, if `SDT` is 0 it is set to 1 and the
+      trap is delivered as expected. If `SDT` is already 1, the trap is unexpected:
+      a double-trap exception is delivered into M-mode instead. The hart writes the
+      M-mode trap CSRs, except `mcause` and `mtval2`, with the information the
+      unexpected trap would have written had it been taken into M-mode; `mtval2` is
+      set to the value the unexpected trap would have written to `mcause`, and
+      `mcause` is set to 16 (double trap).
+
+      When `SDT` is set to 1 by an explicit CSR write, `SIE` is cleared to 0,
+      regardless of the value written to `SIE` by the same write. `SIE` can only be
+      set to 1 by an explicit CSR write if `SDT` is being set to 0 by the same write
+      or is already 0.
+
+      An `SRET` instruction sets `SDT` to 0. `MRET` and `MNRET` also set `SDT` to 0
+      when the new privilege mode is U, VS, or VU.
+
+      `SDT` is read-only zero when `menvcfg.DTE` is 0.
+    definedBy:
+      extension:
+        name: Ssdbltrp
+    type: RW-H
+    reset_value: 0
+    sw_write(csr_value): |
+      if (CSR[menvcfg].DTE == 0) {
+        return 0;
+      }
+      return csr_value.SDT;
   SPELP:
     location: 23
     long_name: S-mode Previous Expected Landing Pad state
