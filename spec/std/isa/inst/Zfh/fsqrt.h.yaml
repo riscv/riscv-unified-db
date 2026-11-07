@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fsqrt.h
-long_name: No synopsis available
+long_name: Floating-Point Square Root Half-Precision
 description: |
-  No description available.
+  The `fsqrt.h` instruction computes the square root of `fs1` and writes the result to `fd`.
 definedBy:
   extension:
     oneOf:

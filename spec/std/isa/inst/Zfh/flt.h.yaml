@@ -6,9 +6,11 @@
 $schema: inst_schema.json#
 kind: instruction
 name: flt.h
-long_name: No synopsis available
+long_name: Floating-Point Less Than Half-Precision
 description: |
-  No description available.
+  The `flt.h` instruction writes 1 to `xd` if `fs1` is less than `fs2`, and 0 otherwise.
+  If either operand is NaN, the result is 0. If either operand is a NaN
+  (signaling or quiet), the invalid flag is set.
 definedBy:
   extension:
     oneOf:

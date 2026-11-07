@@ -17536,7 +17536,7 @@ This instruction requires the following:
 == fadd.h
 
 Synopsis::
-No synopsis available
+Floating-Point Add Half-Precision
 
 Base::
 
@@ -17558,7 +17558,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fadd_h.adoc#udb:doc:inst:fadd_h[fadd.h] instruction performs half-precision floating-point addition of `fs1` and `fs2`
+and writes the final result to `fd`.
 
 
 Decode Variables::
@@ -17759,7 +17760,7 @@ This instruction requires the following:
 == fclass.h
 
 Synopsis::
-No synopsis available
+Floating-Point Classify Half-Precision
 
 Base::
 
@@ -17781,7 +17782,28 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fclass_h.adoc#udb:doc:inst:fclass_h[fclass.h] instruction examines the value in floating-point register `fs1` and writes to integer register `xd`
+a 10-bit mask that indicates the class of the floating-point number.
+
+The format of the mask is described in the table below. The corresponding bit in `xd` will be set if the property
+is true and clear otherwise. All other bits in `xd` are cleared. Note that exactly one bit in `xd` will be set.
+xref:insts:fclass_h.adoc#udb:doc:inst:fclass_h[fclass.h] does not set the floating-point exception flags.
+
+.Format of result of `fclass` instruction.
+[%autowidth,float="center",align="center",cols="^,<",options="header",]
+|===
+|_xd_ bit |Meaning
+|0 |_fs1_ is latexmath:[$-\infty$].
+|1 |_fs1_ is a negative normal number.
+|2 |_fs1_ is a negative subnormal number.
+|3 |_fs1_ is latexmath:[$-0$].
+|4 |_fs1_ is latexmath:[$+0$].
+|5 |_fs1_ is a positive subnormal number.
+|6 |_fs1_ is a positive normal number.
+|7 |_fs1_ is latexmath:[$+\infty$].
+|8 |_fs1_ is a signaling NaN.
+|9 |_fs1_ is a quiet NaN.
+|===
 
 
 Decode Variables::
@@ -18003,7 +18025,7 @@ Included in::
 == fcvt.d.h
 
 Synopsis::
-No synopsis available
+Floating-Point Convert Half-Precision to Double-Precision
 
 Base::
 
@@ -18025,7 +18047,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+Converts a half-precision number in floating-point register _fs1_ into a double-precision floating-point number in
+floating-point register _fd_.
+
+xref:insts:fcvt_d_h.adoc#udb:doc:inst:fcvt_d_h[fcvt.d.h] will never round, and so the 'rm' field is effectively ignored.
 
 
 Decode Variables::
@@ -20480,7 +20505,7 @@ This instruction requires the following:
 == fdiv.h
 
 Synopsis::
-No synopsis available
+Floating-Point Divide Half-Precision
 
 Base::
 
@@ -20502,7 +20527,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fdiv_h.adoc#udb:doc:inst:fdiv_h[fdiv.h] instruction performs the half-precision floating-point division of `fs1` by `fs2`, and
+writes the final result to `fd`.
 
 
 Decode Variables::
@@ -20996,7 +21022,7 @@ This instruction requires the following:
 == feq.h
 
 Synopsis::
-No synopsis available
+Floating-Point Equal Half-Precision
 
 Base::
 
@@ -21018,7 +21044,9 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:feq_h.adoc#udb:doc:inst:feq_h[feq.h] instruction writes 1 to `xd` if `fs1` and `fs2` are equal, and 0 otherwise.
+If either operand is NaN, the result is 0 (not equal). If either operand is a signaling NaN,
+the invalid flag is set. Positive zero is considered equal to negative zero.
 
 
 Decode Variables::
@@ -21257,7 +21285,7 @@ This instruction requires the following:
 == fle.h
 
 Synopsis::
-No synopsis available
+Floating-Point Less Than or Equal Half-Precision
 
 Base::
 
@@ -21279,7 +21307,9 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fle_h.adoc#udb:doc:inst:fle_h[fle.h] instruction writes 1 to `xd` if `fs1` is less than or equal to `fs2`, and 0 otherwise.
+If either operand is NaN, the result is 0. If either operand is a NaN (signaling or quiet),
+the invalid flag is set. Positive zero and negative zero are considered equal.
 
 
 Decode Variables::
@@ -22004,7 +22034,7 @@ This instruction requires the following:
 == flt.h
 
 Synopsis::
-No synopsis available
+Floating-Point Less Than Half-Precision
 
 Base::
 
@@ -22026,7 +22056,9 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:flt_h.adoc#udb:doc:inst:flt_h[flt.h] instruction writes 1 to `xd` if `fs1` is less than `fs2`, and 0 otherwise.
+If either operand is NaN, the result is 0. If either operand is a NaN
+(signaling or quiet), the invalid flag is set.
 
 
 Decode Variables::
@@ -22485,7 +22517,7 @@ This instruction requires the following:
 == fmadd.h
 
 Synopsis::
-No synopsis available
+Floating-Point Multiply-Add Half-Precision
 
 Base::
 
@@ -22507,7 +22539,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmadd_h.adoc#udb:doc:inst:fmadd_h[fmadd.h] instruction multiplies the values in `fs1` and `fs2`, adds the value in `fs3`, and writes the final result to `fd`.
 
 
 Decode Variables::
@@ -22696,7 +22728,7 @@ This instruction requires the following:
 == fmax.h
 
 Synopsis::
-No synopsis available
+Floating-Point Maximum-Number Half-Precision
 
 Base::
 
@@ -22718,7 +22750,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmax_h.adoc#udb:doc:inst:fmax_h[fmax.h] instruction writes the larger of `fs1` and `fs2` to `fd`. For the purposes of this instruction,
+the value `-0.0` is considered to be less than the value `+0.0`. If both inputs are NaNs, the result is
+the canonical NaN. If only one operand is a NaN, the result is the non-NaN operand. Signaling NaN inputs
+set the invalid operation exception flag, even when the result is not NaN.
 
 
 Decode Variables::
@@ -23130,7 +23165,7 @@ This instruction requires the following:
 == fmin.h
 
 Synopsis::
-No synopsis available
+Floating-Point Minimum-Number Half-Precision
 
 Base::
 
@@ -23152,7 +23187,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmin_h.adoc#udb:doc:inst:fmin_h[fmin.h] instruction writes the smaller of `fs1` and `fs2` to `fd`. For the purposes of this instruction,
+the value `-0.0` is considered to be less than the value `+0.0`. If both inputs are NaNs, the result is
+the canonical NaN. If only one operand is a NaN, the result is the non-NaN operand. Signaling NaN inputs
+set the invalid operation exception flag, even when the result is not NaN.
 
 
 Decode Variables::
@@ -23563,7 +23601,7 @@ This instruction requires the following:
 == fmsub.h
 
 Synopsis::
-No synopsis available
+Floating-Point Multiply-Subtract Half-Precision
 
 Base::
 
@@ -23585,7 +23623,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmsub_h.adoc#udb:doc:inst:fmsub_h[fmsub.h] instruction multiplies the values in `fs1` and `fs2`, subtracts the value in `fs3`, and writes the final result to `fd`.
 
 
 Decode Variables::
@@ -23771,7 +23809,7 @@ This instruction requires the following:
 == fmul.h
 
 Synopsis::
-No synopsis available
+Floating-Point Multiply Half-Precision
 
 Base::
 
@@ -23793,7 +23831,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmul_h.adoc#udb:doc:inst:fmul_h[fmul.h] instruction performs the half-precision floating-point multiplication between `fs1` and `fs2`, and
+writes the result in `fd`.
 
 
 Decode Variables::
@@ -24533,7 +24572,7 @@ This instruction requires the following:
 == fnmadd.h
 
 Synopsis::
-No synopsis available
+Floating-Point Negate-Multiply-Add Half-Precision
 
 Base::
 
@@ -24555,7 +24594,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fnmadd_h.adoc#udb:doc:inst:fnmadd_h[fnmadd.h] instruction multiplies the values in `fs1` and `fs2`, negates the product, subtracts the value in `fs3`, and
+writes the final result to `fd`.
 
 
 Decode Variables::
@@ -24743,7 +24783,7 @@ This instruction requires the following:
 == fnmsub.h
 
 Synopsis::
-No synopsis available
+Floating-Point Negate-Multiply-Subtract Half-Precision
 
 Base::
 
@@ -24765,7 +24805,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fnmsub_h.adoc#udb:doc:inst:fnmsub_h[fnmsub.h] instruction multiplies the values in `fs1` and `fs2`, negates the product, adds the value in `fs3`, and
+writes the final result to `fd`.
 
 
 Decode Variables::
@@ -25453,7 +25494,7 @@ This instruction requires the following:
 == fsgnj.h
 
 Synopsis::
-No synopsis available
+Floating-Point Sign-Inject Half-Precision
 
 Base::
 
@@ -25475,7 +25516,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsgnj_h.adoc#udb:doc:inst:fsgnj_h[fsgnj.h] instruction produces a result that takes all bits except the sign bit from `fs1`.
+The result's sign bit is taken from `fs2`'s sign bit, and the result is written to the destination
+register `fd`. Sign-injection instructions do not set floating-point exception flags, nor do they
+canonicalize NaNs.
 
 
 Decode Variables::
@@ -25659,7 +25703,7 @@ This instruction requires the following:
 == fsgnjn.h
 
 Synopsis::
-No synopsis available
+Floating-Point Sign-Inject Negate Half-Precision
 
 Base::
 
@@ -25681,7 +25725,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsgnjn_h.adoc#udb:doc:inst:fsgnjn_h[fsgnjn.h] instruction produces a result that takes all bits except the sign bit from `fs1`.
+The result's sign bit is opposite of `fs2`'s sign bit, and the result is written to the destination
+register `fd`. Sign-injection instructions do not set floating-point exception flags, nor do they
+canonicalize NaNs.
 
 
 Decode Variables::
@@ -25865,7 +25912,7 @@ This instruction requires the following:
 == fsgnjx.h
 
 Synopsis::
-No synopsis available
+Floating-Point Sign-Inject XOR Half-Precision
 
 Base::
 
@@ -25887,7 +25934,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsgnjx_h.adoc#udb:doc:inst:fsgnjx_h[fsgnjx.h] instruction produces a result that takes all bits except the sign bit from `fs1`.
+The result's sign bit is the XOR of sign bits of `fs1` and `fs2`, and the result is written to
+the destination register `fd`. Sign-injection instructions do not set floating-point exception flags, nor do they
+canonicalize NaNs.
 
 
 Decode Variables::
@@ -26181,7 +26231,7 @@ This instruction requires the following:
 == fsqrt.h
 
 Synopsis::
-No synopsis available
+Floating-Point Square Root Half-Precision
 
 Base::
 
@@ -26203,7 +26253,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsqrt_h.adoc#udb:doc:inst:fsqrt_h[fsqrt.h] instruction computes the square root of `fs1` and writes the result to `fd`.
 
 
 Decode Variables::
@@ -26381,7 +26431,7 @@ This instruction requires the following:
 == fsub.h
 
 Synopsis::
-No synopsis available
+Floating-Point Subtract Half-Precision
 
 Base::
 
@@ -26403,7 +26453,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsub_h.adoc#udb:doc:inst:fsub_h[fsub.h] instruction performs the half-precision floating-point subtraction of `fs2` from `fs1` and writes the result in `fd`.
 
 
 Decode Variables::

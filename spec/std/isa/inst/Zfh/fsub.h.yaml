@@ -6,9 +6,9 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fsub.h
-long_name: No synopsis available
+long_name: Floating-Point Subtract Half-Precision
 description: |
-  No description available.
+  The `fsub.h` instruction performs the half-precision floating-point subtraction of `fs2` from `fs1` and writes the result in `fd`.
 definedBy:
   extension:
     oneOf:

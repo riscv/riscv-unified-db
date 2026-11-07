@@ -6,9 +6,12 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fmin.h
-long_name: No synopsis available
+long_name: Floating-Point Minimum-Number Half-Precision
 description: |
-  No description available.
+  The `fmin.h` instruction writes the smaller of `fs1` and `fs2` to `fd`. For the purposes of this instruction,
+  the value `-0.0` is considered to be less than the value `+0.0`. If both inputs are NaNs, the result is
+  the canonical NaN. If only one operand is a NaN, the result is the non-NaN operand. Signaling NaN inputs
+  set the invalid operation exception flag, even when the result is not NaN.
 definedBy:
   extension:
     oneOf:
