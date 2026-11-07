@@ -8,7 +8,7 @@ kind: instruction
 name: vwmaccsu.vx
 long_name: "Vector Widening Integer Multiply-Add Signed-Unsigned with Scalar"
 description: |
-  Widen and multiply signed elements from scalar register xs1 by unsigned elements from vector register vs2 to produce a double-width product, add the product to the double-width elements of vector register vd, and store results in vector register vd, using vector mask vm.
+  Widen and multiply signed scalar integer in register xs1 by unsigned elements from vector register vs2 to produce double-width products, add each product to the double-width elements of vector register vd and store results in vector register vd using vector mask vm.
 definedBy:
   extension:
     name: Zvl32b
