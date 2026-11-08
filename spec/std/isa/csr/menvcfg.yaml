@@ -320,8 +320,6 @@ fields:
 
         * The hart does not update the `ELP` state; it remains as `NO_LP_EXPECTED`.
         * The `LPAD` instruction operates as a no-op.
-
-      When `menvcfg.LPE` is 0, `henvcfg.LPE` and `senvcfg.LPE` are read-only zero.
     definedBy:
       extension:
         name: Zicfilp
