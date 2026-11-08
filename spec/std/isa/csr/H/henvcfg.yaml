@@ -205,7 +205,9 @@ fields:
       `henvcfg.DTE` is read-only zero when `menvcfg.DTE` is 0.
     definedBy:
       extension:
-        name: Ssdbltrp
+        allOf:
+          - name: H
+          - name: Ssdbltrp
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |

@@ -124,7 +124,9 @@ fields:
       Alias of `henvcfg.DTE`.
     definedBy:
       extension:
-        name: Ssdbltrp
+        allOf:
+          - name: H
+          - name: Ssdbltrp
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
