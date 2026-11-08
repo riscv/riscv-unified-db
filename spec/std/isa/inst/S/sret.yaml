@@ -107,6 +107,23 @@ operation(): |
 
   # now pop the interrupt stack and change modes
   if (!virtual_mode?()) {
+    if (implemented?(ExtensionName::Ssdbltrp)) {
+      # SRET from (H)S-mode always clears sstatus.SDT. SRET from M-mode clears it
+      # only when the new privilege mode is U, VS, or VU. If the new privilege
+      # mode is VU, vsstatus.SDT is also cleared.
+      Bits<1> spv = 0;
+      if (implemented?(ExtensionName::H)) {
+        spv = CSR[hstatus].SPV;
+      }
+      if (mode() != PrivilegeMode::M || CSR[mstatus].SPP == 1'b0 || spv == 1'b1) {
+        CSR[mstatus].SDT = 1'b0;
+      }
+      if (implemented?(ExtensionName::H)) {
+        if (spv == 1'b1 && CSR[mstatus].SPP == 1'b0) {
+          CSR[vsstatus].SDT = 1'b0;
+        }
+      }
+    }
     if (implemented?(ExtensionName::H)) {
       if (CSR[hstatus].SPV == 1'b1) {
         if (CSR[mstatus].SPP == 1'b1) {
@@ -136,6 +153,9 @@ operation(): |
   } else if (implemented?(ExtensionName::H)) {
     if (CSR[mstatus].TSR == 1'b1) {
       raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
+    }
+    if (implemented?(ExtensionName::Ssdbltrp)) {
+      CSR[vsstatus].SDT = 1'b0;
     }
     CSR[vsstatus].SPP = 0;
     CSR[vsstatus].SIE = CSR[vsstatus].SPIE;
