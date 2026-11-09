@@ -11,7 +11,7 @@ writable: true
 description: |
   The `hip` register is an HSXLEN-bit read/write register that indicates pending interrupts at the hypervisor level.
   It contains interrupt-pending bits for both VS-level and hypervisor-specific interrupts.
-address: 0x608
+address: 0x644
 priv_mode: S
 definedBy:
   extension:
