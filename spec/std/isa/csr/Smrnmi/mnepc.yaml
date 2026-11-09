@@ -31,11 +31,11 @@ fields:
       On an exception return from M-mode NMI / double trap (from the MNRET instruction),
       control transfers to the virtual address read out of `mnepc.PC`.
 
-      [when,"ext?(:C)"]
+      [when,"ext?(:C) || ext?(:Zca)"]
       Because PCs are always halfword-aligned, bit 0 of `mnepc.PC` is always
       read-only 0.
 
-      [when,"!ext?(:C)"]
+      [when,"!ext?(:C) && !ext?(:Zca)"]
       Because PCs are always word-aligned, bits 1:0 of `mnepc.PC` are always
       read-only 0.
 
@@ -44,11 +44,18 @@ fields:
       may be visible on the next read with `misa.C` is set.
     type: RW-RH
     sw_write(csr_value): |
-      return csr_value.PC & ~64'b1;
+      if (implemented?(ExtensionName::Zca)) {
+        return csr_value.PC & ~64'b1;
+      } else {
+        return csr_value.PC & ~64'b11;
+      }
     reset_value: UNDEFINED_LEGAL
 sw_read(): |
-  if (implemented?(ExtensionName::C) && CSR[misa].C == 1'b1) {
+  if (implemented?(ExtensionName::Zca)) {
+    if (implemented?(ExtensionName::C) && MUTABLE_MISA_C && (CSR[misa].C == 1'b0)) {
+      # C is disabled, so IALIGN is 32 and bit 1 reads as zero
+      return CSR[mnepc].PC & ~64'b11;
+    }
     return CSR[mnepc].PC & ~64'b1;
-  } else {
-    return CSR[mnepc].PC & ~64'b11;
   }
+  return CSR[mnepc].PC & ~64'b11;
