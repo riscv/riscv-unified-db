@@ -15,7 +15,9 @@ definedBy:
   extension:
     allOf:
       - name: H
-      - name: Sscsrind
+      - anyOf:
+          - name: Smcsrind
+          - name: Sscsrind
 description: |
   The `vsireg6` CSR is one of several alias registers used to indirectly access
   virtual supervisor-level CSRs in VS-mode or VU-mode.

@@ -15,7 +15,9 @@ definedBy:
   extension:
     allOf:
       - name: H
-      - name: Sscsrind
+      - anyOf:
+          - name: Smcsrind
+          - name: Sscsrind
 description: |
   The `vsiselect` register will support the value range 0..0xFFF at a minimum.
   A future extension may define a value range outside of this minimum range.

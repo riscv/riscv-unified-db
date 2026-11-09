@@ -79,7 +79,11 @@ fields:
     location: 60
     definedBy:
       extension:
-        name: Sscsrind
+        allOf:
+          - name: S
+          - anyOf:
+              - name: Smcsrind
+              - name: Sscsrind
     description: |
       The CSRIND bit in `mstateen0` controls access to the `siselect`, `sireg*`, `vsiselect`, and the `vsireg*`
       CSRs provided by the Sscsrind extensions.

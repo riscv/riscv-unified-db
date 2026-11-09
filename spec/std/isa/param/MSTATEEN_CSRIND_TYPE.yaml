@@ -22,5 +22,8 @@ schema:
 definedBy:
   extension:
     allOf:
-      - name: Sscsrind
+      - name: S
+      - anyOf:
+          - name: Smcsrind
+          - name: Sscsrind
       - name: Smstateen
