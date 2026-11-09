@@ -55,6 +55,19 @@ class TestCli < Minitest::Test
     refute_match %r{MUTABLE_ISA_S}, out
   end
 
+  def test_list_params_dcsr_owned_by_sdext
+    dcsr_params = %w[DCSR_MPRVEN_TYPE DCSR_STEPIE_TYPE DCSR_STOPCOUNT_TYPE DCSR_STOPTIME_TYPE]
+    names = %w[Sdext Sdtrig].to_h do |ext|
+      out, _err = capture_io do
+        run_cmd("list parameters -e #{ext} -f yaml")
+      end
+      [ext, YAML.safe_load(out).map { |p| p["name"] }]
+    end
+    assert_equal dcsr_params, names["Sdext"] & dcsr_params
+    assert_includes names["Sdtrig"], "SDTRIG_NUM_TRIGGERS"
+    assert_empty names["Sdtrig"] & dcsr_params
+  end
+
   def test_list_params_yaml
     t = Tempfile.new
     _out, _err = capture_io do
