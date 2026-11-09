@@ -8,7 +8,7 @@ kind: instruction
 name: feq.h
 long_name: Floating-Point Equal Half-Precision
 description: |
-  The `feq.h` instruction writes 1 to `xd` if `fs1` and `fs2` are equal, and 0 otherwise.
+  The `feq.h` instruction writes 1 to _xd_ if _fs1_ and _fs2_ are equal, and 0 otherwise.
   If either operand is NaN, the result is 0 (not equal). If either operand is a signaling NaN,
   the invalid flag is set. Positive zero is considered equal to negative zero.
 definedBy:

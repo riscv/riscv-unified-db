@@ -8,7 +8,7 @@ kind: instruction
 name: flt.h
 long_name: Floating-Point Less Than Half-Precision
 description: |
-  The `flt.h` instruction writes 1 to `xd` if `fs1` is less than `fs2`, and 0 otherwise.
+  The `flt.h` instruction writes 1 to _xd_ if _fs1_ is less than _fs2_, and 0 otherwise.
   If either operand is NaN, the result is 0. If either operand is a NaN
   (signaling or quiet), the invalid flag is set.
 definedBy:

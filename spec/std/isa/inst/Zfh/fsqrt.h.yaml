@@ -8,7 +8,7 @@ kind: instruction
 name: fsqrt.h
 long_name: Floating-Point Square Root Half-Precision
 description: |
-  The `fsqrt.h` instruction computes the square root of `fs1` and writes the result to `fd`.
+  The `fsqrt.h` instruction computes the square root of _fs1_ and writes the result to _fd_.
 definedBy:
   extension:
     oneOf:

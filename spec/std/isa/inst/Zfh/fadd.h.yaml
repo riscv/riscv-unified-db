@@ -8,8 +8,8 @@ kind: instruction
 name: fadd.h
 long_name: Floating-Point Add Half-Precision
 description: |
-  The `fadd.h` instruction performs half-precision floating-point addition of `fs1` and `fs2`
-  and writes the final result to `fd`.
+  The `fadd.h` instruction performs half-precision floating-point addition of _fs1_ and _fs2_
+  and writes the final result to _fd_.
 definedBy:
   extension:
     anyOf:

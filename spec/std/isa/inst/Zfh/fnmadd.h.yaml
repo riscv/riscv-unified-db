@@ -8,8 +8,8 @@ kind: instruction
 name: fnmadd.h
 long_name: Floating-Point Negate-Multiply-Add Half-Precision
 description: |
-  The `fnmadd.h` instruction multiplies the values in `fs1` and `fs2`, negates the product, subtracts the value in `fs3`, and
-  writes the final result to `fd`.
+  The `fnmadd.h` instruction multiplies the values in _fs1_ and _fs2_, negates the product, subtracts the value in _fs3_, and
+  writes the final result to _fd_.
 definedBy:
   extension:
     oneOf:

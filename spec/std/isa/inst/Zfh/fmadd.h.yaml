@@ -8,7 +8,7 @@ kind: instruction
 name: fmadd.h
 long_name: Floating-Point Multiply-Add Half-Precision
 description: |
-  The `fmadd.h` instruction multiplies the values in `fs1` and `fs2`, adds the value in `fs3`, and writes the final result to `fd`.
+  The `fmadd.h` instruction multiplies the values in _fs1_ and _fs2_, adds the value in _fs3_, and writes the final result to _fd_.
 definedBy:
   extension:
     oneOf:
