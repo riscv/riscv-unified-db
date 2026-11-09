@@ -26,11 +26,18 @@ fields:
       If the base address is written with a non-canonical address (_i.e._, bits [SXLEN-1:<%= va_size %>] do not match bit <%= va_size-1 %>),
       the write should be ignored.
 
+      When `stvec.MODE` is Vectored, the address must be aligned to `STVEC_BASE_ALIGNMENT_VECTORED` bytes.
+      A misaligned write leaves an unspecified legal value in the field.
+
     type: RW-R
     sw_write(csr_value): |
-      # Base spec says that BASE must be 4-byte aligned, which will always be the case
-      # implementations may put further constraints on BASE when MODE != Direct
-      # If that is the case, stvec should have an override for the implementation
+      # BASE always holds a 4-byte aligned address, which is all Direct mode needs.
+      # Vectored mode can require more alignment.
+      if ($array_includes?(STVEC_MODES, 1)) {
+        if ((csr_value.MODE == 1) && (({csr_value.BASE, 2'b00} & (STVEC_BASE_ALIGNMENT_VECTORED - 1)) != 0)) {
+          return UNDEFINED_LEGAL_DETERMINISTIC;
+        }
+      }
       return csr_value.BASE;
     reset_value: UNDEFINED_LEGAL
   MODE:
