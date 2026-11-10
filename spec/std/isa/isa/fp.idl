@@ -539,7 +539,7 @@ function f32_muladd {
         sigZ = softfloat_shiftRightJam64(sig64Z, 32);
       }
       if (sigZ < 0x40000000) {
-        expZ = expZ - 1;
+        expZ = $signed(expZ) - 16'sd1;
         sigZ = sigZ << 1;
       }
       return softfloat_roundPackToF32(signZ, expZ, sigZ, mode);
@@ -565,7 +565,7 @@ function f32_muladd {
         sig64Z = sigProd - softfloat_shiftRightJam64(sig64C, expDiff);
       }
       Bits<8> shiftDist = count_leading_zeros_64(64, sig64Z) - 1;
-      expZ = expZ - shiftDist;
+      expZ = $signed(expZ) - $signed(shiftDist);
       shiftDist = shiftDist - 8'h20;
       if ($signed(shiftDist) < 0s) {
         sigZ = softfloat_shiftRightJam64(sig64Z, -shiftDist);

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsadd.vx
-long_name: "Vector unsigned addition with scalar"
+long_name: "Vector Single-Width Saturating Add Signed with Scalar"
 description: |
-  Performs unsigned addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+  Performs saturating signed addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. If the result would overflow the destination, the result is replaced with the closest representable value, and the `vxsat` bit is set.
 definedBy:
   extension:
     name: Zvl32b
