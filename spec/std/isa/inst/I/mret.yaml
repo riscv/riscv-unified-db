@@ -25,7 +25,11 @@ operation(): |
     }
   }
   if (implemented?(ExtensionName::Smdbltrp)) {
-    CSR[mstatus].MDT = 1'b0;
+    if (xlen() == 64) {
+      CSR[mstatus].MDT = 1'b0;
+    } else {
+      CSR[mstatush].MDT = 1'b0;
+    }
   }
   if (implemented?(ExtensionName::Ssdbltrp)) {
     # If the new privilege mode is U, VS, or VU, clear sstatus.SDT.

@@ -32,7 +32,11 @@ operation(): |
       CSR[mstatus].MPRV = 0;
     }
     if (implemented?(ExtensionName::Smdbltrp)) {
-      CSR[mstatus].MDT = 1'b0;
+      if (xlen() == 64) {
+        CSR[mstatus].MDT = 1'b0;
+      } else {
+        CSR[mstatush].MDT = 1'b0;
+      }
     }
     if (implemented?(ExtensionName::Ssdbltrp)) {
       # The new privilege mode is not M here. If it is U, VS, or VU, clear
