@@ -17782,7 +17782,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fclass_h.adoc#udb:doc:inst:fclass_h[fclass.h] instruction examines the value in floating-point register _fs1_ and writes to integer register _xd_
+The xref:insts:fclass_h.adoc#udb:doc:inst:fclass_h[fclass.h] instruction examines the half-precision value in floating-point register _fs1_ and writes to integer register _xd_
 a 10-bit mask that indicates the class of the floating-point number.
 
 The format of the mask is described in the table below. The corresponding bit in _xd_ will be set if the property
@@ -21044,7 +21044,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:feq_h.adoc#udb:doc:inst:feq_h[feq.h] instruction writes 1 to _xd_ if _fs1_ and _fs2_ are equal, and 0 otherwise.
+The xref:insts:feq_h.adoc#udb:doc:inst:feq_h[feq.h] instruction writes 1 to _xd_ if the half-precision values in _fs1_ and _fs2_ are equal, and 0 otherwise.
 If either operand is NaN, the result is 0 (not equal). If either operand is a signaling NaN,
 the invalid flag is set. Positive zero is considered equal to negative zero.
 
@@ -21307,7 +21307,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fle_h.adoc#udb:doc:inst:fle_h[fle.h] instruction writes 1 to _xd_ if _fs1_ is less than or equal to _fs2_, and 0 otherwise.
+The xref:insts:fle_h.adoc#udb:doc:inst:fle_h[fle.h] instruction writes 1 to _xd_ if the half-precision value in _fs1_ is less than or equal to that in _fs2_, and 0 otherwise.
 If either operand is NaN, the result is 0. If either operand is a NaN (signaling or quiet),
 the invalid flag is set. Positive zero and negative zero are considered equal.
 
@@ -22056,7 +22056,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:flt_h.adoc#udb:doc:inst:flt_h[flt.h] instruction writes 1 to _xd_ if _fs1_ is less than _fs2_, and 0 otherwise.
+The xref:insts:flt_h.adoc#udb:doc:inst:flt_h[flt.h] instruction writes 1 to _xd_ if the half-precision value in _fs1_ is less than that in _fs2_, and 0 otherwise.
 If either operand is NaN, the result is 0. If either operand is a NaN
 (signaling or quiet), the invalid flag is set.
 
@@ -22539,7 +22539,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fmadd_h.adoc#udb:doc:inst:fmadd_h[fmadd.h] instruction multiplies the values in _fs1_ and _fs2_, adds the value in _fs3_, and writes the final result to _fd_.
+The xref:insts:fmadd_h.adoc#udb:doc:inst:fmadd_h[fmadd.h] instruction multiplies the half-precision values in _fs1_ and _fs2_, adds the half-precision value in _fs3_, and writes the final result to _fd_.
 
 
 Decode Variables::
@@ -22750,7 +22750,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fmax_h.adoc#udb:doc:inst:fmax_h[fmax.h] instruction writes the larger of _fs1_ and _fs2_ to _fd_. For the purposes of this instruction,
+The xref:insts:fmax_h.adoc#udb:doc:inst:fmax_h[fmax.h] instruction writes the larger of the half-precision values in _fs1_ and _fs2_ to _fd_. For the purposes of this instruction,
 the value `-0.0` is considered to be less than the value `+0.0`. If both inputs are NaNs, the result is
 the canonical NaN. If only one operand is a NaN, the result is the non-NaN operand. Signaling NaN inputs
 set the invalid operation exception flag, even when the result is not NaN.
@@ -23187,7 +23187,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fmin_h.adoc#udb:doc:inst:fmin_h[fmin.h] instruction writes the smaller of _fs1_ and _fs2_ to _fd_. For the purposes of this instruction,
+The xref:insts:fmin_h.adoc#udb:doc:inst:fmin_h[fmin.h] instruction writes the smaller of the half-precision values in _fs1_ and _fs2_ to _fd_. For the purposes of this instruction,
 the value `-0.0` is considered to be less than the value `+0.0`. If both inputs are NaNs, the result is
 the canonical NaN. If only one operand is a NaN, the result is the non-NaN operand. Signaling NaN inputs
 set the invalid operation exception flag, even when the result is not NaN.
@@ -23623,7 +23623,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fmsub_h.adoc#udb:doc:inst:fmsub_h[fmsub.h] instruction multiplies the values in _fs1_ and _fs2_, subtracts the value in _fs3_, and writes the final result to _fd_.
+The xref:insts:fmsub_h.adoc#udb:doc:inst:fmsub_h[fmsub.h] instruction multiplies the half-precision values in _fs1_ and _fs2_, subtracts the half-precision value in _fs3_, and writes the final result to _fd_.
 
 
 Decode Variables::
@@ -24594,7 +24594,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fnmadd_h.adoc#udb:doc:inst:fnmadd_h[fnmadd.h] instruction multiplies the values in _fs1_ and _fs2_, negates the product, subtracts the value in _fs3_, and
+The xref:insts:fnmadd_h.adoc#udb:doc:inst:fnmadd_h[fnmadd.h] instruction multiplies the half-precision values in _fs1_ and _fs2_, negates the product, subtracts the half-precision value in _fs3_, and
 writes the final result to _fd_.
 
 
@@ -24805,7 +24805,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fnmsub_h.adoc#udb:doc:inst:fnmsub_h[fnmsub.h] instruction multiplies the values in _fs1_ and _fs2_, negates the product, adds the value in _fs3_, and
+The xref:insts:fnmsub_h.adoc#udb:doc:inst:fnmsub_h[fnmsub.h] instruction multiplies the half-precision values in _fs1_ and _fs2_, negates the product, adds the half-precision value in _fs3_, and
 writes the final result to _fd_.
 
 
@@ -25516,7 +25516,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fsgnj_h.adoc#udb:doc:inst:fsgnj_h[fsgnj.h] instruction produces a result that takes all bits except the sign bit from _fs1_.
+The xref:insts:fsgnj_h.adoc#udb:doc:inst:fsgnj_h[fsgnj.h] instruction produces a half-precision result that takes all bits except the sign bit from _fs1_.
 The result's sign bit is taken from _fs2_'s sign bit, and the result is written to the destination
 register _fd_. Sign-injection instructions do not set floating-point exception flags, nor do they
 canonicalize NaNs.
@@ -25725,7 +25725,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fsgnjn_h.adoc#udb:doc:inst:fsgnjn_h[fsgnjn.h] instruction produces a result that takes all bits except the sign bit from _fs1_.
+The xref:insts:fsgnjn_h.adoc#udb:doc:inst:fsgnjn_h[fsgnjn.h] instruction produces a half-precision result that takes all bits except the sign bit from _fs1_.
 The result's sign bit is opposite of _fs2_'s sign bit, and the result is written to the destination
 register _fd_. Sign-injection instructions do not set floating-point exception flags, nor do they
 canonicalize NaNs.
@@ -25934,7 +25934,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fsgnjx_h.adoc#udb:doc:inst:fsgnjx_h[fsgnjx.h] instruction produces a result that takes all bits except the sign bit from _fs1_.
+The xref:insts:fsgnjx_h.adoc#udb:doc:inst:fsgnjx_h[fsgnjx.h] instruction produces a half-precision result that takes all bits except the sign bit from _fs1_.
 The result's sign bit is the XOR of sign bits of _fs1_ and _fs2_, and the result is written to
 the destination register _fd_. Sign-injection instructions do not set floating-point exception flags, nor do they
 canonicalize NaNs.
@@ -26253,7 +26253,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fsqrt_h.adoc#udb:doc:inst:fsqrt_h[fsqrt.h] instruction computes the square root of _fs1_ and writes the result to _fd_.
+The xref:insts:fsqrt_h.adoc#udb:doc:inst:fsqrt_h[fsqrt.h] instruction computes the half-precision square root of _fs1_ and writes the result to _fd_.
 
 
 Decode Variables::

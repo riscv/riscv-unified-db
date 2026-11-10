@@ -8,7 +8,7 @@ kind: instruction
 name: fmin.h
 long_name: Floating-Point Minimum-Number Half-Precision
 description: |
-  The `fmin.h` instruction writes the smaller of _fs1_ and _fs2_ to _fd_. For the purposes of this instruction,
+  The `fmin.h` instruction writes the smaller of the half-precision values in _fs1_ and _fs2_ to _fd_. For the purposes of this instruction,
   the value `-0.0` is considered to be less than the value `+0.0`. If both inputs are NaNs, the result is
   the canonical NaN. If only one operand is a NaN, the result is the non-NaN operand. Signaling NaN inputs
   set the invalid operation exception flag, even when the result is not NaN.

@@ -8,7 +8,7 @@ kind: instruction
 name: fmsub.h
 long_name: Floating-Point Multiply-Subtract Half-Precision
 description: |
-  The `fmsub.h` instruction multiplies the values in _fs1_ and _fs2_, subtracts the value in _fs3_, and writes the final result to _fd_.
+  The `fmsub.h` instruction multiplies the half-precision values in _fs1_ and _fs2_, subtracts the half-precision value in _fs3_, and writes the final result to _fd_.
 definedBy:
   extension:
     oneOf:

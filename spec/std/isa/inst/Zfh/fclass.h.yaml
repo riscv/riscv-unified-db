@@ -8,7 +8,7 @@ kind: instruction
 name: fclass.h
 long_name: Floating-Point Classify Half-Precision
 description: |
-  The `fclass.h` instruction examines the value in floating-point register _fs1_ and writes to integer register _xd_
+  The `fclass.h` instruction examines the half-precision value in floating-point register _fs1_ and writes to integer register _xd_
   a 10-bit mask that indicates the class of the floating-point number.
 
   The format of the mask is described in the table below. The corresponding bit in _xd_ will be set if the property
