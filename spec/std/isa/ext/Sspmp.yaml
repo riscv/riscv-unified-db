@@ -34,11 +34,7 @@ versions:
 requirements:
   allOf:
     - extension:
-        allOf:
-          - name: S
-          - anyOf:
-              - name: Smcsrind
-              - name: Sscsrind
+        name: Sscsrind
     - anyOf:
       - not:
           extension:

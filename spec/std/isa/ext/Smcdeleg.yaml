@@ -41,7 +41,6 @@ versions:
 requirements:
   extension:
     allOf:
-      - name: S
       - name: Ssccfg
         version: ~> 1.0
       - anyOf:

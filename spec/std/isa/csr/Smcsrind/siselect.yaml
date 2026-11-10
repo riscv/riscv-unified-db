@@ -12,11 +12,9 @@ priv_mode: S
 length: SXLEN
 definedBy:
   extension:
-    allOf:
-      - name: S
-      - anyOf:
-          - name: Smcsrind
-          - name: Sscsrind
+    anyOf:
+      - name: Smcsrind
+      - name: Sscsrind
 description: |
   The `siselect` register will support the value range 0..0xFFF at a minimum. A future extension may
   define a value range outside of this minimum range. Only if such an extension is implemented will
