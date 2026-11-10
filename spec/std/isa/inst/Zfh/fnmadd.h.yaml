@@ -6,9 +6,10 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fnmadd.h
-long_name: No synopsis available
+long_name: Floating-Point Negate-Multiply-Add Half-Precision
 description: |
-  No description available.
+  The `fnmadd.h` instruction multiplies the half-precision values in _fs1_ and _fs2_, negates the product, subtracts the half-precision value in _fs3_, and
+  writes the final result to _fd_.
 definedBy:
   extension:
     oneOf:
