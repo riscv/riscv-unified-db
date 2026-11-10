@@ -7,17 +7,15 @@ $schema: param_schema.json#
 kind: parameter
 name: DCSR_STEPIE_TYPE
 description: |
-  Implementation of dcsr.STEPIE is optional.
-  It may be tied to either 0 or 1.
+  Implementations may hard wire dcsr.STEPIE to 0.
 
   Behavior of the dcsr.STEPIE bit:
     * 'read-only-0': tied to 0
-    * 'read-only-1': tied to 1
     * 'rw': read-write
 long_name: TODO
 schema:
   type: string
-  enum: [read-only-0, read-only-1, rw]
+  enum: [read-only-0, rw]
 definedBy:
   extension:
-    name: Sdtrig
+    name: Sdext
