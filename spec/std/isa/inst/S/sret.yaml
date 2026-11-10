@@ -116,6 +116,8 @@ operation(): |
         spv = CSR[hstatus].SPV;
       }
       if (mode() != PrivilegeMode::M || CSR[mstatus].SPP == 1'b0 || spv == 1'b1) {
+        # The spec clears sstatus.SDT. UDB models sstatus as an alias of mstatus,
+        # so writing mstatus.SDT clears sstatus.SDT.
         CSR[mstatus].SDT = 1'b0;
       }
       if (implemented?(ExtensionName::H)) {
