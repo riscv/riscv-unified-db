@@ -36,7 +36,12 @@ operation(): |
     # If the new privilege mode is VU, also clear vsstatus.SDT.
     Bits<1> mpv = 0;
     if (implemented?(ExtensionName::H)) {
-      mpv = CSR[mstatus].MPV;
+      # mstatus.MPV exists only on RV64; on RV32 the bit is in mstatush.
+      if (xlen() == 64) {
+        mpv = CSR[mstatus].MPV;
+      } else {
+        mpv = CSR[mstatush].MPV;
+      }
     }
     if (CSR[mstatus].MPP == 2'b00 || (CSR[mstatus].MPP == 2'b01 && mpv == 1'b1)) {
       # The spec clears sstatus.SDT. UDB models sstatus as an alias of mstatus,
