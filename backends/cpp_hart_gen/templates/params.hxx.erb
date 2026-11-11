@@ -51,7 +51,7 @@ namespace udb {
             end
             alias tsort_each_node each_key
             def tsort_each_child(param_name, &blk)
-              fetch(param_name).defined_by_condition.param_terms(expand: true).map(&:name).each(&blk)
+              fetch(param_name).defined_by_condition.param_terms(expand: false).map(&:name).each(&blk)
             end
           end
       -%>
