@@ -15,7 +15,7 @@ description: |
   Supervisor domains are then restricted to selecting a specific RCID and MCID in srmcfg from the allocated range.
   Although the RDSM could limit access to srmcfg to prevent direct domain configuration, enabling domains to program srmcfg directly is preferred for performance reasons.
 
-  To facilitate delegation of srmcfg to the SD, the Smsdqosid extension introduces a MXLEN-wide WARL read/write machine-mode register called mnrmcfg.
+  To facilitate delegation of srmcfg to the Supervisor Domain the Smsdqosid extension introduces a MXLEN-wide WARL read/write machine-mode register called mnrmcfg.
 
   Additionally, the extension introduces the SRL, SML, SSRM, and SSMM fields in the msdcfg register.
   The SRL (supervisor-RCID-length) is a WARL field with legal values from 0 to RCIDLEN, where RCIDLEN is the number of implemented bits of the RCID field of srmcfg.
@@ -31,4 +31,4 @@ versions:
     release_date: "2026-08"
     url: "https://github.com/riscv/riscv-smmtt/releases/download/v0.9.0/supervisor-domains.pdf"
 requirements:
-  extension: { name: M, version: ~> 2.0.0 }
+  extension: { name: Ssqosid, version: ~> 1.0 }
