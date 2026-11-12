@@ -28487,7 +28487,7 @@ Clear interrupt (Immediate)
 
 Mnemonic::
 ----
-qc.clrinti xs1
+qc.clrinti imm
 ----
 
 Encoding::
