@@ -31,7 +31,7 @@ fields:
       On an exception return from M-mode (from the MRET instruction),
       control transfers to the virtual address read out of `mepc.PC`.
 
-      [when,"ext?(:Zca)"]
+      [when,"ext?(:Zca) && !(ext?(:C) && MUTABLE_MISA_C == true)"]
       Because PCs are always halfword-aligned, bit 0 of `mepc.PC` is always
       read-only 0.
 
@@ -40,6 +40,7 @@ fields:
       read-only 0.
 
       [when,"ext?(:C) && MUTABLE_MISA_C == true"]
+      Bit 0 of `mepc.PC` is always read-only 0.
       When `misa.C` is clear, bit 1 is masked to zero. Writes to bit 1 are still captured, and
       may be visible on the next read when `misa.C` is set.
     type: RW-RH

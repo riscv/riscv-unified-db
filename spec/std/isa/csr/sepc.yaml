@@ -31,11 +31,17 @@ fields:
       On an exception return from S-mode (from the SRET instruction),
       control transfers to the virtual address read out of `sepc.PC`.
 
-      Because PCs are always <% if ext?(:Zca) %>halfword<% else %>word<% end %>-aligned,
-      <% if ext?(:Zca) %>bit 0 of `sepc.PC` is<% else %>bits 1:0 of `sepc.PC` are<% end %> always
+      <%- if ext?(:Zca) && !(ext?(:C) && MUTABLE_MISA_C == true) -%>
+      Because PCs are always halfword-aligned, bit 0 of `sepc.PC` is always
       read-only 0.
 
+      <%- elsif !ext?(:Zca) -%>
+      Because PCs are always word-aligned, bits 1:0 of `sepc.PC` are always
+      read-only 0.
+
+      <%- end -%>
       [when,"ext?(:C) && MUTABLE_MISA_C == true"]
+      Bit 0 of `sepc.PC` is always read-only 0.
       When `misa.C` is clear, bit 1 is masked to zero. Writes to bit 1 are still captured, and
       may be visible on the next read when `misa.C` is set.
     type: RW-RH
