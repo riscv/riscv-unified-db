@@ -20215,7 +20215,7 @@ This instruction requires the following:
 == fcvt.wu.h
 
 Synopsis::
-Floating-point Convert Half-precision to Word
+Floating-point Convert Half-precision to Unsigned Word
 
 Base::
 
@@ -20237,7 +20237,7 @@ Encoding::
 ....
 
 Description::
-xref:insts:fcvt_wu_h.adoc#udb:doc:inst:fcvt_wu_h[fcvt.wu.h] converts a half-precision floating-point number to a signed 32-bit unsigned integer.
+xref:insts:fcvt_wu_h.adoc#udb:doc:inst:fcvt_wu_h[fcvt.wu.h] converts a half-precision floating-point number to a 32-bit unsigned integer.
 
 
 Decode Variables::
@@ -20262,7 +20262,7 @@ This instruction requires the following:
 == fcvt.wu.q
 
 Synopsis::
-Floating-Point Convert Unsigned Quad-Precision to Word
+Floating-Point Convert Quad-Precision to Unsigned Word
 
 Base::
 
