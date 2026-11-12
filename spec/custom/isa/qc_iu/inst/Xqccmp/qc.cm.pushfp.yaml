@@ -22,7 +22,7 @@ description: |
 definedBy:
   extension:
     name: Xqccmp
-assembly: reg_list, -stack_adj
+assembly: "{reg_list}, -stack_adj"
 encoding:
   match: 10111001------10
   variables:
