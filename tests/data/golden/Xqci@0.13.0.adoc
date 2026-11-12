@@ -1942,7 +1942,7 @@ a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcisync[`Xqcisync`])
 ^ `qc.clo xd, xs1`
 ^ xref:#udb-insn-qc_clo[Count leading ones]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqcibm[`Xqcibm`])
-^ `qc.clrinti xs1`
+^ `qc.clrinti imm`
 ^ xref:#udb-insn-qc_clrinti[Clear interrupt (Immediate)]
 a^ ++(++xlen+++()+++ == 32 && xref:#udb-extension-Xqciint[`Xqciint`])
 ^ `qc.compress2 xd, xs1`
