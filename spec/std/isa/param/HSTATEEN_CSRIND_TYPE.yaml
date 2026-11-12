@@ -29,6 +29,8 @@ requirements:
 definedBy:
   extension:
     allOf:
-      - name: Sscsrind
+      - anyOf:
+          - name: Smcsrind
+          - name: Sscsrind
       - name: H
       - name: Ssstateen

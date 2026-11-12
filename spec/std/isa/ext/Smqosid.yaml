@@ -1,0 +1,21 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Smqosid
+type: privileged
+long_name: Machine-Mode Quality-of-Service Identifiers
+description: |
+  The Smqosid introduces a read/write M-mode CSR (mrmcfg) to configure QoS identifiers for requests
+  made by a hart with effective privilege mode equal to M.
+versions:
+  - version: "0.9.0"
+    state: development
+    release_date: "2026-08"
+    url: "https://github.com/riscv/riscv-smmtt/releases/download/v0.9.0/supervisor-domains.pdf"
+requirements:
+  extension:
+    name: Sm

@@ -13,7 +13,11 @@ priv_mode: VS
 length: VSXLEN
 definedBy:
   extension:
-    name: Smcsrind
+    allOf:
+      - name: H
+      - anyOf:
+          - name: Smcsrind
+          - name: Sscsrind
 description: |
   The `vsireg` CSR is one of several alias registers used to indirectly access
   virtual supervisor-level CSRs in VS-mode or VU-mode.

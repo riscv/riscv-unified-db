@@ -43,5 +43,8 @@ requirements:
     allOf:
       - name: Ssccfg
         version: ~> 1.0
-      - name: Sscsrind
-        version: ~> 1.0
+      - anyOf:
+          - name: Smcsrind
+            version: ~> 1.0
+          - name: Sscsrind
+            version: ~> 1.0
