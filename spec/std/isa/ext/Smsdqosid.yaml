@@ -1,0 +1,34 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Smsdqosid
+type: privileged
+long_name: Supervisor Domain Quality-of-Service Identifiers
+description: |
+  The Smsdqosid extension enables the scenario where two or more supervisor domains share a common set of capacity and bandwidth controllers.
+  In this setup, access to the QRI of these controllers is restricted to RDSM, which then provides mediated access for these supervisor domains to configure capacity or bandwidth allocation and read the corresponding monitoring counters.
+  A common QRID is associated with requests from these domains, and the RDSM allocates sets of RCID and MCID for each domain’s use.
+  Supervisor domains are then restricted to selecting a specific RCID and MCID in srmcfg from the allocated range.
+  Although the RDSM could limit access to srmcfg to prevent direct domain configuration, enabling domains to program srmcfg directly is preferred for performance reasons.
+
+  To facilitate delegation of srmcfg to the Supervisor Domain the Smsdqosid extension introduces a MXLEN-wide WARL read/write machine-mode register called mnrmcfg.
+
+  Additionally, the extension introduces the SRL, SML, SSRM, and SSMM fields in the msdcfg register.
+  The SRL (supervisor-RCID-length) is a WARL field with legal values from 0 to RCIDLEN, where RCIDLEN is the number of implemented bits of the RCID field of srmcfg.
+  The least-significant bits of RCID are implemented first. That is, if RCIDLEN is nonzero, then RCID[RCIDLEN-1:0] is writable.
+  The SML (supervisor-MCID-length) is a WARL field with legal values from 0 to MCIDLEN, where MCIDLEN is the number of implemented bits of the MCID field of srmcfg.
+  The least-significant bits of MCID are implemented first. That is, if MCIDLEN is nonzero, then MCID[MCIDLEN-1:0] is writable.
+  The supervisor-srmcfg-rcid-mode (SSRM) and SRL fields in the msdcfg determine the legal values for the srmcfg.RCID field. When SSRM is 0,
+  the legal values are between 0 and 2SRL - 1. When SSRM is 1, the legal values are between 0 and 2RCIDLEN - 2SRL - 1,
+  and in this mode SRL must satisfy 0 ⇐ SRL <  RCIDLEN.
+versions:
+  - version: "0.9.0"
+    state: development
+    release_date: "2026-08"
+    url: "https://github.com/riscv/riscv-smmtt/releases/download/v0.9.0/supervisor-domains.pdf"
+requirements:
+  extension: { name: Ssqosid, version: ~> 1.0 }
