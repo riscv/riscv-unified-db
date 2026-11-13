@@ -27,17 +27,21 @@ RVTEST_CODE_BEGIN
     vsetvl x5, x2, x4; \
   )
 
-  # SEW=8, LMUL=2, VLMAX=32
+  # xs2 = 0x23 -> VMA_VTA_VSEW_VLMUL == 0_0_100_011 -> SEW=RESERVED, LMUL=8
+  # Change to
+  # xs2 = 0x01 -> VMA_VTA_VSEW_VLMUL == 0_0_000_001 -> SEW=8, LMUL=2, VLMAX=32
   TEST_CASE(3, x5, 0x2, \
     li x2, 0x2; \
-    li x4, 0x23; \
+    li x4, 0x01; \
     vsetvl x5, x2, x4; \
   )
 
-  # SEW=8, LMUL=1/2, VLMAX=8
+  # xs2 = 0xeb -> VMA_VTA_VSEW_VLMUL == 1_1_101_011 -> SEW=RESERVED, LMUL=8
+  # Change to
+  # xs2 = 0xc7 -> VMA_VTA_VSEW_VLMUL == 1_1_000_111 -> SEW=8, LMUL=1/2, VLMAX=8
   TEST_CASE(4, x5, 0x2, \
     li x2, 0x2; \
-    li x4, 0xeb; \
+    li x4, 0xc7; \
     vsetvl x5, x2, x4; \
   )
 

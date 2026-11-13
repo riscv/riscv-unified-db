@@ -546,7 +546,7 @@ namespace :test do
 
     # These extensions to the riscv-tests suite have binaries under a different diretcory
     # uvTests are common for rv32/64
-    uvTests = ["vsetivli", "vsetvl", "vsetvli_rs1_eq_zero", "vsetvli_vl_lt_vlmax",
+    uvTests = ["vsetivli", "vsetvl", "vsetvl_rs1_eq_zero", "vsetvli_rs1_eq_zero", "vsetvli_vl_lt_vlmax",
                 "vle8", "vmv_v_i", "vadd.vv"]
     base = YAML.load_file("#{$root}/cfgs/#{configs_name[0]}.yaml")["params"]["MXLEN"]
     uvTests.each do |t|
