@@ -56,10 +56,10 @@ definedBy:
   extension:
     name: Smstateen
 fields:
-  SE0:
+  SE2:
     long_name: hstateen2, hstateen2h, and sstateen2 access control
     location: 63
     description: |
-      The SE0 bit in `mstateen2` controls access to the `hstateen2`, `hstateen2h`, and the `sstateen2` CSRs.
+      The SE2 bit in `mstateen2` controls access to the `hstateen2`, `hstateen2h`, and the `sstateen2` CSRs.
     type: RW
     reset_value: 0

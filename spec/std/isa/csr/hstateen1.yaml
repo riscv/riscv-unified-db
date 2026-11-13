@@ -49,18 +49,18 @@ definedBy:
       - name: Smstateen
       - name: Ssstateen
 fields:
-  SE0:
+  SE1:
     long_name: sstateen1 access control
     location: 63
     description: |
-      The SE0 bit in `hstateen1` controls access to the `sstateen1` CSR.
+      The SE1 bit in `hstateen1` controls access to the `sstateen1` CSR.
     type: RW
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
-      if (CSR[mstateen1].SE0 == 1'b0){
+      if (CSR[mstateen1].SE1 == 1'b0){
         return 0;
       }
-      return csr_value.SE0;
+      return csr_value.SE1;
 sw_read(): |
   # for every bit in an mstateen CSR that is zero, the same bit
   # appears as read-only zero in the matching hstateen CSR

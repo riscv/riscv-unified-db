@@ -30,18 +30,18 @@ definedBy:
           - name: Smstateen
           - name: Ssstateen
 fields:
-  SE0:
+  SE1:
     long_name: sstateen1 access control
     location: 31
-    alias: hstateen1.SE0
+    alias: hstateen1.SE1
     sw_write(csr_value): |
-      if (CSR[mstateen1].SE0 == 1'b0){
+      if (CSR[mstateen1].SE1 == 1'b0){
         return 0;
       }
-      CSR[hstateen1].SE0 = csr_value.SE0;
-      return csr_value.SE0;
+      CSR[hstateen1].SE1 = csr_value.SE1;
+      return csr_value.SE1;
     description: |
-      The SE0 bit in `hstateen1h` controls access to the `sstateen1` CSR.
+      The SE1 bit in `hstateen1h` controls access to the `sstateen1` CSR.
     type: RW
     reset_value: UNDEFINED_LEGAL
 sw_read(): return CSR[hstateen1].sw_read()[63:32];
