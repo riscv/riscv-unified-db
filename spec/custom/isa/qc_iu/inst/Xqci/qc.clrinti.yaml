@@ -15,7 +15,7 @@ definedBy:
     - xlen: 32
     - extension:
         name: Xqciint
-assembly: xs1
+assembly: imm
 encoding:
   match: 1100111----------000000001110011
   variables:
