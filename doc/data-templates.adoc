@@ -56,7 +56,7 @@ versions:
 === Extension Types
 
 * `unprivileged` - User-mode extensions (e.g., Zba, Zbb)
-* `privileged` - Requires M-mode or S-mode (e.g., Smepmp, Sstvecv)
+* `privileged` - Requires M-mode or S-mode (e.g., Smepmp, Sstvecd)
 
 == Instruction Definitions
 
