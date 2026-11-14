@@ -17342,7 +17342,7 @@ When executed in Debug Mode, xref:insts:dret.adoc#udb:doc:inst:dret[dret]:
 . If Smdbltrp is implemented and the new privilege mode is less privileged
   than M-mode, clears xref:csrs:mstatus.adoc#udb:doc:csr_field:mstatus:MDT[mstatus.MDT].
 . If Ssdbltrp is implemented and the new privilege mode is U, VS, or VU,
-  clears xref:csrs:sstatus.adoc#udb:doc:csr:sstatus[sstatus]; if the new mode is VU, also clears xref:csrs:vsstatus.adoc#udb:doc:csr:vsstatus[vsstatus].
+  clears xref:csrs:sstatus.adoc#udb:doc:csr_field:sstatus:SDT[sstatus.SDT]; if the new mode is VU, also clears xref:csrs:vsstatus.adoc#udb:doc:csr_field:vsstatus:SDT[vsstatus.SDT].
 . If Zicfilp is implemented, sets `ELP` to xref:csrs:dcsr.adoc#udb:doc:csr_field:dcsr:PELP[dcsr.PELP] if Zicfilp is
   enabled (`xLPE`=1) in the new privilege mode, otherwise to
   `NO_LP_EXPECTED`, and then clears xref:csrs:dcsr.adoc#udb:doc:csr_field:dcsr:PELP[dcsr.PELP].

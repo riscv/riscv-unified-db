@@ -44,6 +44,22 @@ fields:
 
     type: RO
     reset_value: 2
+  SDT:
+    alias: mstatus.SDT
+    location: 24
+    long_name: Supervisor Double Trap
+    description: |
+      Alias of `mstatus.SDT`.
+    definedBy:
+      extension:
+        name: Ssdbltrp
+    type: RW-H
+    reset_value: 0
+    sw_write(csr_value): |
+      if (CSR[menvcfg].DTE == 0) {
+        return 0;
+      }
+      return csr_value.SDT;
   SPELP:
     alias: mstatus.SPELP
     location: 23
