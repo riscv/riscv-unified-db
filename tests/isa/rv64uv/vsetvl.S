@@ -30,14 +30,14 @@ RVTEST_CODE_BEGIN
   # SEW=8, LMUL=2, VLMAX=32
   TEST_CASE(3, x5, 0x2, \
     li x2, 0x2; \
-    li x4, 0x23; \
+    li x4, 0x01; \
     vsetvl x5, x2, x4; \
   )
 
   # SEW=8, LMUL=1/2, VLMAX=8
   TEST_CASE(4, x5, 0x2, \
     li x2, 0x2; \
-    li x4, 0xeb; \
+    li x4, 0xc7; \
     vsetvl x5, x2, x4; \
   )
 
