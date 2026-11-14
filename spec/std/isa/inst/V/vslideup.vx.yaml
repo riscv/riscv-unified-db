@@ -6,9 +6,11 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vslideup.vx
-long_name: "Vector slide up with scalar"
+long_name: "Vector slide up by scalar offset"
 description: |
-  Slides elements in vector register vs2 up by 1 position, inserting scalar register xs1 at the bottom, and stores results in vector register vd, using vector mask vm.
+  Slides elements in vector register vs2 up by the unsigned offset in scalar register xs1, so that
+  vd[i+offset] = vs2[i], and stores results in vector register vd, using vector mask vm. Destination
+  elements below the offset are not written; no scalar value is inserted.
 definedBy:
   extension:
     name: Zvl32b
