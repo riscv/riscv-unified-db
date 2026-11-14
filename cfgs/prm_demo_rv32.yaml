@@ -24,5 +24,7 @@ mandatory_extensions:
     version: ">= 2.0"
   - name: "C"
     version: ">= 2.0"
+  - name: "Zca"
+    version: ">= 1.0"
 
 additional_extensions: false
