@@ -2,7 +2,7 @@
 # Makefrag for rv32uv tests
 #-----------------------------------------------------------------------
 
-rv32uv_sc_tests = vadd.vv vle8 \
+rv32uv_sc_tests = vaadd.vv average_forms carry_borrow_forms vadd.vi vadd.vv vstart_bounds vector_legality vle8 \
     vsetivli \
     vsetvl \
     vsetvli_vl_lt_vlmax \
