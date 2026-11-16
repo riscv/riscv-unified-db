@@ -28378,9 +28378,9 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the value in xd,
+Loads a doubleword from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
-addressed word.
+addressed doubleword.
 
 The address in xs1 must be 8-byte aligned.
 
@@ -28470,9 +28470,9 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the value in xd,
+Loads a doubleword from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
-addressed word.
+addressed doubleword.
 
 The address in xs1 must be 8-byte aligned.
 
@@ -28562,9 +28562,9 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the value in xd,
+Loads a doubleword from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
-addressed word.
+addressed doubleword.
 
 The address in xs1 must be 8-byte aligned.
 
@@ -28654,9 +28654,9 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the value in xd,
+Loads a doubleword from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
-addressed word.
+addressed doubleword.
 
 The address in xs1 must be 8-byte aligned.
 
@@ -28746,7 +28746,7 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the sign-extended value in xd,
+Loads a word from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
 addressed word.
 
@@ -28754,8 +28754,7 @@ addressed word.
 The 32-bit load result is sign-extended to 64-bits.
 <%- end -%>
 
-The address in xs1 must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+The address in xs1 must be 4-byte aligned.
 
 If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
 `LoadAccessFault` exception will be generated. The access-fault exception can be generated
@@ -28840,7 +28839,7 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the sign-extended value in xd,
+Loads a word from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
 addressed word.
 
@@ -28848,8 +28847,7 @@ addressed word.
 The 32-bit load result is sign-extended to 64-bits.
 <%- end -%>
 
-The address in xs1 must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+The address in xs1 must be 4-byte aligned.
 
 If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
 `LoadAccessFault` exception will be generated. The access-fault exception can be generated
@@ -28934,7 +28932,7 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the sign-extended value in xd,
+Loads a word from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
 addressed word.
 
@@ -28942,8 +28940,7 @@ addressed word.
 The 32-bit load result is sign-extended to 64-bits.
 <%- end -%>
 
-The address in xs1 must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+The address in xs1 must be 4-byte aligned.
 
 If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
 `LoadAccessFault` exception will be generated. The access-fault exception can be generated
@@ -29028,7 +29025,7 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the sign-extended value in xd,
+Loads a word from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
 addressed word.
 
@@ -29036,8 +29033,7 @@ addressed word.
 The 32-bit load result is sign-extended to 64-bits.
 <%- end -%>
 
-The address in xs1 must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+The address in xs1 must be 4-byte aligned.
 
 If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
 `LoadAccessFault` exception will be generated. The access-fault exception can be generated
