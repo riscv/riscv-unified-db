@@ -8,7 +8,7 @@ kind: instruction
 name: vsm3me.vv
 long_name: Vector SM3 message expansion
 description: |
-  Performs SM3 message expansion operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in the SM3 hash function message expansion phase.
+  Performs eight rounds of SM3 message expansion. The sixteen most recent 32-bit message words are read as two eight-element groups from vs1 and vs2, and the next eight 32-bit message words are written to vd as an eight-element group.
 definedBy:
   extension:
     name: Zvksh

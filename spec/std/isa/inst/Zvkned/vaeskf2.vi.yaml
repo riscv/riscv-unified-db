@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vaeskf2.vi
-long_name: Vector AES key schedule subsequent rounds
+long_name: Vector AES-256 Forward KeySchedule generation
 description: |
-  Performs subsequent rounds of AES key schedule computation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This instruction is used in AES key expansion after the first round.
+  Performs a single round of the forward AES-256 KeySchedule. The next round key is generated word by word from the previous round key element group in vd and the current round key element group in vs2, and is written to vd. The round number, which ranges from 2 to 14, comes from imm[3:0] and selects both the round constant and the function applied; imm[4] is ignored. The out-of-range imm[3:0] values 0-1 and 15 are mapped to in-range values by inverting imm[3].
 definedBy:
   extension:
     name: Zvkned
