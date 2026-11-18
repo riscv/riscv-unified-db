@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vaeskf1.vi
-long_name: Vector AES key schedule first round
+long_name: Vector AES-128 forward key schedule
 description: |
-  Performs the first round of AES key schedule computation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This instruction is used in AES key expansion.
+  Performs a single round of the forward AES-128 KeySchedule. The next round key is generated word by word from the current round key element group in vs2 and is written to vd. The round number, which ranges from 1 to 10, comes from imm[3:0] and selects the round constant; imm[4] is ignored. The out-of-range imm[3:0] values 0 and 11-15 are mapped to in-range values by inverting imm[3].
 definedBy:
   extension:
     name: Zvkned
