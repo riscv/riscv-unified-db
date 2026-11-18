@@ -40691,7 +40691,7 @@ Included in::
 == vaesdf.vs
 
 Synopsis::
-Vector AES decryption final round with scalar
+Vector AES final-round decryption with scalar round key
 
 Base::
 
@@ -40713,7 +40713,7 @@ Encoding::
 ....
 
 Description::
-Performs the final round of AES decryption on vector register vs2 using scalar register rs1, storing results in vector register vd according to mask vm. This combines the inverse shift rows, inverse sub bytes, and add round key operations.
+Performs a final-round AES block cipher decryption. The InvShiftRows and InvSubBytes steps are applied to each round state element group from vd, and the result is XORed with the round key in the scalar element group in vs2, which is used for every element group. The new round state is written to vd.
 
 
 Decode Variables::
@@ -40742,7 +40742,7 @@ Included in::
 == vaesdf.vv
 
 Synopsis::
-Vector AES decryption final round
+Vector AES final-round decryption
 
 Base::
 
@@ -40764,7 +40764,7 @@ Encoding::
 ....
 
 Description::
-Performs the final round of AES decryption on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This combines the inverse shift rows, inverse sub bytes, and add round key operations.
+Performs a final-round AES block cipher decryption. The InvShiftRows and InvSubBytes steps are applied to each round state element group from vd, and the result is XORed with the round key in the corresponding element group in vs2. The new round state is written to vd.
 
 
 Decode Variables::
@@ -40793,7 +40793,7 @@ Included in::
 == vaesdm.vs
 
 Synopsis::
-Vector AES decryption mix columns with scalar
+Vector AES middle-round decryption with scalar round key
 
 Base::
 
@@ -40815,7 +40815,7 @@ Encoding::
 ....
 
 Description::
-Performs AES decryption mix columns operation on vector register vs2 using scalar register rs1, storing results in vector register vd according to mask vm. This is the inverse mix columns operation used in AES decryption.
+Performs a middle-round AES block cipher decryption. The InvShiftRows and InvSubBytes steps are applied to each round state element group from vd, and the result is XORed with the round key in the scalar element group in vs2, which is used for every element group, and the InvMixColumns step is then applied. The new round state is written to vd.
 
 
 Decode Variables::
@@ -40844,7 +40844,7 @@ Included in::
 == vaesdm.vv
 
 Synopsis::
-Vector AES decryption mix columns
+Vector AES middle-round decryption
 
 Base::
 
@@ -40866,7 +40866,7 @@ Encoding::
 ....
 
 Description::
-Performs AES decryption mix columns operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is the inverse mix columns operation used in AES decryption.
+Performs a middle-round AES block cipher decryption. The InvShiftRows and InvSubBytes steps are applied to each round state element group from vd, and the result is XORed with the round key in the corresponding element group in vs2, and the InvMixColumns step is then applied. The new round state is written to vd.
 
 
 Decode Variables::
@@ -40895,7 +40895,7 @@ Included in::
 == vaesef.vs
 
 Synopsis::
-Vector AES encryption final round with scalar
+Vector AES final-round encryption with scalar round key
 
 Base::
 
@@ -40917,7 +40917,7 @@ Encoding::
 ....
 
 Description::
-Performs the final round of AES encryption on vector register vs2 using scalar register rs1, storing results in vector register vd according to mask vm. This combines the shift rows, sub bytes, and add round key operations.
+Performs a final-round AES block cipher encryption. The SubBytes and ShiftRows steps are applied to each round state element group from vd, and the result is XORed with the round key in the scalar element group in vs2, which is used for every element group. The new round state is written to vd.
 
 
 Decode Variables::
@@ -40946,7 +40946,7 @@ Included in::
 == vaesef.vv
 
 Synopsis::
-Vector AES encryption final round
+Vector AES final-round encryption
 
 Base::
 
@@ -40968,7 +40968,7 @@ Encoding::
 ....
 
 Description::
-Performs the final round of AES encryption on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This combines the shift rows, sub bytes, and add round key operations.
+Performs a final-round AES block cipher encryption. The SubBytes and ShiftRows steps are applied to each round state element group from vd, and the result is XORed with the round key in the corresponding element group in vs2. The new round state is written to vd.
 
 
 Decode Variables::
@@ -40997,7 +40997,7 @@ Included in::
 == vaesem.vs
 
 Synopsis::
-Vector AES encryption mix columns with scalar
+Vector AES middle-round encryption with scalar round key
 
 Base::
 
@@ -41019,7 +41019,7 @@ Encoding::
 ....
 
 Description::
-Performs AES encryption mix columns operation on vector register vs2 using scalar register rs1, storing results in vector register vd according to mask vm. This is the mix columns operation used in AES encryption.
+Performs a middle-round AES block cipher encryption. The SubBytes, ShiftRows, and MixColumns steps are applied to each round state element group from vd, and the result is XORed with the round key in the scalar element group in vs2, which is used for every element group. The new round state is written to vd.
 
 
 Decode Variables::
@@ -41048,7 +41048,7 @@ Included in::
 == vaesem.vv
 
 Synopsis::
-Vector AES encryption mix columns
+Vector AES middle-round encryption
 
 Base::
 
@@ -41070,7 +41070,7 @@ Encoding::
 ....
 
 Description::
-Performs AES encryption mix columns operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is the mix columns operation used in AES encryption.
+Performs a middle-round AES block cipher encryption. The SubBytes, ShiftRows, and MixColumns steps are applied to each round state element group from vd, and the result is XORed with the round key in the corresponding element group in vs2. The new round state is written to vd.
 
 
 Decode Variables::
@@ -41099,7 +41099,7 @@ Included in::
 == vaeskf1.vi
 
 Synopsis::
-Vector AES key schedule first round
+Vector AES-128 forward key schedule
 
 Base::
 
@@ -41121,7 +41121,7 @@ Encoding::
 ....
 
 Description::
-Performs the first round of AES key schedule computation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This instruction is used in AES key expansion.
+Performs a single round of the forward AES-128 KeySchedule. The next round key is generated word by word from the current round key element group in vs2 and is written to vd. The round number, which ranges from 1 to 10, comes from imm[3:0] and selects the round constant; imm[4] is ignored. The out-of-range imm[3:0] values 0 and 11-15 are mapped to in-range values by inverting imm[3].
 
 
 Decode Variables::
@@ -41151,7 +41151,7 @@ Included in::
 == vaeskf2.vi
 
 Synopsis::
-Vector AES key schedule subsequent rounds
+Vector AES-256 forward key schedule
 
 Base::
 
@@ -41173,7 +41173,7 @@ Encoding::
 ....
 
 Description::
-Performs subsequent rounds of AES key schedule computation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This instruction is used in AES key expansion after the first round.
+Performs a single round of the forward AES-256 KeySchedule. The next round key is generated word by word from the previous round key element group in vd and the current round key element group in vs2, and is written to vd. The round number, which ranges from 2 to 14, comes from imm[3:0] and selects both the round constant and the function applied; imm[4] is ignored. The out-of-range imm[3:0] values 0-1 and 15 are mapped to in-range values by inverting imm[3].
 
 
 Decode Variables::
@@ -41783,7 +41783,7 @@ Included in::
 == vbrev8.v
 
 Synopsis::
-Vector byte reverse within elements
+Vector reverse bits in bytes
 
 Base::
 
@@ -41805,7 +41805,7 @@ Encoding::
 ....
 
 Description::
-Reverses the byte order within each element of vector register vs2, storing results in vector register vd according to mask vm. Similar to vrev8.v but with different encoding.
+Reverses the order of the bits within each byte of each element of vector register vs2, storing results in vector register vd according to mask vm.
 
 
 Decode Variables::
@@ -48273,7 +48273,7 @@ Included in::
 == vghsh.vv
 
 Synopsis::
-Vector Galois field hash
+Vector add-multiply over GHASH Galois field
 
 Base::
 
@@ -48295,7 +48295,7 @@ Encoding::
 ....
 
 Description::
-Performs a Galois field hash operation on vector register vs2 using vector register vs1 as the hash polynomial, storing results in vector register vd according to mask vm. This instruction is used in cryptographic hash functions and error detection algorithms.
+Performs a single iteration of the GHASH algorithm. The current partial hash in vd is added to the cipher text block in vs1, and the sum is multiplied over GF(2^128^) by the hash subkey in vs2. The multiplication is a carry-less multiply of two 128-bit polynomials modulo the GHASH polynomial x^128^ + x^7^ + x^2^ + x + 1. The next partial hash is written to vd.
 
 
 Decode Variables::
@@ -48325,7 +48325,7 @@ Included in::
 == vgmul.vv
 
 Synopsis::
-Vector Galois field multiply
+Vector multiply over GHASH Galois field
 
 Base::
 
@@ -48347,7 +48347,7 @@ Encoding::
 ....
 
 Description::
-Performs a Galois field multiply operation on vector register vs2 with vector register vs1, storing results in vector register vd according to mask vm. This instruction is used in cryptographic algorithms and error correction codes.
+Multiplies the 128-bit element groups in vd (multiplier) and vs2 (multiplicand) over GF(2^128^) and writes the product to vd. The multiplication is a carry-less multiply of two 128-bit polynomials modulo the GHASH polynomial x^128^ + x^7^ + x^2^ + x + 1. This is the same as xref:insts:vghsh_vv.adoc#udb:doc:inst:vghsh_vv[vghsh.vv] with a zero cipher text block.
 
 
 Decode Variables::
@@ -65679,7 +65679,7 @@ Included in::
 == vsha2ch.vv
 
 Synopsis::
-Vector SHA-2 choose function
+Vector SHA-2 two rounds of compression, high message words
 
 Base::
 
@@ -65701,7 +65701,7 @@ Encoding::
 ....
 
 Description::
-Performs the SHA-2 choose function (Ch) on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in SHA-256 and SHA-512 hash computations.
+Performs two rounds of SHA-2 compression (SHA-256 when SEW=32; SHA-512 when SEW=64, which requires Zvknhb). Two message schedule words from vs1 are processed with the eight words of current state held in vd and vs2 to produce four words of the next state, which are written to vd. xref:insts:vsha2ch_vv.adoc#udb:doc:inst:vsha2ch_vv[vsha2ch.vv] uses the two most significant message schedule words of the element group in vs1; xref:insts:vsha2cl_vv.adoc#udb:doc:inst:vsha2cl_vv[vsha2cl.vv] is identical except that it uses the two least significant.
 
 
 Decode Variables::
@@ -65731,7 +65731,7 @@ Included in::
 == vsha2cl.vv
 
 Synopsis::
-Vector SHA-2 compression loop
+Vector SHA-2 two rounds of compression, low message words
 
 Base::
 
@@ -65753,7 +65753,7 @@ Encoding::
 ....
 
 Description::
-Performs the SHA-2 compression loop operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This combines multiple SHA-2 operations for efficient hash computation.
+Performs two rounds of SHA-2 compression (SHA-256 when SEW=32; SHA-512 when SEW=64, which requires Zvknhb). Two message schedule words from vs1 are processed with the eight words of current state held in vd and vs2 to produce four words of the next state, which are written to vd. xref:insts:vsha2cl_vv.adoc#udb:doc:inst:vsha2cl_vv[vsha2cl.vv] uses the two least significant message schedule words of the element group in vs1; xref:insts:vsha2ch_vv.adoc#udb:doc:inst:vsha2ch_vv[vsha2ch.vv] is identical except that it uses the two most significant.
 
 
 Decode Variables::
@@ -65783,7 +65783,7 @@ Included in::
 == vsha2ms.vv
 
 Synopsis::
-Vector SHA-2 majority function
+Vector SHA-2 message schedule
 
 Base::
 
@@ -65805,7 +65805,7 @@ Encoding::
 ....
 
 Description::
-Performs the SHA-2 majority function (Maj) on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in SHA-256 and SHA-512 hash computations.
+Performs four rounds of SHA-2 message schedule expansion (SHA-256 when SEW=32; SHA-512 when SEW=64, which requires Zvknhb). Eleven of the last 16 message schedule words, taken from vd (oldest), vs2, and vs1 (most recent), are processed to produce the next four message schedule words, which are written to vd.
 
 
 Decode Variables::
@@ -66363,7 +66363,7 @@ Included in::
 == vsm3c.vi
 
 Synopsis::
-Vector SM3 compression with immediate
+Vector SM3 compression
 
 Base::
 
@@ -66385,7 +66385,7 @@ Encoding::
 ....
 
 Description::
-Performs SM3 compression operation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This is used in the SM3 hash function compression phase.
+Performs two rounds of SM3 compression. The current state of eight 32-bit words is read as an element group from vd, and eight 32-bit message words are read as an element group from vs2, of which only four are used. The next state of eight 32-bit words is written to vd. The 5-bit imm gives the round group, 0-31, that selects which two rounds are performed; for example, imm=1 performs rounds 2 and 3.
 
 
 Decode Variables::
@@ -66437,7 +66437,7 @@ Encoding::
 ....
 
 Description::
-Performs SM3 message expansion operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in the SM3 hash function message expansion phase.
+Performs eight rounds of SM3 message expansion. The sixteen most recent 32-bit message words are read as two eight-element groups from vs1 and vs2, and the next eight 32-bit message words are written to vd as an eight-element group.
 
 
 Decode Variables::
@@ -66467,7 +66467,7 @@ Included in::
 == vsm4k.vi
 
 Synopsis::
-Vector SM4 key schedule with immediate
+Vector SM4 key expansion
 
 Base::
 
@@ -66489,7 +66489,7 @@ Encoding::
 ....
 
 Description::
-Performs SM4 key schedule operation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This is used in SM4 block cipher key expansion.
+Performs four rounds of SM4 key expansion. Four round keys are read as a four-element group from vs2, and the next four round keys are written to vd. The round group number, 0-7, comes from imm[2:0] and selects which group of four round keys is generated; imm[4:3] are ignored. For example, imm=1 generates round keys 4, 5, 6, and 7.
 
 
 Decode Variables::
@@ -66519,7 +66519,7 @@ Included in::
 == vsm4r.vs
 
 Synopsis::
-Vector SM4 round function with scalar
+Vector SM4 rounds with scalar round keys
 
 Base::
 
@@ -66541,7 +66541,7 @@ Encoding::
 ....
 
 Description::
-Performs SM4 round function operation on vector register vs2 using scalar register rs1, storing results in vector register vd according to mask vm. This is used in SM4 block cipher encryption/decryption rounds.
+Performs four rounds of SM4 encryption or decryption. The four words of current state are read as a four-element group from vd, and the round keys are read from the scalar element group in vs2, which is used for every element group. The next four words of state are written to vd.
 
 
 Decode Variables::
@@ -66570,7 +66570,7 @@ Included in::
 == vsm4r.vv
 
 Synopsis::
-Vector SM4 round function
+Vector SM4 rounds
 
 Base::
 
@@ -66592,7 +66592,7 @@ Encoding::
 ....
 
 Description::
-Performs SM4 round function operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in SM4 block cipher encryption/decryption rounds.
+Performs four rounds of SM4 encryption or decryption. The four words of current state are read as a four-element group from vd, and the round keys are read from the corresponding four-element group in vs2. The next four words of state are written to vd.
 
 
 Decode Variables::
