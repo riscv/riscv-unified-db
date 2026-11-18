@@ -152,19 +152,8 @@ fields:
       Implementations may hard wire this bit to 0. In that case interrupt behavior can be emulated by the
       debugger. The debugger must not change the value of this bit while the hart is running.
     type(): |
-      if (DCSR_STEPIE_TYPE == "read-only-0" || DCSR_STEPIE_TYPE == "read-only-1") {
-        return CsrFieldType::RO;
-      }
-      assert(DCSR_STEPIE_TYPE == "rw", "Unhandled DCSR_STEPIE_TYPE value");
-      return CsrFieldType::RW;
-    reset_value(): |
-      if (DCSR_STEPIE_TYPE == "read-only-0") {
-        return 0;
-      } else if (DCSR_STEPIE_TYPE == "read-only-1") {
-        return 1;
-      }
-      assert(DCSR_STEPIE_TYPE == "rw", "Unhandled DCSR_STEPIE_TYPE value");
-      return UNDEFINED_LEGAL;
+      return (DCSR_STEPIE_TYPE == "rw") ? CsrFieldType::RW : CsrFieldType::RO;
+    reset_value: 0
   STOPCOUNT:
     location: 10
     description: |
@@ -174,18 +163,13 @@ fields:
       should be stopped, but on multi-hart cores it must keep incrementing.
       An implementation may hardwire this bit to 0 or 1.
     type(): |
-      if (DCSR_STOPCOUNT_TYPE == "read-only-0" || DCSR_STOPCOUNT_TYPE == "read-only-1") {
-        return CsrFieldType::RO;
-      }
-      assert(DCSR_STOPCOUNT_TYPE == "rw", "Unhandled DCSR_STOPCOUNT_TYPE value");
-      return CsrFieldType::RW;
+      return (DCSR_STOPCOUNT_TYPE == "rw") ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       if (DCSR_STOPCOUNT_TYPE == "read-only-0") {
         return 0;
       } else if (DCSR_STOPCOUNT_TYPE == "read-only-1") {
         return 1;
       }
-      assert(DCSR_STOPCOUNT_TYPE == "rw", "Unhandled DCSR_STOPCOUNT_TYPE value");
       return UNDEFINED_LEGAL;
   STOPTIME:
     location: 9
@@ -196,18 +180,13 @@ fields:
       While all harts have stoptime=1 and are in Debug Mode, mtime is allowed to stop incrementing.
       An implementation may hardwire this bit to 0 or 1.
     type(): |
-      if (DCSR_STOPTIME_TYPE == "read-only-0" || DCSR_STOPTIME_TYPE == "read-only-1") {
-        return CsrFieldType::RO;
-      }
-      assert(DCSR_STOPTIME_TYPE == "rw", "Unhandled DCSR_STOPTIME_TYPE value");
-      return CsrFieldType::RW;
+      return (DCSR_STOPTIME_TYPE == "rw") ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       if (DCSR_STOPTIME_TYPE == "read-only-0") {
         return 0;
       } else if (DCSR_STOPTIME_TYPE == "read-only-1") {
         return 1;
       }
-      assert(DCSR_STOPTIME_TYPE == "rw", "Unhandled DCSR_STOPTIME_TYPE value");
       return UNDEFINED_LEGAL;
   CAUSE:
     location: 8-6
@@ -250,18 +229,13 @@ fields:
       1 (enabled):: mprv in mstatus takes effect in Debug Mode.
       Implementing this bit is optional. It may be tied to either 0 or 1.
     type(): |
-      if (DCSR_MPRVEN_TYPE == "read-only-0" || DCSR_MPRVEN_TYPE == "read-only-1") {
-        return CsrFieldType::RO;
-      }
-      assert(DCSR_MPRVEN_TYPE == "rw", "Unhandled DCSR_MPRVEN_TYPE value");
-      return CsrFieldType::RW;
+      return (DCSR_MPRVEN_TYPE == "rw") ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       if (DCSR_MPRVEN_TYPE == "read-only-0") {
         return 0;
       } else if (DCSR_MPRVEN_TYPE == "read-only-1") {
         return 1;
       }
-      assert(DCSR_MPRVEN_TYPE == "rw", "Unhandled DCSR_MPRVEN_TYPE value");
       return UNDEFINED_LEGAL;
   NMIP:
     location: 3

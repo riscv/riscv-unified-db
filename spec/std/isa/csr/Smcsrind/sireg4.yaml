@@ -12,7 +12,9 @@ priv_mode: S
 length: SXLEN
 definedBy:
   extension:
-    name: Sscsrind
+    anyOf:
+      - name: Smcsrind
+      - name: Sscsrind
 description: |
   Access to `sireg4` from M-mode or S-mode while `siselect` holds a number in a
   standard-defined and implemented range results in specific behavior that, for each combination of

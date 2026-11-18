@@ -5,12 +5,14 @@
 
 $schema: param_schema.json#
 kind: parameter
-name: MCONTEXT_AVAILABLE
+name: QRID_WIDTH
 description: |
-  Specifies if MCONTEXT is available
-long_name: TODO
+  Number of bits used for the QoS Register Interface ID field (QRID).
+long_name: QoS Register Interface ID Width
 schema:
-  type: boolean
+  type: integer
+  minimum: 1
+  maximum: 4
 definedBy:
   extension:
-    name: Sdtrig
+    name: Smqosid

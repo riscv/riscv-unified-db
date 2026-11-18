@@ -11732,9 +11732,9 @@ Encoding::
 ....
 
 Description::
-Adds a zero-extended non-zero immediate, scaled by 4, to the stack pointer, x2, and writes the result to rd'.
+Adds a zero-extended non-zero immediate, scaled by 4, to the stack pointer, x2, and writes the result to xd'.
 This instruction is used to generate pointers to stack-allocated variables.
-It expands to `addi rd', x2, nzuimm[9:2]`.
+It expands to `addi xd', x2, nzuimm[9:2]`.
 C.ADDI4SPN is only valid when nzuimm ≠ 0; the code points with nzuimm=0 are reserved.
 
 
@@ -12057,8 +12057,8 @@ Encoding::
 ....
 
 Description::
-C.BEQZ performs conditional control transfers. The offset is sign-extended and added to the pc to form the branch target address. It can therefore target a ±256 B range. C.BEQZ takes the branch if the value in register xs1' is NOT zero.
-It expands to xref:insts:beq.adoc#udb:doc:inst:beq[beq] `xs1, x0, offset`.
+C.BNEZ performs conditional control transfers. The offset is sign-extended and added to the pc to form the branch target address. It can therefore target a ±256 B range. C.BNEZ takes the branch if the value in register xs1' is NOT zero.
+It expands to xref:insts:bne.adoc#udb:doc:inst:bne[bne] `xs1, x0, offset`.
 
 
 Decode Variables::
@@ -15025,7 +15025,7 @@ Description::
 Stores a 32-bit value in register xs2 to memory.
 It computes an effective address by adding the zero-extended offset, scaled by 4,
 to the base address in register xs1.
-It expands to xref:insts:sw.adoc#udb:doc:inst:sw[sw] `rs2, offset(xs1)`.
+It expands to xref:insts:sw.adoc#udb:doc:inst:sw[sw] `xs2, offset(xs1)`.
 
 
 Decode Variables::
@@ -17536,7 +17536,7 @@ This instruction requires the following:
 == fadd.h
 
 Synopsis::
-No synopsis available
+Floating-Point Add Half-Precision
 
 Base::
 
@@ -17558,7 +17558,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fadd_h.adoc#udb:doc:inst:fadd_h[fadd.h] instruction performs half-precision floating-point addition of _fs1_ and _fs2_
+and writes the final result to _fd_.
 
 
 Decode Variables::
@@ -17759,7 +17760,7 @@ This instruction requires the following:
 == fclass.h
 
 Synopsis::
-No synopsis available
+Floating-Point Classify Half-Precision
 
 Base::
 
@@ -17781,7 +17782,28 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fclass_h.adoc#udb:doc:inst:fclass_h[fclass.h] instruction examines the half-precision value in floating-point register _fs1_ and writes to integer register _xd_
+a 10-bit mask that indicates the class of the floating-point number.
+
+The format of the mask is described in the table below. The corresponding bit in _xd_ will be set if the property
+is true and clear otherwise. All other bits in _xd_ are cleared. Note that exactly one bit in _xd_ will be set.
+xref:insts:fclass_h.adoc#udb:doc:inst:fclass_h[fclass.h] does not set the floating-point exception flags.
+
+.Format of result of `fclass` instruction.
+[%autowidth,float="center",align="center",cols="^,<",options="header",]
+|===
+|_xd_ bit |Meaning
+|0 |_fs1_ is latexmath:[$-\infty$].
+|1 |_fs1_ is a negative normal number.
+|2 |_fs1_ is a negative subnormal number.
+|3 |_fs1_ is latexmath:[$-0$].
+|4 |_fs1_ is latexmath:[$+0$].
+|5 |_fs1_ is a positive subnormal number.
+|6 |_fs1_ is a positive normal number.
+|7 |_fs1_ is latexmath:[$+\infty$].
+|8 |_fs1_ is a signaling NaN.
+|9 |_fs1_ is a quiet NaN.
+|===
 
 
 Decode Variables::
@@ -18003,7 +18025,7 @@ Included in::
 == fcvt.d.h
 
 Synopsis::
-No synopsis available
+Floating-Point Convert Half-Precision to Double-Precision
 
 Base::
 
@@ -18025,7 +18047,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+Converts a half-precision number in floating-point register _fs1_ into a double-precision floating-point number in
+floating-point register _fd_.
+
+xref:insts:fcvt_d_h.adoc#udb:doc:inst:fcvt_d_h[fcvt.d.h] will never round, and so the 'rm' field is effectively ignored.
 
 
 Decode Variables::
@@ -19126,7 +19151,7 @@ Encoding::
 ....
 
 Description::
-xref:insts:fcvt_d_q.adoc#udb:doc:inst:fcvt_d_q[fcvt.d.q] converts a double-precision floating-point number to a quad-precision floating-point number.
+xref:insts:fcvt_q_d.adoc#udb:doc:inst:fcvt_q_d[fcvt.q.d] converts a double-precision floating-point number to a quad-precision floating-point number.
 
 
 Decode Variables::
@@ -20190,7 +20215,7 @@ This instruction requires the following:
 == fcvt.wu.h
 
 Synopsis::
-Floating-point Convert Half-precision to Word
+Floating-point Convert Half-precision to Unsigned Word
 
 Base::
 
@@ -20212,7 +20237,7 @@ Encoding::
 ....
 
 Description::
-xref:insts:fcvt_wu_h.adoc#udb:doc:inst:fcvt_wu_h[fcvt.wu.h] converts a half-precision floating-point number to a signed 32-bit unsigned integer.
+xref:insts:fcvt_wu_h.adoc#udb:doc:inst:fcvt_wu_h[fcvt.wu.h] converts a half-precision floating-point number to a 32-bit unsigned integer.
 
 
 Decode Variables::
@@ -20237,7 +20262,7 @@ This instruction requires the following:
 == fcvt.wu.q
 
 Synopsis::
-Floating-Point Convert Unsigned Quad-Precision to Word
+Floating-Point Convert Quad-Precision to Unsigned Word
 
 Base::
 
@@ -20480,7 +20505,7 @@ This instruction requires the following:
 == fdiv.h
 
 Synopsis::
-No synopsis available
+Floating-Point Divide Half-Precision
 
 Base::
 
@@ -20502,7 +20527,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fdiv_h.adoc#udb:doc:inst:fdiv_h[fdiv.h] instruction performs the half-precision floating-point division of _fs1_ by _fs2_, and
+writes the final result to _fd_.
 
 
 Decode Variables::
@@ -20996,7 +21022,7 @@ This instruction requires the following:
 == feq.h
 
 Synopsis::
-No synopsis available
+Floating-Point Equal Half-Precision
 
 Base::
 
@@ -21018,7 +21044,9 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:feq_h.adoc#udb:doc:inst:feq_h[feq.h] instruction writes 1 to _xd_ if the half-precision values in _fs1_ and _fs2_ are equal, and 0 otherwise.
+If either operand is NaN, the result is 0 (not equal). If either operand is a signaling NaN,
+the invalid flag is set. Positive zero is considered equal to negative zero.
 
 
 Decode Variables::
@@ -21257,7 +21285,7 @@ This instruction requires the following:
 == fle.h
 
 Synopsis::
-No synopsis available
+Floating-Point Less Than or Equal Half-Precision
 
 Base::
 
@@ -21279,7 +21307,9 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fle_h.adoc#udb:doc:inst:fle_h[fle.h] instruction writes 1 to _xd_ if the half-precision value in _fs1_ is less than or equal to that in _fs2_, and 0 otherwise.
+If either operand is NaN, the result is 0. If either operand is a NaN (signaling or quiet),
+the invalid flag is set. Positive zero and negative zero are considered equal.
 
 
 Decode Variables::
@@ -21912,7 +21942,7 @@ Base::
 |===
 
 Assembly::
-flq fd, xs1, imm
+flq fd, imm(xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -22004,7 +22034,7 @@ This instruction requires the following:
 == flt.h
 
 Synopsis::
-No synopsis available
+Floating-Point Less Than Half-Precision
 
 Base::
 
@@ -22026,7 +22056,9 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:flt_h.adoc#udb:doc:inst:flt_h[flt.h] instruction writes 1 to _xd_ if the half-precision value in _fs1_ is less than that in _fs2_, and 0 otherwise.
+If either operand is NaN, the result is 0. If either operand is a NaN
+(signaling or quiet), the invalid flag is set.
 
 
 Decode Variables::
@@ -22485,7 +22517,7 @@ This instruction requires the following:
 == fmadd.h
 
 Synopsis::
-No synopsis available
+Floating-Point Multiply-Add Half-Precision
 
 Base::
 
@@ -22507,7 +22539,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmadd_h.adoc#udb:doc:inst:fmadd_h[fmadd.h] instruction multiplies the half-precision values in _fs1_ and _fs2_, adds the half-precision value in _fs3_, and writes the final result to _fd_.
 
 
 Decode Variables::
@@ -22696,7 +22728,7 @@ This instruction requires the following:
 == fmax.h
 
 Synopsis::
-No synopsis available
+Floating-Point Maximum-Number Half-Precision
 
 Base::
 
@@ -22718,7 +22750,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmax_h.adoc#udb:doc:inst:fmax_h[fmax.h] instruction writes the larger of the half-precision values in _fs1_ and _fs2_ to _fd_. For the purposes of this instruction,
+the value `-0.0` is considered to be less than the value `+0.0`. If both inputs are NaNs, the result is
+the canonical NaN. If only one operand is a NaN, the result is the non-NaN operand. Signaling NaN inputs
+set the invalid operation exception flag, even when the result is not NaN.
 
 
 Decode Variables::
@@ -23130,7 +23165,7 @@ This instruction requires the following:
 == fmin.h
 
 Synopsis::
-No synopsis available
+Floating-Point Minimum-Number Half-Precision
 
 Base::
 
@@ -23152,7 +23187,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmin_h.adoc#udb:doc:inst:fmin_h[fmin.h] instruction writes the smaller of the half-precision values in _fs1_ and _fs2_ to _fd_. For the purposes of this instruction,
+the value `-0.0` is considered to be less than the value `+0.0`. If both inputs are NaNs, the result is
+the canonical NaN. If only one operand is a NaN, the result is the non-NaN operand. Signaling NaN inputs
+set the invalid operation exception flag, even when the result is not NaN.
 
 
 Decode Variables::
@@ -23563,7 +23601,7 @@ This instruction requires the following:
 == fmsub.h
 
 Synopsis::
-No synopsis available
+Floating-Point Multiply-Subtract Half-Precision
 
 Base::
 
@@ -23585,7 +23623,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmsub_h.adoc#udb:doc:inst:fmsub_h[fmsub.h] instruction multiplies the half-precision values in _fs1_ and _fs2_, subtracts the half-precision value in _fs3_, and writes the final result to _fd_.
 
 
 Decode Variables::
@@ -23771,7 +23809,7 @@ This instruction requires the following:
 == fmul.h
 
 Synopsis::
-No synopsis available
+Floating-Point Multiply Half-Precision
 
 Base::
 
@@ -23793,7 +23831,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fmul_h.adoc#udb:doc:inst:fmul_h[fmul.h] instruction performs the half-precision floating-point multiplication between _fs1_ and _fs2_, and
+writes the result in _fd_.
 
 
 Decode Variables::
@@ -24533,7 +24572,7 @@ This instruction requires the following:
 == fnmadd.h
 
 Synopsis::
-No synopsis available
+Floating-Point Negate-Multiply-Add Half-Precision
 
 Base::
 
@@ -24555,7 +24594,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fnmadd_h.adoc#udb:doc:inst:fnmadd_h[fnmadd.h] instruction multiplies the half-precision values in _fs1_ and _fs2_, negates the product, subtracts the half-precision value in _fs3_, and
+writes the final result to _fd_.
 
 
 Decode Variables::
@@ -24743,7 +24783,7 @@ This instruction requires the following:
 == fnmsub.h
 
 Synopsis::
-No synopsis available
+Floating-Point Negate-Multiply-Subtract Half-Precision
 
 Base::
 
@@ -24765,7 +24805,8 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fnmsub_h.adoc#udb:doc:inst:fnmsub_h[fnmsub.h] instruction multiplies the half-precision values in _fs1_ and _fs2_, negates the product, adds the half-precision value in _fs3_, and
+writes the final result to _fd_.
 
 
 Decode Variables::
@@ -25453,7 +25494,7 @@ This instruction requires the following:
 == fsgnj.h
 
 Synopsis::
-No synopsis available
+Floating-Point Sign-Inject Half-Precision
 
 Base::
 
@@ -25475,7 +25516,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsgnj_h.adoc#udb:doc:inst:fsgnj_h[fsgnj.h] instruction produces a half-precision result that takes all bits except the sign bit from _fs1_.
+The result's sign bit is taken from _fs2_'s sign bit, and the result is written to the destination
+register _fd_. Sign-injection instructions do not set floating-point exception flags, nor do they
+canonicalize NaNs.
 
 
 Decode Variables::
@@ -25659,7 +25703,7 @@ This instruction requires the following:
 == fsgnjn.h
 
 Synopsis::
-No synopsis available
+Floating-Point Sign-Inject Negate Half-Precision
 
 Base::
 
@@ -25681,7 +25725,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsgnjn_h.adoc#udb:doc:inst:fsgnjn_h[fsgnjn.h] instruction produces a half-precision result that takes all bits except the sign bit from _fs1_.
+The result's sign bit is opposite of _fs2_'s sign bit, and the result is written to the destination
+register _fd_. Sign-injection instructions do not set floating-point exception flags, nor do they
+canonicalize NaNs.
 
 
 Decode Variables::
@@ -25865,7 +25912,7 @@ This instruction requires the following:
 == fsgnjx.h
 
 Synopsis::
-No synopsis available
+Floating-Point Sign-Inject XOR Half-Precision
 
 Base::
 
@@ -25887,7 +25934,10 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsgnjx_h.adoc#udb:doc:inst:fsgnjx_h[fsgnjx.h] instruction produces a half-precision result that takes all bits except the sign bit from _fs1_.
+The result's sign bit is the XOR of sign bits of _fs1_ and _fs2_, and the result is written to
+the destination register _fd_. Sign-injection instructions do not set floating-point exception flags, nor do they
+canonicalize NaNs.
 
 
 Decode Variables::
@@ -26181,7 +26231,7 @@ This instruction requires the following:
 == fsqrt.h
 
 Synopsis::
-No synopsis available
+Floating-Point Square Root Half-Precision
 
 Base::
 
@@ -26203,7 +26253,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsqrt_h.adoc#udb:doc:inst:fsqrt_h[fsqrt.h] instruction computes the half-precision square root of _fs1_ and writes the result to _fd_.
 
 
 Decode Variables::
@@ -26381,7 +26431,7 @@ This instruction requires the following:
 == fsub.h
 
 Synopsis::
-No synopsis available
+Floating-Point Subtract Half-Precision
 
 Base::
 
@@ -26403,7 +26453,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+The xref:insts:fsub_h.adoc#udb:doc:inst:fsub_h[fsub.h] instruction performs the half-precision floating-point subtraction of _fs2_ from _fs1_ and writes the result in _fd_.
 
 
 Decode Variables::
@@ -26821,7 +26871,7 @@ Base::
 |===
 
 Assembly::
-hlv.b xd, xs1
+hlv.b xd, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -26873,7 +26923,7 @@ Base::
 |===
 
 Assembly::
-hlv.bu xd, xs1
+hlv.bu xd, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -26925,7 +26975,7 @@ Base::
 |===
 
 Assembly::
-hlv.d xd, xs1
+hlv.d xd, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -26980,7 +27030,7 @@ Base::
 |===
 
 Assembly::
-hlv.h xd, xs1
+hlv.h xd, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -27032,7 +27082,7 @@ Base::
 |===
 
 Assembly::
-hlv.hu xd, xs1
+hlv.hu xd, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -27084,7 +27134,7 @@ Base::
 |===
 
 Assembly::
-hlv.w xd, xs1
+hlv.w xd, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -27136,7 +27186,7 @@ Base::
 |===
 
 Assembly::
-hlv.wu xd, xs1
+hlv.wu xd, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -27191,7 +27241,7 @@ Base::
 |===
 
 Assembly::
-hlvx.hu xd, xs1
+hlvx.hu xd, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -27245,7 +27295,7 @@ Base::
 |===
 
 Assembly::
-hlvx.wu xd, xs1
+hlvx.wu xd, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -27299,7 +27349,7 @@ Base::
 |===
 
 Assembly::
-hsv.b xs1, xs2
+hsv.b xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -27351,7 +27401,7 @@ Base::
 |===
 
 Assembly::
-hsv.d xs1, xs2
+hsv.d xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -27406,7 +27456,7 @@ Base::
 |===
 
 Assembly::
-hsv.h xs1, xs2
+hsv.h xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -27458,7 +27508,7 @@ Base::
 |===
 
 Assembly::
-hsv.w xs1, xs2
+hsv.w xs2, (xs1)
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
@@ -28328,9 +28378,9 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the value in xd,
+Loads a doubleword from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
-addressed word.
+addressed doubleword.
 
 The address in xs1 must be 8-byte aligned.
 
@@ -28420,9 +28470,9 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the value in xd,
+Loads a doubleword from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
-addressed word.
+addressed doubleword.
 
 The address in xs1 must be 8-byte aligned.
 
@@ -28512,9 +28562,9 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the value in xd,
+Loads a doubleword from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
-addressed word.
+addressed doubleword.
 
 The address in xs1 must be 8-byte aligned.
 
@@ -28604,9 +28654,9 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the value in xd,
+Loads a doubleword from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
-addressed word.
+addressed doubleword.
 
 The address in xs1 must be 8-byte aligned.
 
@@ -28696,7 +28746,7 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the sign-extended value in xd,
+Loads a word from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
 addressed word.
 
@@ -28704,8 +28754,7 @@ addressed word.
 The 32-bit load result is sign-extended to 64-bits.
 <%- end -%>
 
-The address in xs1 must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+The address in xs1 must be 4-byte aligned.
 
 If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
 `LoadAccessFault` exception will be generated. The access-fault exception can be generated
@@ -28790,7 +28839,7 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the sign-extended value in xd,
+Loads a word from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
 addressed word.
 
@@ -28798,8 +28847,7 @@ addressed word.
 The 32-bit load result is sign-extended to 64-bits.
 <%- end -%>
 
-The address in xs1 must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+The address in xs1 must be 4-byte aligned.
 
 If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
 `LoadAccessFault` exception will be generated. The access-fault exception can be generated
@@ -28884,7 +28932,7 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the sign-extended value in xd,
+Loads a word from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
 addressed word.
 
@@ -28892,8 +28940,7 @@ addressed word.
 The 32-bit load result is sign-extended to 64-bits.
 <%- end -%>
 
-The address in xs1 must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+The address in xs1 must be 4-byte aligned.
 
 If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
 `LoadAccessFault` exception will be generated. The access-fault exception can be generated
@@ -28978,7 +29025,7 @@ Encoding::
 ....
 
 Description::
-Loads a word from the address in xs1, places the sign-extended value in xd,
+Loads a word from the address in xs1, places the value in xd,
 and registers a _reservation set_  -- a set of bytes that subsumes the bytes in the
 addressed word.
 
@@ -28986,8 +29033,7 @@ addressed word.
 The 32-bit load result is sign-extended to 64-bits.
 <%- end -%>
 
-The address in xs1 must be naturally aligned to the size of the operand
-(_i.e._, eight-byte aligned for doublewords and four-byte aligned for words).
+The address in xs1 must be 4-byte aligned.
 
 If the address is not naturally aligned, a `LoadAddressMisaligned` exception or an
 `LoadAccessFault` exception will be generated. The access-fault exception can be generated
@@ -34289,7 +34335,7 @@ RV64::
 ....
 
 Description::
-Reverses the order of the bytes in rs1.
+Reverses the order of the bytes in xs1.
 
 [NOTE]
 The rev8 mnemonic corresponds to different instruction encodings in RV32 and RV64.
@@ -40121,14 +40167,14 @@ vabd.vv vd, vs2, vs1, vm
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x11,"type":2}]}
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x15,"type":2}]}
 ....
 
 Description::
 Computes the element-wise absolute difference of two signed integer SEW-bit
 source operands vs1 and vs2 and writes the result to vd according to mask vm.
 
-Reserved when SEW is neither 8 nor 16.
+Supports SEW of 8, 16, and 32. If the Zve64x extension is supported, SEW 64 is also supported.
 
 
 Decode Variables::
@@ -40138,6 +40184,63 @@ Decode Variables::
 |vm |$encoding[25]
 |vs2 |$encoding[24:20]
 |vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvabd*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vabd_vx]
+== vabd.vx
+
+Synopsis::
+Vector Single-Width Signed Integer Absolute Difference with Scalar
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vabd.vx vd, vs2, xs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x15,"type":2}]}
+....
+
+Description::
+Computes the element-wise absolute difference of signed integer operands from
+vector register vs2 and scalar register xs1, and writes the SEW-bit results to
+vd according to mask vm. The scalar is sign-extended or truncated to SEW.
+
+Supports SEW of 8, 16, and 32, and SEW of 64 when Zve64x is implemented.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
 |vd |$encoding[11:7]
 |===
 
@@ -40177,14 +40280,14 @@ vabdu.vv vd, vs2, vs1, vm
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x13,"type":2}]}
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x16,"type":2}]}
 ....
 
 Description::
 Computes the element-wise absolute difference of two unsigned integer SEW-bit
 source operands vs1 and vs2 and writes the result to vd according to mask vm.
 
-Reserved when SEW is neither 8 nor 16.
+Supports SEW of 8, 16, and 32. If the Zve64x extension is supported, SEW 64 is also supported.
 
 
 Decode Variables::
@@ -40211,11 +40314,11 @@ Included in::
 
 
 
-[#udb:doc:inst:vabs_v]
-== vabs.v
+[#udb:doc:inst:vabdu_vx]
+== vabdu.vx
 
 Synopsis::
-Vector Single-Width Signed Integer Absolute
+Vector Single-Width Unsigned Integer Absolute Difference with Scalar
 
 Base::
 
@@ -40228,20 +40331,21 @@ Base::
 |===
 
 Assembly::
-vabs.v vd, vs2, vm
+vabdu.vx vd, vs2, xs1, vm
 
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":8,"name": 0x82,"type":2},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x12,"type":2}]}
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x16,"type":2}]}
 ....
 
 Description::
-An absolute value operation is performed on each element of vs2, storing the
-result in vector register vd according to mask vm.
+Computes the element-wise absolute difference of unsigned integer operands
+from vector register vs2 and scalar register xs1, and writes the SEW-bit
+results to vd according to mask vm. The scalar is sign-extended or truncated
+to SEW before being interpreted as an unsigned value.
 
-vabs.v supports SEW of 8, 16, and 32 when Zve32x is implemented.
-When Zve64x is implemented, vabs.v also supports SEW of 64.
+Supports SEW of 8, 16, and 32, and SEW of 64 when Zve64x is implemented.
 
 
 Decode Variables::
@@ -40250,6 +40354,7 @@ Decode Variables::
 |Variable Name |Location
 |vm |$encoding[25]
 |vs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
 |vd |$encoding[11:7]
 |===
 
@@ -40271,7 +40376,7 @@ Included in::
 == vadc.vim
 
 Synopsis::
-Vector add with carry and masked
+Vector integer add-with-carry-in immediate
 
 Base::
 
@@ -40293,7 +40398,7 @@ Encoding::
 ....
 
 Description::
-Performs addition on elements from vector register vs2 and immediate value, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm. This variant includes additional masking behavior.
+Add each element from vector register vs2 to the immediate value imm and the respective carry-in from vector register v0, and write the result to vector register vd. `vd[i] = vs2[i] + imm + v0.mask[i]`
 
 
 Decode Variables::
@@ -40323,7 +40428,7 @@ Included in::
 == vadc.vvm
 
 Synopsis::
-Vector add with carry and masked
+Vector integer add-with-carry-in vector
 
 Base::
 
@@ -40345,7 +40450,7 @@ Encoding::
 ....
 
 Description::
-Performs addition on elements from vector registers vs2 and vs1, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm. This variant includes additional masking behavior.
+Add each element from vector register vs2 to the respective element from vector register vs1 and the respective carry-in from vector register v0, and write the result to vector register vd. `vd[i] = vs2[i] + vs1[i] + v0.mask[i]`
 
 
 Decode Variables::
@@ -40375,7 +40480,7 @@ Included in::
 == vadc.vxm
 
 Synopsis::
-Vector add with carry and scalar, masked
+Vector integer add-with-carry-in scalar
 
 Base::
 
@@ -40397,7 +40502,7 @@ Encoding::
 ....
 
 Description::
-Performs addition on elements from vector register vs2 and scalar register xs1, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm. This variant includes additional masking behavior.
+Add each element from vector register vs2 to the scalar register xs1 and the respective carry-in from vector register v0, and write the result to vector register vd. `vd[i] = vs2[i] + x[xs1] + v0.mask[i]`
 
 
 Decode Variables::
@@ -40555,7 +40660,7 @@ Encoding::
 ....
 
 Description::
-Adds elements from vector register vs2 to scalar register rs1 according to mask vm and stores results in vector register vd. Element width is determined by SEW setting.
+Adds elements from vector register vs2 to scalar register xs1 according to mask vm and stores results in vector register vd. Element width is determined by SEW setting.
 
 
 Decode Variables::
@@ -42410,6 +42515,406 @@ Included in::
 
 
 
+[#udb:doc:inst:vdot4a_vv]
+== vdot4a.vv
+
+Synopsis::
+Vector 4-element signed-signed dot-product accumulate (vector-vector)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vdot4a.vv vd, vs2, vs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x2c,"type":2}]}
+....
+
+Description::
+Computes the dot product of four signed 8-bit elements from `vs2` and four
+signed 8-bit elements from `vs1` (both packed within the same 32-bit element
+group), sums the four products, and accumulates the signed 32-bit result into
+the corresponding 32-bit element of `vd`.
+
+No saturation is performed; given the 8-bit source width and 32-bit
+accumulation width, overflow is presumed infrequent.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvdot4a8i*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vdot4a_vx]
+== vdot4a.vx
+
+Synopsis::
+Vector 4-element signed-signed dot-product accumulate (vector-scalar)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vdot4a.vx vd, vs2, xs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x2c,"type":2}]}
+....
+
+Description::
+Computes the dot product of four signed 8-bit elements from `vs2` and four
+signed 8-bit elements packed/replicated from the scalar `xs1`, sums the four
+products, and accumulates the signed 32-bit result into the corresponding
+32-bit element of `vd`.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvdot4a8i*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vdot4asu_vv]
+== vdot4asu.vv
+
+Synopsis::
+Vector 4-element signed-unsigned dot-product accumulate (vector-vector)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vdot4asu.vv vd, vs2, vs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x2a,"type":2}]}
+....
+
+Description::
+Computes the dot product of four signed 8-bit elements from `vs2` and four
+unsigned 8-bit elements from `vs1`, sums the four products, and accumulates
+the signed 32-bit result into the corresponding 32-bit element of `vd`.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvdot4a8i*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vdot4asu_vx]
+== vdot4asu.vx
+
+Synopsis::
+Vector 4-element signed-unsigned dot-product accumulate (vector-scalar)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vdot4asu.vx vd, vs2, xs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x2a,"type":2}]}
+....
+
+Description::
+Computes the dot product of four signed 8-bit elements from `vs2` and four
+unsigned 8-bit elements packed/replicated from the scalar `xs1`, sums the
+four products, and accumulates the signed 32-bit result into the
+corresponding 32-bit element of `vd`.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvdot4a8i*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vdot4au_vv]
+== vdot4au.vv
+
+Synopsis::
+Vector 4-element unsigned-unsigned dot-product accumulate (vector-vector)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vdot4au.vv vd, vs2, vs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x28,"type":2}]}
+....
+
+Description::
+Computes the dot product of four unsigned 8-bit elements from `vs2` and four
+unsigned 8-bit elements from `vs1`, sums the four products, and accumulates
+the unsigned 32-bit result into the corresponding 32-bit element of `vd`.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvdot4a8i*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vdot4au_vx]
+== vdot4au.vx
+
+Synopsis::
+Vector 4-element unsigned-unsigned dot-product accumulate (vector-scalar)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vdot4au.vx vd, vs2, xs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x28,"type":2}]}
+....
+
+Description::
+Computes the dot product of four unsigned 8-bit elements from `vs2` and four
+unsigned 8-bit elements packed/replicated from the scalar `xs1`, sums the
+four products, and accumulates the unsigned 32-bit result into the
+corresponding 32-bit element of `vd`.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvdot4a8i*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vdot4aus_vx]
+== vdot4aus.vx
+
+Synopsis::
+Vector 4-element unsigned-signed dot-product accumulate (vector-scalar)
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vdot4aus.vx vd, vs2, xs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x6,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x2e,"type":2}]}
+....
+
+Description::
+Computes the dot product of four unsigned 8-bit elements from `vs2` and four
+signed 8-bit elements packed/replicated from the scalar `xs1`, sums the
+four products, and accumulates the signed 32-bit result into the
+corresponding 32-bit element of `vd`.
+
+This vector-scalar variant exists to save encoding space: the
+unsigned-vs2/signed-vs1 vector-vector combination is not separately
+encoded, since operand order can simply be swapped to use
+xref:insts:vdot4asu_vv.adoc#udb:doc:inst:vdot4asu_vv[vdot4asu.vv] instead. That swap isn't possible for the vector-scalar
+form, since the scalar operand's signedness is fixed to `xs1`'s position,
+so this variant is provided explicitly.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvdot4a8i*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:vfadd_vf]
 == vfadd.vf
 
@@ -42510,6 +43015,95 @@ Included in::
 | Extension | Version
 
 | *Zvl32b*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vfbdota_vv]
+== vfbdota.vv
+
+Synopsis::
+Vector FP32 Batched Dot Product Accumulate
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vfbdota.vv vd, vs2, vs1, ci, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x77,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x1,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":3,"name": "ci","type":4},{"bits":2,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x2b,"type":2}]}
+....
+
+Description::
+Performs a batched
+dot-product operation on FP32 vectors, accumulating into FP32. The
+instruction is reserved unless `SEW=32` and `LMUL=1`. The `vs1`, `vs2`, and
+`vd` operands all have `EEW=SEW`.
+
+The batched dot-product family treats `vs1` as an EMUL=1 vector register
+group and `vs2` as an EMUL=8 vector register group, computing eight
+independent dot products and accumulating the results into `vd`. xref:csrs:vl.adoc#udb:doc:csr:vl[vl] sets
+the length of each dot product. Tail elements are substituted with the bit
+pattern of all zeros, then the computation is performed as though
+`vl=VLMAX`.
+
+For long-vector implementations with `VLEN > 8*EEW`, `ci` is a 3-bit
+scaled-by-8 immediate indicating which eight elements of `vd` are read and
+written. The `ci` field is encoded in `vs2[2:0]`; those bits are not needed
+for the register address because `vs2` addresses an EMUL=8 register group.
+The instruction is reserved if `ci >= VLEN/(8*EEW)`. Destination elements
+at or beyond `ci+8` are tail elements, elements below `ci` are prestart
+elements, and the remaining elements are body elements. The destination
+vector register group cannot overlap either source vector register group.
+Masked-off body elements follow the current mask agnostic or undisturbed
+policy, and the instruction is reserved when xref:csrs:vstart.adoc#udb:doc:csr:vstart[vstart] is nonzero; exceptions
+are always reported with `vstart=0`.
+
+The FP32 products are first computed to full precision, setting the invalid
+operation exception flag as appropriate. The products are then optionally
+rounded to FP32 according to the dynamic rounding mode, setting the inexact,
+overflow, and underflow exception flags as appropriate. The sum of these
+products and the accumulator is then computed as though by xref:insts:vfredusum_vs.adoc#udb:doc:inst:vfredusum_vs[vfredusum.vs]
+with `SEW=32`, including the setting of exception flags.
+
+This formulation allows significant implementation flexibility while being
+sufficiently precise to implement SGEMM. The algorithm used by
+xref:insts:vfredusum_vs.adoc#udb:doc:inst:vfredusum_vs[vfredusum.vs] offers several implementation choices; implementations are
+not required to use the same algorithm configuration for xref:insts:vfbdota_vv.adoc#udb:doc:inst:vfbdota_vv[vfbdota.vv] as for
+xref:insts:vfredusum_vs.adoc#udb:doc:inst:vfredusum_vs[vfredusum.vs].
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:23]
+|ci |$encoding[22:20]
+|vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvfbdota32f*
 | any
 |===
 
@@ -44101,7 +44695,7 @@ Included in::
 == vfncvt.f.f.w
 
 Synopsis::
-Vector floating-point widening conversion
+Vector floating-point narrowing conversion
 
 Base::
 
@@ -44123,7 +44717,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
+Converts double-width floating-point elements from vector register vs2 to a single-width floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
 
 
 Decode Variables::
@@ -44153,7 +44747,7 @@ Included in::
 == vfncvt.f.x.w
 
 Synopsis::
-Vector integer to floating-point widening conversion
+Vector integer to floating-point narrowing conversion
 
 Base::
 
@@ -44175,7 +44769,7 @@ Encoding::
 ....
 
 Description::
-Converts signed integer elements from vector register vs2 to a wider floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
+Converts double-width signed integer elements from vector register vs2 to a single-width floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
 
 
 Decode Variables::
@@ -44205,7 +44799,7 @@ Included in::
 == vfncvt.f.xu.w
 
 Synopsis::
-Vector unsigned integer to floating-point widening conversion
+Vector unsigned integer to floating-point narrowing conversion
 
 Base::
 
@@ -44227,7 +44821,7 @@ Encoding::
 ....
 
 Description::
-Converts unsigned integer elements from vector register vs2 to a wider floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
+Converts double-width unsigned integer elements from vector register vs2 to a single-width floating-point format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 standards.
 
 
 Decode Variables::
@@ -44257,7 +44851,7 @@ Included in::
 == vfncvt.rod.f.f.w
 
 Synopsis::
-Vector floating-point format conversion with round-to-odd (widening)
+Vector floating-point narrowing conversion with round-to-odd
 
 Base::
 
@@ -44279,7 +44873,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider floating-point format using round-to-odd mode and stores results in vector register vd, using vector mask vm.
+Converts double-width floating-point elements from vector register vs2 to a single-width floating-point format using round-to-odd mode and stores results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -44309,7 +44903,7 @@ Included in::
 == vfncvt.rtz.x.f.w
 
 Synopsis::
-Vector floating-point to integer widening conversion with truncation
+Vector floating-point to integer narrowing conversion with truncation
 
 Base::
 
@@ -44331,7 +44925,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider integer format using round-toward-zero mode and stores results in vector register vd, using vector mask vm.
+Converts double-width floating-point elements from vector register vs2 to a single-width integer format using round-toward-zero mode and stores results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -44361,7 +44955,7 @@ Included in::
 == vfncvt.rtz.xu.f.w
 
 Synopsis::
-Vector floating-point to unsigned integer widening conversion with truncation
+Vector floating-point to unsigned integer narrowing conversion with truncation
 
 Base::
 
@@ -44383,7 +44977,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider unsigned integer format using round-toward-zero mode and stores results in vector register vd, using vector mask vm.
+Converts double-width floating-point elements from vector register vs2 to a single-width unsigned integer format using round-toward-zero mode and stores results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -44468,7 +45062,7 @@ Included in::
 == vfncvt.x.f.w
 
 Synopsis::
-Vector floating-point to integer widening conversion
+Vector floating-point to integer narrowing conversion
 
 Base::
 
@@ -44490,7 +45084,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider integer format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 rounding rules.
+Converts double-width floating-point elements from vector register vs2 to a single-width integer format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 rounding rules.
 
 
 Decode Variables::
@@ -44520,7 +45114,7 @@ Included in::
 == vfncvt.xu.f.w
 
 Synopsis::
-Vector floating-point to unsigned integer widening conversion
+Vector floating-point to unsigned integer narrowing conversion
 
 Base::
 
@@ -44542,7 +45136,7 @@ Encoding::
 ....
 
 Description::
-Converts floating-point elements from vector register vs2 to a wider unsigned integer format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 rounding rules.
+Converts double-width floating-point elements from vector register vs2 to a single-width unsigned integer format and stores results in vector register vd, using vector mask vm. The conversion follows IEEE 754 rounding rules.
 
 
 Decode Variables::
@@ -57274,7 +57868,7 @@ Included in::
 == vmadc.vi
 
 Synopsis::
-Vector multiply-add with carry and immediate
+Vector integer add-with-carry-out immediate
 
 Base::
 
@@ -57296,7 +57890,7 @@ Encoding::
 ....
 
 Description::
-Performs multiply-add operation on elements from vector register vs2 and immediate value, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm.
+Add each element from vector register vs2 to the immediate value imm, and write the respective carry-out to mask register vd. There is no carry-in. `vd.mask[i] = carry_out(vs2[i] + imm)`
 
 
 Decode Variables::
@@ -57326,7 +57920,7 @@ Included in::
 == vmadc.vim
 
 Synopsis::
-Vector multiply-add with carry and masked
+Vector integer add-with-carry-in-out immediate
 
 Base::
 
@@ -57348,7 +57942,7 @@ Encoding::
 ....
 
 Description::
-Performs multiply-add operation on elements from vector register vs2 and immediate value, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm. This variant includes additional masking behavior.
+Add each element from vector register vs2 to the immediate value imm and the respective carry-in from vector register v0, and write the respective carry-out to mask register vd. `vd.mask[i] = carry_out(vs2[i] + imm + v0.mask[i])`
 
 
 Decode Variables::
@@ -57378,7 +57972,7 @@ Included in::
 == vmadc.vv
 
 Synopsis::
-Vector multiply-add with carry
+Vector integer add-with-carry-out vector
 
 Base::
 
@@ -57400,7 +57994,7 @@ Encoding::
 ....
 
 Description::
-Performs multiply-add operation on elements from vector registers vs2 and vs1, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm.
+Add each element from vector register vs2 to the respective element from vector register vs1, and write the respective carry-out to mask register vd. There is no carry-in. `vd.mask[i] = carry_out(vs2[i] + vs1[i])`
 
 
 Decode Variables::
@@ -57430,7 +58024,7 @@ Included in::
 == vmadc.vvm
 
 Synopsis::
-Vector multiply-add with carry and masked
+Vector integer add-with-carry-in-out vector
 
 Base::
 
@@ -57452,7 +58046,7 @@ Encoding::
 ....
 
 Description::
-Performs multiply-add operation on elements from vector registers vs2 and vs1, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm. This variant includes additional masking behavior.
+Add each element from vector register vs2 to the respective element from vector register vs1 and the respective carry-in from vector register v0, and write the respective carry-out to mask register vd. `vd.mask[i] = carry_out(vs2[i] + vs1[i] + v0.mask[i])`
 
 
 Decode Variables::
@@ -57482,7 +58076,7 @@ Included in::
 == vmadc.vx
 
 Synopsis::
-Vector multiply-add with carry and scalar
+Vector integer add-with-carry-out scalar
 
 Base::
 
@@ -57504,7 +58098,7 @@ Encoding::
 ....
 
 Description::
-Performs multiply-add operation on elements from vector register vs2 and scalar register xs1, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm.
+Add each element from vector register vs2 to the scalar register xs1, and write the respective carry-out to mask register vd. There is no carry-in. `vd.mask[i] = carry_out(vs2[i] + x[xs1])`
 
 
 Decode Variables::
@@ -57534,7 +58128,7 @@ Included in::
 == vmadc.vxm
 
 Synopsis::
-Vector multiply-add with carry and scalar, masked
+Vector integer add-with-carry-in-out scalar
 
 Base::
 
@@ -57556,7 +58150,7 @@ Encoding::
 ....
 
 Description::
-Performs multiply-add operation on elements from vector register vs2 and scalar register xs1, adds the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm. This variant includes additional masking behavior.
+Add each element from vector register vs2 to the scalar register xs1 and the respective carry-in from vector register v0, and write the respective carry-out to mask register vd. `vd.mask[i] = carry_out(vs2[i] + x[xs1] + v0.mask[i])`
 
 
 Decode Variables::
@@ -59114,7 +59708,7 @@ Included in::
 == vmsbc.vv
 
 Synopsis::
-Vector multiply-subtract with carry
+Vector integer subtract-with-borrow-out vector
 
 Base::
 
@@ -59136,7 +59730,7 @@ Encoding::
 ....
 
 Description::
-Performs multiply-subtract operation on elements from vector registers vs2 and vs1, subtracts the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm.
+Subtract from each element of vector register vs2 the respective element from vector register vs1, and write the respective borrow-out to mask register vd. There is no borrow-in. The borrow is defined to be 1 iff the difference, prior to truncation, is negative. `vd.mask[i] = borrow_out(vs2[i] - vs1[i])`
 
 
 Decode Variables::
@@ -59166,7 +59760,7 @@ Included in::
 == vmsbc.vvm
 
 Synopsis::
-No synopsis available
+Vector integer subtract-with-borrow-in-out vector
 
 Base::
 
@@ -59188,7 +59782,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtract from each element of vector register vs2 the respective element from vector register vs1 and the respective borrow-in from vector register v0, and write the respective borrow-out to mask register vd. The borrow is defined to be 1 iff the difference, prior to truncation, is negative. `vd.mask[i] = borrow_out(vs2[i] - vs1[i] - v0.mask[i])`
 
 
 Decode Variables::
@@ -59218,7 +59812,7 @@ Included in::
 == vmsbc.vx
 
 Synopsis::
-Vector multiply-subtract with carry and scalar
+Vector integer subtract-with-borrow-out scalar
 
 Base::
 
@@ -59240,7 +59834,7 @@ Encoding::
 ....
 
 Description::
-Performs multiply-subtract operation on elements from vector register vs2 and scalar register xs1, subtracts the carry-in from vector register vs3, and stores results in vector register vd, using vector mask vm.
+Subtract from each element of vector register vs2 the scalar register xs1, and write the respective borrow-out to mask register vd. There is no borrow-in. The borrow is defined to be 1 iff the difference, prior to truncation, is negative. `vd.mask[i] = borrow_out(vs2[i] - x[xs1])`
 
 
 Decode Variables::
@@ -59270,7 +59864,7 @@ Included in::
 == vmsbc.vxm
 
 Synopsis::
-No synopsis available
+Vector integer subtract-with-borrow-in-out scalar
 
 Base::
 
@@ -59292,7 +59886,7 @@ Encoding::
 ....
 
 Description::
-No description available.
+Subtract from each element of vector register vs2 the scalar register xs1 and the respective borrow-in from vector register v0, and write the respective borrow-out to mask register vd. The borrow is defined to be 1 iff the difference, prior to truncation, is negative. `vd.mask[i] = borrow_out(vs2[i] - x[xs1] - v0.mask[i])`
 
 
 Decode Variables::
@@ -59502,7 +60096,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 equal scalar in rs1, according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 equal scalar in xs1, according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -59608,7 +60202,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are greater than scalar in rs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are greater than scalar in xs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -59714,7 +60308,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are greater than scalar in rs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are greater than scalar in xs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -59925,7 +60519,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are less than or equal to scalar in rs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are less than or equal to scalar in xs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -60084,7 +60678,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are less than or equal to scalar in rs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are less than or equal to scalar in xs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -60190,7 +60784,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are less than scalar in rs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are less than scalar in xs1 (signed), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -60296,7 +60890,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 are less than scalar in rs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 are less than scalar in xs1 (unsigned), according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -60455,7 +61049,7 @@ Encoding::
 ....
 
 Description::
-Sets mask bits where elements in vs2 do not equal scalar in rs1, according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
+Sets mask bits where elements in vs2 do not equal scalar in xs1, according to mask vm, and stores results in vd. Element width is determined by SEW setting. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -61535,7 +62129,7 @@ Included in::
 == vnclip.wi
 
 Synopsis::
-Vector widening signed clip with immediate
+Vector narrowing signed clip with immediate
 
 Base::
 
@@ -61557,7 +62151,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed clip operation on elements from vector register vs2 using immediate clip value and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Performs narrowing signed clip operation on double-width elements from vector register vs2 using immediate clip value and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and packs the result into a narrower destination.
 
 
 Decode Variables::
@@ -61588,7 +62182,7 @@ Included in::
 == vnclip.wv
 
 Synopsis::
-Vector widening signed clip
+Vector narrowing signed clip
 
 Base::
 
@@ -61610,7 +62204,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed clip operation on elements from vector register vs2 using clip values from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Performs narrowing signed clip operation on double-width elements from vector register vs2 using clip values from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and packs the result into a narrower destination.
 
 
 Decode Variables::
@@ -61641,7 +62235,7 @@ Included in::
 == vnclip.wx
 
 Synopsis::
-Vector widening signed clip with scalar
+Vector narrowing signed clip with scalar
 
 Base::
 
@@ -61663,7 +62257,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed clip operation on elements from vector register vs2 using scalar clip value from register xs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Performs narrowing signed clip operation on double-width elements from vector register vs2 using scalar clip value from register xs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and packs the result into a narrower destination.
 
 
 Decode Variables::
@@ -61694,7 +62288,7 @@ Included in::
 == vnclipu.wi
 
 Synopsis::
-Vector widening unsigned clip with immediate
+Vector narrowing unsigned clip with immediate
 
 Base::
 
@@ -61716,7 +62310,7 @@ Encoding::
 ....
 
 Description::
-Performs widening unsigned clip operation on elements from vector register vs2 using immediate clip value and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Performs narrowing unsigned clip operation on double-width elements from vector register vs2 using immediate clip value and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and packs the result into a narrower destination.
 
 
 Decode Variables::
@@ -61747,7 +62341,7 @@ Included in::
 == vnclipu.wv
 
 Synopsis::
-Vector widening unsigned clip
+Vector narrowing unsigned clip
 
 Base::
 
@@ -61769,7 +62363,7 @@ Encoding::
 ....
 
 Description::
-Performs widening unsigned clip operation on elements from vector register vs2 using clip values from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Performs narrowing unsigned clip operation on double-width elements from vector register vs2 using clip values from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and packs the result into a narrower destination.
 
 
 Decode Variables::
@@ -61800,7 +62394,7 @@ Included in::
 == vnclipu.wx
 
 Synopsis::
-Vector widening unsigned clip with scalar
+Vector narrowing unsigned clip with scalar
 
 Base::
 
@@ -61822,7 +62416,7 @@ Encoding::
 ....
 
 Description::
-Performs widening unsigned clip operation on elements from vector register vs2 using scalar clip value from register xs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and widens the result.
+Performs narrowing unsigned clip operation on double-width elements from vector register vs2 using scalar clip value from register xs1 and stores results in vector register vd, using vector mask vm. The operation clips values to a specified range and packs the result into a narrower destination.
 
 
 Decode Variables::
@@ -62065,7 +62659,7 @@ Included in::
 == vnsra.wi
 
 Synopsis::
-Vector widening signed shift right arithmetic with immediate
+Vector narrowing signed shift right arithmetic with immediate
 
 Base::
 
@@ -62087,7 +62681,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed arithmetic right shift on elements from vector register vs2 by immediate shift amount and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit and widens the result.
+Performs narrowing signed arithmetic right shift on double-width elements from vector register vs2 by immediate shift amount and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit and writes a single-width destination.
 
 
 Decode Variables::
@@ -62118,7 +62712,7 @@ Included in::
 == vnsra.wv
 
 Synopsis::
-Vector widening signed shift right arithmetic
+Vector narrowing signed shift right arithmetic
 
 Base::
 
@@ -62140,7 +62734,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed arithmetic right shift on elements from vector register vs2 by shift amounts from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit and widens the result.
+Performs narrowing signed arithmetic right shift on double-width elements from vector register vs2 by shift amounts from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit and writes a single-width destination.
 
 
 Decode Variables::
@@ -62171,7 +62765,7 @@ Included in::
 == vnsra.wx
 
 Synopsis::
-Vector widening signed shift right arithmetic with scalar
+Vector narrowing signed shift right arithmetic with scalar
 
 Base::
 
@@ -62193,7 +62787,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed arithmetic right shift on elements from vector register vs2 by shift amount from scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit and widens the result.
+Performs narrowing signed arithmetic right shift on double-width elements from vector register vs2 by shift amount from scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation preserves the sign bit and writes a single-width destination.
 
 
 Decode Variables::
@@ -62224,7 +62818,7 @@ Included in::
 == vnsrl.wi
 
 Synopsis::
-Vector widening logical shift right with immediate
+Vector narrowing logical shift right with immediate
 
 Base::
 
@@ -62246,7 +62840,7 @@ Encoding::
 ....
 
 Description::
-Performs widening logical right shift on elements from vector register vs2 by immediate shift amount and stores results in vector register vd, using vector mask vm. The operation fills with zeros and widens the result.
+Performs narrowing logical right shift on double-width elements from vector register vs2 by immediate shift amount and stores results in vector register vd, using vector mask vm. The operation fills with zeros and writes a single-width destination.
 
 
 Decode Variables::
@@ -62277,7 +62871,7 @@ Included in::
 == vnsrl.wv
 
 Synopsis::
-Vector widening logical shift right
+Vector narrowing logical shift right
 
 Base::
 
@@ -62299,7 +62893,7 @@ Encoding::
 ....
 
 Description::
-Performs widening logical right shift on elements from vector register vs2 by shift amounts from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation fills with zeros and widens the result.
+Performs narrowing logical right shift on double-width elements from vector register vs2 by shift amounts from vector register vs1 and stores results in vector register vd, using vector mask vm. The operation fills with zeros and writes a single-width destination.
 
 
 Decode Variables::
@@ -62330,7 +62924,7 @@ Included in::
 == vnsrl.wx
 
 Synopsis::
-Vector widening logical shift right with scalar
+Vector narrowing logical shift right with scalar
 
 Base::
 
@@ -62352,7 +62946,7 @@ Encoding::
 ....
 
 Description::
-Performs widening logical right shift on elements from vector register vs2 by shift amount from scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation fills with zeros and widens the result.
+Performs narrowing logical right shift on double-width elements from vector register vs2 by shift amount from scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation fills with zeros and writes a single-width destination.
 
 
 Decode Variables::
@@ -62564,12 +63158,17 @@ Encoding::
 ....
 
 Description::
-Interleaves even-indexed elements of two source vector register groups into
-the destination. All operands have EMUL=LMUL. For destination index `i`,
-even indices read `vs2[i]` and odd indices read `vs1[i-1]`, producing
-`[vs2[0], vs1[0], vs2[2], vs1[2], ...]`. Standard vector masking,
-prestart, inactive, and tail handling applies. The destination may not
-overlap either source group.
+Interleaves the even-indexed elements of two source vector register groups
+into the destination. All operands have EMUL=LMUL. For destination element
+index `i`, `vd[i] = vs2[i]` if `i` is even and `vd[i] = vs1[i-1]` if `i` is
+odd, producing `vd = [vs2[0], vs1[0], vs2[2], vs1[2], ...]`.
+
+Masking, prestart, body, and tail element handling follow the base
+specification, applied to the destination element indices.
+
+The destination vector register group cannot overlap either source vector
+register group; an overlapping encoding raises an illegal-instruction
+exception.
 
 
 Decode Variables::
@@ -62622,13 +63221,19 @@ Encoding::
 ....
 
 Description::
-Interleaves odd-indexed elements of two source vector register groups into
-the destination. All operands have EMUL=LMUL. For destination index `i`,
-even indices read `vs2[i+1]` and odd indices read `vs1[i]`, producing
-`[vs2[1], vs1[1], vs2[3], vs1[3], ...]`. When xref:csrs:vl.adoc#udb:doc:csr:vl[vl] is odd, the final
-out-of-range source position contributes zero; no source at or above xref:csrs:vl.adoc#udb:doc:csr:vl[vl]
-is read. Standard vector masking, prestart, inactive, and tail handling
-applies. The destination may not overlap either source group.
+Interleaves the odd-indexed elements of two source vector register groups
+into the destination. All operands have EMUL=LMUL. For destination element
+index `i`, `vd[i] = vs2[i+1]` if `i` is even and `vd[i] = vs1[i]` if `i` is
+odd, producing `vd = [vs2[1], vs1[1], vs2[3], vs1[3], ...]`. If xref:csrs:vl.adoc#udb:doc:csr:vl[vl] is odd,
+the result for element `vl-1` is 0 and `vs2[vl]` is not read, which keeps
+the result independent of register contents at or above xref:csrs:vl.adoc#udb:doc:csr:vl[vl].
+
+Masking, prestart, body, and tail element handling follow the base
+specification, applied to the destination element indices.
+
+The destination vector register group cannot overlap either source vector
+register group; an overlapping encoding raises an illegal-instruction
+exception.
 
 
 Decode Variables::
@@ -64134,7 +64739,7 @@ Included in::
 == vsadd.vi
 
 Synopsis::
-Vector unsigned addition with immediate
+Vector Single-Width Saturating Add Signed with Immediate
 
 Base::
 
@@ -64156,7 +64761,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector register vs2 and immediate value and stores results in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Performs saturating signed addition on elements from vector register vs2 and immediate value imm and stores results in vector register vd, using vector mask vm. If the result would overflow the destination, the result is replaced with the closest representable value, and the xref:csrs:vxsat.adoc#udb:doc:csr:vxsat[vxsat] bit is set.
 
 
 Decode Variables::
@@ -64187,7 +64792,7 @@ Included in::
 == vsadd.vv
 
 Synopsis::
-Vector unsigned addition
+Vector Single-Width Saturating Add Signed Vector
 
 Base::
 
@@ -64209,7 +64814,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Performs saturating signed addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. If the result would overflow the destination, the result is replaced with the closest representable value, and the xref:csrs:vxsat.adoc#udb:doc:csr:vxsat[vxsat] bit is set.
 
 
 Decode Variables::
@@ -64240,7 +64845,7 @@ Included in::
 == vsadd.vx
 
 Synopsis::
-Vector unsigned addition with scalar
+Vector Single-Width Saturating Add Signed with Scalar
 
 Base::
 
@@ -64262,7 +64867,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Performs saturating signed addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. If the result would overflow the destination, the result is replaced with the closest representable value, and the xref:csrs:vxsat.adoc#udb:doc:csr:vxsat[vxsat] bit is set.
 
 
 Decode Variables::
@@ -64293,7 +64898,7 @@ Included in::
 == vsaddu.vi
 
 Synopsis::
-Vector signed addition with immediate
+Vector Single-Width Saturating Add Unsigned with Immediate
 
 Base::
 
@@ -64315,7 +64920,7 @@ Encoding::
 ....
 
 Description::
-Performs signed addition on elements from vector register vs2 and immediate value and stores results in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+Performs saturating unsigned addition on elements from vector register vs2 and immediate value imm and stores results in vector register vd, using vector mask vm. If the result would overflow the destination, the result is replaced with the closest representable value, and the xref:csrs:vxsat.adoc#udb:doc:csr:vxsat[vxsat] bit is set.
 
 
 Decode Variables::
@@ -64346,7 +64951,7 @@ Included in::
 == vsaddu.vv
 
 Synopsis::
-Vector signed addition
+Vector Single-Width Saturating Add Unsigned Vector
 
 Base::
 
@@ -64368,7 +64973,7 @@ Encoding::
 ....
 
 Description::
-Performs signed addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+Performs saturating unsigned addition on elements from vector registers vs2 and vs1 and stores results in vector register vd, using vector mask vm. If the result would overflow the destination, the result is replaced with the closest representable value, and the xref:csrs:vxsat.adoc#udb:doc:csr:vxsat[vxsat] bit is set.
 
 
 Decode Variables::
@@ -64399,7 +65004,7 @@ Included in::
 == vsaddu.vx
 
 Synopsis::
-Vector signed addition with scalar
+Vector Single-Width Saturating Add Unsigned with Scalar
 
 Base::
 
@@ -64421,7 +65026,7 @@ Encoding::
 ....
 
 Description::
-Performs signed addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+Performs saturating unsigned addition on elements from vector register vs2 and scalar register xs1 and stores results in vector register vd, using vector mask vm. If the result would overflow the destination, the result is replaced with the closest representable value, and the xref:csrs:vxsat.adoc#udb:doc:csr:vxsat[vxsat] bit is set.
 
 
 Decode Variables::
@@ -64452,7 +65057,7 @@ Included in::
 == vsbc.vvm
 
 Synopsis::
-Vector subtract with borrow and masked
+Vector integer subtract-with-borrow-in vector
 
 Base::
 
@@ -64474,7 +65079,7 @@ Encoding::
 ....
 
 Description::
-Performs subtraction on elements from vector registers vs2 and vs1, subtracts the borrow-in from vector register vs3, and stores results in vector register vd, using vector mask vm.
+Subtract from each element of vector register vs2 the respective element from vector register vs1 and the respective borrow-in from vector register v0, and write the result to vector register vd. `vd[i] = vs2[i] - vs1[i] - v0.mask[i]`
 
 
 Decode Variables::
@@ -64504,7 +65109,7 @@ Included in::
 == vsbc.vxm
 
 Synopsis::
-Vector subtract with borrow and scalar, masked
+Vector integer subtract-with-borrow-in scalar
 
 Base::
 
@@ -64526,7 +65131,7 @@ Encoding::
 ....
 
 Description::
-Performs subtraction on elements from vector register vs2 and scalar register xs1, subtracts the borrow-in from vector register vs3, and stores results in vector register vd, using vector mask vm.
+Subtract from each element of vector register vs2 the scalar register xs1 and the respective borrow-in from vector register v0, and write the result to vector register vd. `vd[i] = vs2[i] - x[xs1] - v0.mask[i]`
 
 
 Decode Variables::
@@ -64786,7 +65391,7 @@ Encoding::
 ....
 
 Description::
-Set the vtype and vl CSRs, and write the new value of vl into rd.
+Set the vtype and vl CSRs, and write the new value of vl into xd.
 
 Decode Variables::
 [width="100%", cols="1,2", options="header"]
@@ -64837,7 +65442,7 @@ Encoding::
 ....
 
 Description::
-Set the vtype and vl CSRs, and write the new value of vl into rd.
+Set the vtype and vl CSRs, and write the new value of vl into xd.
 
 Decode Variables::
 [width="100%", cols="1,2", options="header"]
@@ -65676,7 +66281,7 @@ Encoding::
 ....
 
 Description::
-Performs logical left shift on elements from vs2 using shift amount from rs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
+Performs logical left shift on elements from vs2 using shift amount from xs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -67946,7 +68551,7 @@ Encoding::
 ....
 
 Description::
-Performs arithmetic right shift on elements from vs2 using shift amount from rs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
+Performs arithmetic right shift on elements from vs2 using shift amount from xs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -68105,7 +68710,7 @@ Encoding::
 ....
 
 Description::
-Performs logical right shift on elements from vs2 using shift amount from rs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
+Performs logical right shift on elements from vs2 using shift amount from xs1, according to mask vm, and stores results in vd. Only the low lg2(SEW) bits of the shift amount are used. Supports vector masking and follows vector tail policy.
 
 
 Decode Variables::
@@ -71893,7 +72498,7 @@ Encoding::
 ....
 
 Description::
-Subtracts elements of vs2 from scalar rs1 according to mask vm and stores results in vd. Element width is determined by SEW setting.
+Subtracts elements of vs2 from scalar xs1 according to mask vm and stores results in vd. Element width is determined by SEW setting.
 
 
 Decode Variables::
@@ -73642,11 +74247,23 @@ Encoding::
 ....
 
 Description::
-Extracts even-indexed elements from source vector register group `vs2`,
-with EMUL=2*LMUL, into destination `vd`, with EMUL=LMUL. For `0 <= i < vl`,
-`vd[i] = vs2[2*i]`; source indices below `2*vl` may be read. `LMUL=8`
-and masked encodings (`vm=0`) are illegal. Destination/source overlap is
-allowed only when `vd` equals `vs2`, as for narrowing instructions.
+Extracts the even-indexed elements of source vector register group `vs2`,
+with EMUL=2*LMUL, into destination `vd`, with EMUL=LMUL. For destination
+element index `i`, `vd[i] = vs2[2*i]`. The source is read at indices below
+`2*vl`; as for `vslidedown` and `vrgather`, source reads are not bounded by
+xref:csrs:vl.adoc#udb:doc:csr:vl[vl], so the source must hold `2*vl` valid elements.
+
+Masking, prestart, body, and tail element handling follow the base
+specification, applied to the destination element indices.
+
+An illegal-instruction exception is raised when LMUL=8.
+
+The destination vector register group may overlap the source vector register
+group only if `vd` equals `vs2`, as for narrowing instructions. Any other
+overlapping encoding raises an illegal-instruction exception. Note that
+`vunzipe.v vd, vd` overwrites the low half of the source register group, so
+when both halves are needed, extract the odd elements first (e.g.
+`vunzipo.v v6, v4` before `vunzipe.v v4, v4`).
 
 
 Decode Variables::
@@ -73698,11 +74315,20 @@ Encoding::
 ....
 
 Description::
-Extracts odd-indexed elements from source vector register group `vs2`,
-with EMUL=2*LMUL, into destination `vd`, with EMUL=LMUL. For `0 <= i < vl`,
-`vd[i] = vs2[2*i+1]`; source indices below `2*vl` may be read. `LMUL=8`
-and masked encodings (`vm=0`) are illegal. Destination/source overlap is
-allowed only when `vd` equals `vs2`, as for narrowing instructions.
+Extracts the odd-indexed elements of source vector register group `vs2`,
+with EMUL=2*LMUL, into destination `vd`, with EMUL=LMUL. For destination
+element index `i`, `vd[i] = vs2[2*i+1]`. The source is read at indices below
+`2*vl`; as for `vslidedown` and `vrgather`, source reads are not bounded by
+xref:csrs:vl.adoc#udb:doc:csr:vl[vl], so the source must hold `2*vl` valid elements.
+
+Masking, prestart, body, and tail element handling follow the base
+specification, applied to the destination element indices.
+
+An illegal-instruction exception is raised when LMUL=8.
+
+The destination vector register group may overlap the source vector register
+group only if `vd` equals `vs2`, as for narrowing instructions. Any other
+overlapping encoding raises an illegal-instruction exception.
 
 
 Decode Variables::
@@ -73750,7 +74376,7 @@ vwabda.vv vd, vs2, vs1, vm
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x15,"type":2}]}
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x3d,"type":2}]}
 ....
 
 Description::
@@ -73768,6 +74394,63 @@ Decode Variables::
 |vm |$encoding[25]
 |vs2 |$encoding[24:20]
 |vs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvabd*
+| any
+|===
+
+
+
+
+[#udb:doc:inst:vwabda_vx]
+== vwabda.vx
+
+Synopsis::
+Vector Widening Signed Integer Absolute Difference and Accumulate with Scalar
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vwabda.vx vd, vs2, xs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x3d,"type":2}]}
+....
+
+Description::
+Computes the element-wise absolute difference of signed integer operands from
+vector register vs2 and scalar register xs1, and accumulates the results into
+the 2*SEW-bit elements of vd. The scalar is sign-extended or truncated to SEW.
+
+Reserved when SEW is neither 8 nor 16.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
 |vd |$encoding[11:7]
 |===
 
@@ -73807,7 +74490,7 @@ vwabdau.vv vd, vs2, vs1, vm
 Encoding::
 [wavedrom, ,svg,subs='attributes',width="100%"]
 ....
-{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x2,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x16,"type":2}]}
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x0,"type":2},{"bits":5,"name": "vs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x3e,"type":2}]}
 ....
 
 Description::
@@ -73842,11 +74525,69 @@ Included in::
 
 
 
+[#udb:doc:inst:vwabdau_vx]
+== vwabdau.vx
+
+Synopsis::
+Vector Widening Unsigned Integer Absolute Difference and Accumulate with Scalar
+
+Base::
+
+[cols="1,1"]
+|===
+| RV32 | RV64
+
+| &#x2713;
+| &#x2713;
+|===
+
+Assembly::
+vwabdau.vx vd, vs2, xs1, vm
+
+Encoding::
+[wavedrom, ,svg,subs='attributes',width="100%"]
+....
+{"reg":[{"bits":7,"name": 0x57,"type":2},{"bits":5,"name": "vd","type":4},{"bits":3,"name": 0x4,"type":2},{"bits":5,"name": "xs1","type":4},{"bits":5,"name": "vs2","type":4},{"bits":1,"name": "vm","type":4},{"bits":6,"name": 0x3e,"type":2}]}
+....
+
+Description::
+Computes the element-wise absolute difference of unsigned integer operands
+from vector register vs2 and scalar register xs1, and accumulates the results
+into the 2*SEW-bit elements of vd. The scalar is sign-extended or truncated
+to SEW before being interpreted as an unsigned value.
+
+Reserved when SEW is neither 8 nor 16.
+
+
+Decode Variables::
+[width="100%", cols="1,2", options="header"]
+|===
+|Variable Name |Location
+|vm |$encoding[25]
+|vs2 |$encoding[24:20]
+|xs1 |$encoding[19:15]
+|vd |$encoding[11:7]
+|===
+
+Included in::
+
+
+[width="100%",cols="1,2",options="header"]
+|===
+| Extension | Version
+
+| *Zvabd*
+| any
+|===
+
+
+
+
 [#udb:doc:inst:vwadd_vv]
 == vwadd.vv
 
 Synopsis::
-Vector widening unsigned addition
+Vector Widening Integer Add Signed Vector
 
 Base::
 
@@ -73868,7 +74609,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector registers vs2 and vs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Widen and sign-extend signed elements from vector registers vs2 and vs1, add to produce a double-width sum, and store results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -73899,7 +74640,7 @@ Included in::
 == vwadd.vx
 
 Synopsis::
-Vector widening unsigned addition with scalar
+Vector Widening Integer Add Signed with Scalar
 
 Base::
 
@@ -73921,7 +74662,7 @@ Encoding::
 ....
 
 Description::
-Performs unsigned addition on elements from vector register vs2 and scalar register xs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard unsigned arithmetic rules.
+Widen and sign-extend signed elements from vector register vs2 and scalar register xs1, add to produce a double-width sum, and store results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -74058,7 +74799,7 @@ Included in::
 == vwaddu.vv
 
 Synopsis::
-Vector widening signed addition
+Vector Widening Integer Add Unsigned Vector
 
 Base::
 
@@ -74080,7 +74821,7 @@ Encoding::
 ....
 
 Description::
-Performs signed addition on elements from vector registers vs2 and vs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+Widen and zero-extend unsigned elements from vector registers vs2 and vs1, add to produce a double-width sum, and store results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -74111,7 +74852,7 @@ Included in::
 == vwaddu.vx
 
 Synopsis::
-Vector widening signed addition with scalar
+Vector Widening Integer Add Unsigned with Scalar
 
 Base::
 
@@ -74133,7 +74874,7 @@ Encoding::
 ....
 
 Description::
-Performs signed addition on elements from vector register vs2 and scalar register xs1, widens the results, and stores them in vector register vd, using vector mask vm. The operation follows standard signed arithmetic rules.
+Widen and zero-extend unsigned elements from vector register vs2 and scalar register xs1, add to produce a double-width sum, and store results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -74376,7 +75117,7 @@ Included in::
 == vwmaccsu.vv
 
 Synopsis::
-Vector widening signed-unsigned multiply-add
+Vector Widening Integer Multiply-Add Signed-Unsigned Vector
 
 Base::
 
@@ -74398,7 +75139,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed-unsigned multiplication on elements from vector registers vs2 (signed) and vs1 (unsigned), adds the result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
+Widen and multiply signed elements from vector register vs1 by unsigned elements from vector register vs2 to produce a double-width product, add the product to the double-width elements of vector register vd, and store results in vector register vd, using vector mask vm.
 
 
 Decode Variables::
@@ -74429,7 +75170,7 @@ Included in::
 == vwmaccsu.vx
 
 Synopsis::
-Vector widening signed-unsigned multiply-add with scalar
+Vector Widening Integer Multiply-Add Signed-Unsigned with Scalar
 
 Base::
 
@@ -74451,7 +75192,7 @@ Encoding::
 ....
 
 Description::
-Performs widening signed-unsigned multiplication on elements from vector register vs2 (signed) and scalar register xs1 (unsigned), adds the result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
+Widen and multiply signed scalar integer in register xs1 by unsigned elements from vector register vs2 to produce double-width products, add each product to the double-width elements of vector register vd and store results in vector register vd using vector mask vm.
 
 
 Decode Variables::
@@ -74588,7 +75329,7 @@ Included in::
 == vwmaccus.vx
 
 Synopsis::
-Vector widening unsigned multiply-add with scalar, signed
+Vector Widening Integer Multiply-Add Unsigned-Signed with Scalar
 
 Base::
 
@@ -74610,7 +75351,7 @@ Encoding::
 ....
 
 Description::
-Performs widening unsigned multiplication on elements from vector register vs2 and scalar register xs1, adds the signed result to elements from vector register vd, and stores the final results in vector register vd, using vector mask vm.
+Widen and multiply unsigned scalar integer in register xs1 by signed elements from vector register vs2 to produce double-width products, add each product to the double-width elements of vector register vd and store results in vector register vd using vector mask vm.
 
 
 Decode Variables::
@@ -75985,13 +76726,22 @@ Encoding::
 ....
 
 Description::
-Interleaves source vector register groups `vs2` and `vs1`, each with
-EMUL=LMUL/2, into destination `vd` with EMUL=LMUL. For destination index
-`i`, even indices read `vs2[i/2]` and odd indices read `vs1[i/2]`.
-Standard vector masking, prestart, inactive, and tail handling applies.
-The source and destination groups may overlap only when source EMUL is at
-least 1 and their highest-numbered registers coincide. The encoding is
-illegal when `2*SEW > LMUL * ELEN` or overlap rules are violated.
+Interleaves the elements of source vector register groups `vs2` and `vs1`,
+each with EMUL=LMUL/2, into destination `vd` with EMUL=LMUL. For destination
+element index `i`, even indices read `vs2[i/2]` and odd indices read
+`vs1[i/2]`, producing `vd = [vs2[0], vs1[0], vs2[1], vs1[1], ...]`. When
+xref:csrs:vl.adoc#udb:doc:csr:vl[vl] is odd, `vs2` supplies one more element than `vs1`.
+
+Masking, prestart, body, and tail element handling follow the base
+specification, applied to the destination element indices.
+
+An illegal-instruction exception is raised when `2*SEW > LMUL*ELEN`, i.e.
+when SEW is too large for a source operand with EMUL=LMUL/2.
+
+A source vector register group may overlap the destination vector register
+group only if it is the highest-numbered half of the destination register
+group (which requires LMUL>=2), as for widening instructions. Any other
+overlapping encoding raises an illegal-instruction exception.
 
 
 Decode Variables::

@@ -17,3 +17,43 @@ versions:
   - version: "1.0.0"
     state: ratified
     ratification_date: 2023-03
+requirements:
+  allOf:
+    - extension:
+        name: H
+    - if:
+        param:
+          name: SATP_MODE_BARE
+          equal: true
+      then:
+        param:
+          name: VSSTAGE_MODE_BARE
+          equal: true
+    - if:
+        extension:
+          name: Sv32
+      then:
+        param:
+          name: SV32_VSMODE_TRANSLATION
+          equal: true
+    - if:
+        extension:
+          name: Sv39
+      then:
+        param:
+          name: SV39_VSMODE_TRANSLATION
+          equal: true
+    - if:
+        extension:
+          name: Sv48
+      then:
+        param:
+          name: SV48_VSMODE_TRANSLATION
+          equal: true
+    - if:
+        extension:
+          name: Sv57
+      then:
+        param:
+          name: SV57_VSMODE_TRANSLATION
+          equal: true

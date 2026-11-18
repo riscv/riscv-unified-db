@@ -20,4 +20,4 @@ schema:
   enum: [read-only-0, read-only-1, rw]
 definedBy:
   extension:
-    name: Sdtrig
+    name: Sdext

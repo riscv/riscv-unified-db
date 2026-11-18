@@ -41,8 +41,5 @@ versions:
     url: "https://github.com/riscv/riscv-isa-manual/releases/tag/riscv-isa-release-482805d-2025-03-25"
 requirements:
   extension:
-    allOf:
-      - name: S
-        version: ~> 1.13
-      - name: Smcsrind
-        version: ~> 1.0
+    name: S
+    version: "~> 1.13"

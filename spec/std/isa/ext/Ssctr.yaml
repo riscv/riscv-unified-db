@@ -19,5 +19,8 @@ requirements:
     allOf:
       - name: S
         version: ~> 1.13 # The latest ratified version of S when Ssctr was ratified
-      - name: Sscsrind
-        version: ~> 1.0
+      - anyOf:
+          - name: Smcsrind
+            version: ~> 1.0
+          - name: Sscsrind
+            version: ~> 1.0

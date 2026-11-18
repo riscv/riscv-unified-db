@@ -101,8 +101,10 @@ fields:
     definedBy:
       extension:
         name: Sscofpmf
-    type: RW
-    reset_value: UNDEFINED_LEGAL
+    type(): |
+      return implemented?(ExtensionName::Shlcofideleg) ? CsrFieldType::RW : CsrFieldType::RO;
+    reset_value(): |
+      return implemented?(ExtensionName::Shlcofideleg) ? UNDEFINED_LEGAL : 0;
     long_name: Local-Counter-Overfloat Interrupt
     description: Local-Counter-Overfloat Interrupt
     sw_write(csr_value): |

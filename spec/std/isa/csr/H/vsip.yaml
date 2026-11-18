@@ -50,6 +50,8 @@ fields:
       if (CSR[hideleg].VSSI == 1) {
         CSR[hip].VSSIP = csr_value.SSIP;
       }
+      #The actual value of this field is never used, so we can return 0 to avoid warnings
+      return 0;
     description: |
       *Supervisor Software Interrupt Pending*
       Indicates a pending software interrupt at the supervisor level.
@@ -63,6 +65,8 @@ fields:
       if (CSR[hideleg].VSTI == 1) {
         CSR[hip].VSTIP = csr_value.STIP;
       }
+      #The actual value of this field is never used, so we can return 0 to avoid warnings
+      return 0;
     description: |
       *Supervisor Timer Interrupt Pending*
       Indicates a pending timer interrupt at the supervisor level.
@@ -76,6 +80,8 @@ fields:
       if (CSR[hideleg].VSEI == 1) {
         CSR[hip].VSEIP = csr_value.SEIP;
       }
+      #The actual value of this field is never used, so we can return 0 to avoid warnings
+      return 0;
     description: |
       *Supervisor External Interrupt Pending*
       Indicates a pending external interrupt at the supervisor level.
@@ -92,6 +98,8 @@ fields:
       if (CSR[hideleg].LCOFI == 1) {
         CSR[sip].LCOFIP = csr_value.LCOFIP;
       }
+      #The actual value of this field is never used, so we can return 0 to avoid warnings
+      return 0;
     description: |
       *Local Counter Overflow Interrupt Pending*
       Indicates an overflow of a local counter.

@@ -22,3 +22,24 @@ description: |
   and pairwise transposition of elements from two vector register groups.
   These operations support packing and unpacking structured data and
   transposing small matrices.
+
+  NOTE: This extension is a draft. Its encodings are provisional, pending
+  codepoint allocation.
+
+  All operands of all `Zvzip` instructions have EEW=SEW. `vtype` and `vl`
+  describe the destination: `vl` gives the number of destination elements, and
+  the destination is a vector register group with EMUL=LMUL. The source
+  operands of `vzip.vv` have EMUL=LMUL/2, the source operand of `vunzipe.v`
+  and `vunzipo.v` has EMUL=2*LMUL, and the source operands of `vpaire.vv` and
+  `vpairo.vv` have EMUL=LMUL. The vector register alignment rules apply to
+  each operand according to its EMUL.
+
+  Masking, prestart, body, and tail element handling follow the base
+  specification, applied to the destination element indices. As in the base
+  specification, a masked instruction whose destination overlaps `v0` is
+  reserved. Unlike the base specification, unsupported SEW/LMUL settings and
+  vector register group overlap violations raise an illegal-instruction
+  exception.
+
+  If the `Zvkt` extension is implemented, all `Zvzip` instructions are
+  executed with data-independent execution latency.

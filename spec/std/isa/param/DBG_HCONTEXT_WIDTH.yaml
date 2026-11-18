@@ -14,5 +14,10 @@ schema:
   minimum: 0
   maximum: 14
 definedBy:
-  extension:
-    name: Sdtrig
+  allOf:
+    - extension:
+        name: Sdtrig
+    - param:
+        # Also used by mcontext.HCONTEXT and hcontext depends on mcontext
+        name: MCONTEXT_IMPLEMENTED
+        equal: true

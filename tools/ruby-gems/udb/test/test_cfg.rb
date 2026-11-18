@@ -52,4 +52,46 @@ class TestCfg < Minitest::Test
       MSG
     end
   end
+
+  # Full rv64 config that also implements Sdext, with the given DCSR_*_TYPE values
+  def dcsr_cfg_arch(name, params)
+    data = YAML.load_file(Udb.repo_root / "cfgs" / "rv64-riscv-tests.yaml")
+    data["name"] = name
+    data["implemented_extensions"] << ["Sdext", "1.0.0"]
+    data["params"].merge!(params)
+    path = Pathname.new(@gen_dir) / "#{name}.yaml"
+    File.write(path, YAML.dump(data))
+    @resolver.cfg_arch_for(path)
+  end
+
+  def test_dcsr_rw_fields_are_rw
+    dcsr = dcsr_cfg_arch(
+      "dcsr_rw",
+      "DCSR_MPRVEN_TYPE" => "rw",
+      "DCSR_STEPIE_TYPE" => "rw",
+      "DCSR_STOPCOUNT_TYPE" => "rw",
+      "DCSR_STOPTIME_TYPE" => "rw"
+    ).csr("dcsr")
+    %w[MPRVEN STEPIE STOPCOUNT STOPTIME].each do |field|
+      assert_equal "RW", dcsr.field(field).type(64), "dcsr.#{field}"
+    end
+    assert_equal 0, dcsr.field("STEPIE").reset_value
+  end
+
+  def test_dcsr_read_only_fields_are_ro
+    dcsr = dcsr_cfg_arch(
+      "dcsr_ro",
+      "DCSR_MPRVEN_TYPE" => "read-only-1",
+      "DCSR_STEPIE_TYPE" => "read-only-0",
+      "DCSR_STOPCOUNT_TYPE" => "read-only-0",
+      "DCSR_STOPTIME_TYPE" => "read-only-1"
+    ).csr("dcsr")
+    %w[MPRVEN STEPIE STOPCOUNT STOPTIME].each do |field|
+      assert_equal "RO", dcsr.field(field).type(64), "dcsr.#{field}"
+    end
+    assert_equal 1, dcsr.field("MPRVEN").reset_value
+    assert_equal 0, dcsr.field("STEPIE").reset_value
+    assert_equal 0, dcsr.field("STOPCOUNT").reset_value
+    assert_equal 1, dcsr.field("STOPTIME").reset_value
+  end
 end

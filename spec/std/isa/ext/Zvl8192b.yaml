@@ -1,0 +1,30 @@
+# Copyright (c) RISC-V International
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Zvl8192b
+long_name: Vector register length must be at least 8192 bits
+description: |
+  The Zvl8192b extension requires the implementation to have a vector register
+  length (VLEN) of at least 8192 bits.
+
+  The Zvl*b extensions are a family of extensions that specify minimum vector
+  register lengths. They allow software to determine the minimum VLEN supported
+  by an implementation without needing to probe at runtime.
+
+  With VLEN=8192 and SEW=8 bits, VLMAX is 1024 elements (with LMUL=1).
+type: unprivileged
+versions:
+  - version: "1.0.0"
+    state: ratified
+    ratification_date: 2021-11
+requirements:
+  allOf:
+    - extension:
+        name: Zvl4096b
+    - param:
+        name: VLEN
+        greaterThanOrEqual: 8192

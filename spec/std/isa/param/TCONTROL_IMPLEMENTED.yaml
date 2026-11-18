@@ -1,0 +1,16 @@
+# Copyright (C) 2026 Harvey Mudd College
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: TCONTROL_IMPLEMENTED
+description: |
+  Specifies if the tcontrol CSR is implemented
+long_name: tcontrol CSR is implemented
+schema:
+  type: boolean
+definedBy:
+  extension:
+    name: Sdtrig
