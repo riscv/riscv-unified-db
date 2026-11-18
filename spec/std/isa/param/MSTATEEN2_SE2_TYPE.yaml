@@ -5,17 +5,17 @@
 
 $schema: param_schema.json#
 kind: parameter
-name: MSTATEEN2_SE0_TYPE
-long_name: Behavior of mstateen2.SE0
+name: MSTATEEN2_SE2_TYPE
+long_name: Behavior of mstateen2.SE2
 description: |
-  Behavior of the `mstateen2.SE0`, which controls access to
+  Behavior of the `mstateen2.SE2`, which controls access to
   `hstateen2`, `hstateen2h`, and `sstateen2`:
 
     * 'rw': read-write
     * 'read-only-0': read-only, fixed to 0
     * 'read-only-1': read-only, fixed to 1
 
-  `mstateen2.SE0` may be read-only zero only if the hypervisor extension is not
+  `mstateen2.SE2` may be read-only zero only if the hypervisor extension is not
   implemented and `sstateen2` is all read-only zeros.
   No bits of `sstateen2` are currently defined, so only the hypervisor
   condition applies.
@@ -29,11 +29,11 @@ definedBy:
   extension:
     name: Smstateen
 requirements:
-  # mstateen2.SE0 cannot be read-only zero when H is implemented
+  # mstateen2.SE2 cannot be read-only zero when H is implemented
   if:
     extension:
       name: H
   then:
     param:
-      name: MSTATEEN2_SE0_TYPE
+      name: MSTATEEN2_SE2_TYPE
       notEqual: read-only-0

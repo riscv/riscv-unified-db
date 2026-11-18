@@ -69,15 +69,6 @@
       "datasourceTemplate": "rubygems"
     },
     {
-      "description": "Bundler version installed by default via mise",
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.default-gems$/"],
-      "matchStrings": ["^bundler\\s+(?<currentValue>[\\d.]+)"],
-      "depNameTemplate": "gem:bundler",
-      "packageNameTemplate": "bundler",
-      "datasourceTemplate": "rubygems"
-    },
-    {
       "description": "must (mustool) commit tracked by the udb gem binary version file",
       "customType": "regex",
       "managerFilePatterns": ["/^tools/ruby-gems/udb/lib/udb/MUST_VERSION$/"],

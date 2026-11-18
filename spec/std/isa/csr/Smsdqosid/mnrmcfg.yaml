@@ -1,0 +1,48 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../../schemas/csr_schema.json
+$schema: csr_schema.json#
+kind: csr
+name: mnrmcfg
+long_name: Machine Next-Privilege Resource Management Configuration
+address: 0x781
+writable: true
+priv_mode: M
+length: MXLEN
+definedBy:
+  extension:
+    name: Smsdqosid
+description: |
+  To facilitate delegation of srmcfg to the SD, the Smsdqosid extension introduces a MXLEN-wide WARL read/write machine-mode register called mnrmcfg.
+  The CSR number for mnrmcfg is 0x781.
+
+fields:
+  RCID:
+    location: 11-0
+    type: RW
+    long_name: Resource Control ID
+    description: |
+      The `RCID` is used to determine the resource allocations (e.g., cache occupancy limits,
+      memory bandwidth limits, etc.) to enforce.
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      return csr_value.RCID & ((1 `<< RCID_WIDTH) - 1);
+  MCID:
+    location: 27-16
+    type: RW
+    long_name: Monitoring Counter ID
+    description: |
+      The `MCID` is used to identify a counter to monitor resource usage.
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      return csr_value.MCID & ((1 `<< MCID_WIDTH) - 1);
+  QRID:
+    location: 31-28
+    type: RW
+    long_name: QoS Register Interface ID
+    description: |
+      The `QRID` is used to identify a QoS Register Interface to monitor resource usage.
+    reset_value: UNDEFINED_LEGAL
+    sw_write(csr_value): |
+      return csr_value.QRID & ((1 `<< QRID_WIDTH) - 1);

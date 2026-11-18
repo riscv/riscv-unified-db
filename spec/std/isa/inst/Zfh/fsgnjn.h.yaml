@@ -6,9 +6,12 @@
 $schema: inst_schema.json#
 kind: instruction
 name: fsgnjn.h
-long_name: No synopsis available
+long_name: Floating-Point Sign-Inject Negate Half-Precision
 description: |
-  No description available.
+  The `fsgnjn.h` instruction produces a half-precision result that takes all bits except the sign bit from _fs1_.
+  The result's sign bit is opposite of _fs2_'s sign bit, and the result is written to the destination
+  register _fd_. Sign-injection instructions do not set floating-point exception flags, nor do they
+  canonicalize NaNs.
 definedBy:
   extension:
     oneOf:
