@@ -1,0 +1,327 @@
+<!--
+ Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ SPDX-License-Identifier: BSD-3-Clause-Clear
+ -->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Unified UDB, Sail, and ISA-manual parameter comparison</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1 id="unified-udb-sail-and-isa-manual-parameter-comparison">Unified
+UDB, Sail, and ISA-manual parameter comparison</h1>
+<p>This directory compares UDB parameter definitions, the Sail RISC-V
+model/configuration schema, and the ISA manual. The summary and class
+reports preserve the evidence and unresolved cases behind each
+mapping.</p>
+<p><a href="class-venn.svg"><img src="class-venn.svg"
+alt="Parameter coverage by source" /></a></p>
+<p>The preserved diagram shows intersection-region labels linked to
+their reports; it was not regenerated in this run, so its counts may be
+stale. The refreshed <a
+href="summary.json"><code>summary.json</code></a> is authoritative for
+current totals.</p>
+<h2 id="start-here">Start here</h2>
+<ul>
+<li><a href="summary.md">Process summary and source revisions</a></li>
+<li><a href="summary.json">Machine-readable set sizes and class
+counts</a></li>
+<li><a href="class-venn.svg">Venn diagram SVG</a></li>
+<li><a href="no-udb-clusters.md">Potential UDB development
+directions</a></li>
+<li><a href="no-sail-clusters.md">Potential Sail development
+directions</a></li>
+</ul>
+<h2 id="class-reports">Class reports</h2>
+<p>The class bits are ordered <code>spec</code> (least significant),
+<code>udb</code>, then <code>sail</code>. A set bit means the concept is
+represented in that source. The six classes contain <strong>465</strong>
+records: <strong>318</strong> parameter-YAML-backed UDB concepts,
+<strong>112</strong> UDB extension declarations, and <strong>35</strong>
+Sail-only concepts.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Class</th>
+<th>Sources represented</th>
+<th style="text-align: right;">Count</th>
+<th>Report</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>0b010</code></td>
+<td>UDB only</td>
+<td style="text-align: right;">4</td>
+<td><a href="only-udb.md">only-udb.md</a></td>
+</tr>
+<tr class="even">
+<td><code>0b011</code></td>
+<td>UDB and spec; not Sail</td>
+<td style="text-align: right;">42</td>
+<td><a href="no-sail.md">no-sail.md</a></td>
+</tr>
+<tr class="odd">
+<td><code>0b100</code></td>
+<td>Sail only; no spec match</td>
+<td style="text-align: right;">20</td>
+<td><a href="only-sail.md">only-sail.md</a></td>
+</tr>
+<tr class="even">
+<td><code>0b101</code></td>
+<td>Spec and Sail; no UDB</td>
+<td style="text-align: right;">15</td>
+<td><a href="no-udb.md">no-udb.md</a></td>
+</tr>
+<tr class="odd">
+<td><code>0b110</code></td>
+<td>UDB and Sail; no spec match</td>
+<td style="text-align: right;">41</td>
+<td><a href="no-spec.md">no-spec.md</a></td>
+</tr>
+<tr class="even">
+<td><code>0b111</code></td>
+<td>UDB, spec, and Sail</td>
+<td style="text-align: right;">343</td>
+<td><a href="all.md">all.md</a></td>
+</tr>
+</tbody>
+</table>
+<p>Source totals are Spec <strong>400</strong>, Sail
+<strong>419</strong>, and UDB <strong>430</strong>. They overlap and are
+not additive. Class <code>0b000</code> (no source) and
+<code>0b001</code> (spec only) do not occur.</p>
+<h2 id="potential-future-directions">Potential future directions</h2>
+<p>The no-udb and no-sail clusters group candidates by architectural
+concept and likely investigation task. They are evidence-backed prompts
+for human review, not confirmed defects or implementation
+commitments.</p>
+<ul>
+<li><a href="no-udb-clusters.md">Spec and Sail without UDB: 15
+candidates</a></li>
+<li><a href="no-sail-clusters.md">UDB and spec without Sail: 42
+candidates</a></li>
+</ul>
+<h2 id="reconciliation-flow">Reconciliation flow</h2>
+<h3 id="1-udb-first-pass">1. UDB-first pass</h3>
+<p>Each UDB parameter YAML is a starting record. Its <code>name</code>,
+<code>long_name</code>, and <code>description</code> guide searches
+across Sail sources/configuration and AsciiDoc specification files.
+Matches are confirmed against behavior and architectural scope;
+identifier hits alone are not enough. The current pass covers
+<strong>318</strong> UDB parameters, with <strong>272</strong> semantic
+Sail matches and <strong>283</strong> manual concept matches;
+<strong>261</strong> of the latter have a confidently identified
+normative anchor.</p>
+<h3 id="2-sail-first-reverse-pass">2. Sail-first reverse pass</h3>
+<p>The rebuilt schema was traversed at configuration-value leaves
+(<strong>323</strong>). Settings already mapped in the first pass are
+not duplicated. Remaining leaves are checked against UDB parameter
+descriptions; the exact shape
+<code>extensions.&lt;EXTNAME&gt;.supported</code> is handled separately
+by checking for <code>spec/std/isa/ext/&lt;EXTNAME&gt;.yaml</code>. That
+file denotes an extension declaration, not a parameter YAML. This run
+identified <strong>13</strong> parameter-YAML mappings,
+<strong>112</strong> extension-declaration mappings, <strong>35</strong>
+remaining Sail-only entries, and <strong>47</strong> ambiguous or
+parent-level cases left unresolved.</p>
+<p>The schema also exposes
+<code>base.reserved_behavior.illegal_privilege</code>; the manual
+discusses legal MPP encodings but does not determine Sail's
+ignore-versus-lowest policy. The reports retain this distinction and its
+unresolved anchor status.</p>
+<h2 id="how-approximate-fuzzy-matching-works">How approximate (“fuzzy”)
+matching works</h2>
+<p>Matching is semantic and evidence-based, not an edit-distance
+threshold or an embedding score. Names and descriptions generate
+candidates; the hierarchy, type, values, source behavior, and relevant
+specification rule are used to confirm architectural identity. A spec
+concept mention sets the spec class bit independently of whether a
+defining normative anchor can be identified.</p>
+<p>For example, <code>MXLEN</code> maps to Sail <code>base.xlen</code>
+and the machine-mode <code>misa.MXL</code> rule (<a
+href="all.md#mxlen">evidence in all.md</a>). Conversely,
+<code>FORCE_UPGRADE_CBO_INVAL_TO_FLUSH</code> is not mapped to
+<code>base.reserved_behavior.xenvcfg_cbie</code>: the latter handles
+reserved CBIE=0b10 writes, not CBIE=0b11 invalidate-versus-flush
+behavior (<a href="no-sail.md#force_upgrade_cbo_inval_to_flush">no-sail
+entry</a>).</p>
+<p>When a source only exposes a parent object, when multiple UDB
+candidates remain plausible, or when behavior differs, the relationship
+remains unresolved and is reported as such. Clustered absences are
+candidate gaps only, never proof that a source is deficient.</p>
+<h2 id="reading-the-artifacts">Reading the artifacts</h2>
+<ul>
+<li>The six class reports provide per-entry UDB, Sail, and spec
+evidence, including schema pointers, source locations, and
+unresolved-match notes.</li>
+<li><a href="summary.md">summary.md</a> records revisions and aggregate
+results; <a href="summary.json">summary.json</a> contains the counts
+used by the diagram.</li>
+<li><a href="no-udb-clusters.md">no-udb clusters</a> and <a
+href="no-sail-clusters.md">no-sail clusters</a> are triage views over
+the corresponding class reports.</li>
+</ul>
+</body>
+</html>
