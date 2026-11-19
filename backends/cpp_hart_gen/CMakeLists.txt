@@ -304,11 +304,21 @@ target_compile_definitions(test_regfile PRIVATE
 # target_include_directories(test_decode PUBLIC ${CMAKE_SOURCE_DIR}/include)
 # target_link_libraries(test_decode PRIVATE hart Catch2::Catch2WithMain)
 
+add_executable(test_memory_endian
+  ${CMAKE_SOURCE_DIR}/test/test_memory_endian.cpp
+  ${CMAKE_SOURCE_DIR}/src/NotificationHandler.cpp
+  ${CMAKE_SOURCE_DIR}/src/htif.cpp
+  ${CMAKE_SOURCE_DIR}/src/GDBServer.cpp
+)
+target_include_directories(test_memory_endian PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_memory_endian PRIVATE hart Catch2::Catch2WithMain)
+
 include(CTest)
 include(Catch)
 catch_discover_tests(test_bits_directed)
 catch_discover_tests(test_regfile)
 catch_discover_tests(test_util)
+catch_discover_tests(test_memory_endian TEST_PREFIX "test_memory_endian.")
 
 foreach (random_test IN LISTS RANDOM_TESTS)
   catch_discover_tests(${random_test})

@@ -11,15 +11,68 @@ typedef struct _SYSCALLBLOCK
   uint64_t a[7];
 } SYSCALLBLOCK, *PSYSCALLBLOCK;
 
-union HTIFCOMMAND
+struct HTIFCOMMAND
 {
-  struct
+  uint64_t value = 0;
+
+  constexpr HTIFCOMMAND() = default;
+
+  constexpr explicit HTIFCOMMAND(uint64_t val) : value(val) {}
+
+  constexpr HTIFCOMMAND(uint8_t dev, uint8_t cmd, uint64_t pay)
+      : value((static_cast<uint64_t>(dev) << 56) |
+              (static_cast<uint64_t>(cmd) << 48) |
+              (pay & 0x0000ffffffffffffULL)) {}
+
+  constexpr uint64_t payload() const
   {
-    uint64_t payload:48;
-    uint8_t command:8;
-    uint8_t device:8;
-  };
-  uint64_t value;
+    return value & 0x0000ffffffffffffULL;
+  }
+
+  constexpr uint8_t command() const
+  {
+    return static_cast<uint8_t>((value >> 48) & 0xff);
+  }
+
+  constexpr uint8_t device() const
+  {
+    return static_cast<uint8_t>((value >> 56) & 0xff);
+  }
+
+  constexpr void set_payload(uint64_t pay)
+  {
+    value = (value & ~0x0000ffffffffffffULL) | (pay & 0x0000ffffffffffffULL);
+  }
+
+  constexpr void set_command(uint8_t cmd)
+  {
+    value = (value & ~(0xffULL << 48)) | (static_cast<uint64_t>(cmd) << 48);
+  }
+
+  constexpr void set_device(uint8_t dev)
+  {
+    value = (value & ~(0xffULL << 56)) | (static_cast<uint64_t>(dev) << 56);
+  }
+
+  static constexpr HTIFCOMMAND from_value(uint64_t val)
+  {
+    return HTIFCOMMAND(val);
+  }
+
+  static constexpr HTIFCOMMAND encode(uint8_t dev, uint8_t cmd, uint64_t pay)
+  {
+    return HTIFCOMMAND(dev, cmd, pay);
+  }
+
+  constexpr uint64_t to_value() const
+  {
+    return value;
+  }
+
+  constexpr operator uint64_t() const
+  {
+    return value;
+  }
 };
 
 //HTIF Device base class
