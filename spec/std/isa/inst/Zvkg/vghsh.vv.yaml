@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vghsh.vv
-long_name: Vector Galois field hash
+long_name: Vector add-multiply over GHASH Galois field
 description: |
-  Performs a Galois field hash operation on vector register vs2 using vector register vs1 as the hash polynomial, storing results in vector register vd according to mask vm. This instruction is used in cryptographic hash functions and error detection algorithms.
+  Performs a single iteration of the GHASH algorithm. The current partial hash in vd is added to the cipher text block in vs1, and the sum is multiplied over GF(2^128^) by the hash subkey in vs2. The multiplication is a carry-less multiply of two 128-bit polynomials modulo the GHASH polynomial x^128^ + x^7^ + x^2^ + x + 1. The next partial hash is written to vd.
 definedBy:
   extension:
     name: Zvkg

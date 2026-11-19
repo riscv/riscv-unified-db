@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsha2ms.vv
-long_name: Vector SHA-2 majority function
+long_name: Vector SHA-2 message schedule
 description: |
-  Performs the SHA-2 majority function (Maj) on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in SHA-256 and SHA-512 hash computations.
+  Performs four rounds of SHA-2 message schedule expansion (SHA-256 when SEW=32; SHA-512 when SEW=64, which requires Zvknhb). Eleven of the last 16 message schedule words, taken from vd (oldest), vs2, and vs1 (most recent), are processed to produce the next four message schedule words, which are written to vd.
 definedBy:
   extension:
     name: Zvknha

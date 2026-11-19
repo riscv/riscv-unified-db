@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vaesdf.vs
-long_name: Vector AES decryption final round with scalar
+long_name: Vector AES final-round decryption with scalar round key
 description: |
-  Performs the final round of AES decryption on vector register vs2 using scalar register rs1, storing results in vector register vd according to mask vm. This combines the inverse shift rows, inverse sub bytes, and add round key operations.
+  Performs a final-round AES block cipher decryption. The InvShiftRows and InvSubBytes steps are applied to each round state element group from vd, and the result is XORed with the round key in the scalar element group in vs2, which is used for every element group. The new round state is written to vd.
 definedBy:
   extension:
     name: Zvkned

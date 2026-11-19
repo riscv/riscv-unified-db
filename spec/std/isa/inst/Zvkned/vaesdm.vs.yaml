@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vaesdm.vs
-long_name: Vector AES decryption mix columns with scalar
+long_name: Vector AES middle-round decryption with scalar round key
 description: |
-  Performs AES decryption mix columns operation on vector register vs2 using scalar register rs1, storing results in vector register vd according to mask vm. This is the inverse mix columns operation used in AES decryption.
+  Performs a middle-round AES block cipher decryption. The InvShiftRows and InvSubBytes steps are applied to each round state element group from vd, and the result is XORed with the round key in the scalar element group in vs2, which is used for every element group, and the InvMixColumns step is then applied. The new round state is written to vd.
 definedBy:
   extension:
     name: Zvkned

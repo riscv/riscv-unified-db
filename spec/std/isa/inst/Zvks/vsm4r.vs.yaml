@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsm4r.vs
-long_name: Vector SM4 round function with scalar
+long_name: Vector SM4 rounds with scalar round keys
 description: |
-  Performs SM4 round function operation on vector register vs2 using scalar register rs1, storing results in vector register vd according to mask vm. This is used in SM4 block cipher encryption/decryption rounds.
+  Performs four rounds of SM4 encryption or decryption. The four words of current state are read as a four-element group from vd, and the round keys are read from the scalar element group in vs2, which is used for every element group. The next four words of state are written to vd.
 definedBy:
   extension:
     name: Zvksed
