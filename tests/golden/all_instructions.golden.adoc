@@ -48479,7 +48479,7 @@ Included in::
 == vl1re16.v
 
 Synopsis::
-Vector load 1 element of 16 bits with register stride
+Vector load 1 whole register (EEW=16)
 
 Base::
 
@@ -48501,7 +48501,7 @@ Encoding::
 ....
 
 Description::
-Loads 1 segment of 16-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 16 bits.
+Loads 1 whole vector register from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 16 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48530,7 +48530,7 @@ Included in::
 == vl1re32.v
 
 Synopsis::
-Vector load 1 element of 32 bits with register stride
+Vector load 1 whole register (EEW=32)
 
 Base::
 
@@ -48552,7 +48552,7 @@ Encoding::
 ....
 
 Description::
-Loads 1 segment of 32-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 32 bits.
+Loads 1 whole vector register from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 32 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48581,7 +48581,7 @@ Included in::
 == vl1re64.v
 
 Synopsis::
-Vector load 1 element of 64 bits with register stride
+Vector load 1 whole register (EEW=64)
 
 Base::
 
@@ -48603,7 +48603,7 @@ Encoding::
 ....
 
 Description::
-Loads 1 segment of 64-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 64 bits.
+Loads 1 whole vector register from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 64 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48632,7 +48632,7 @@ Included in::
 == vl1re8.v
 
 Synopsis::
-Vector load 1 element of 8 bits with register stride
+Vector load 1 whole register (EEW=8)
 
 Base::
 
@@ -48654,7 +48654,7 @@ Encoding::
 ....
 
 Description::
-Loads 1 segment of 8-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 8 bits.
+Loads 1 whole vector register from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 8 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48683,7 +48683,7 @@ Included in::
 == vl2re16.v
 
 Synopsis::
-Vector load 2 elements of 16 bits with register stride
+Vector load 2 whole registers (EEW=16)
 
 Base::
 
@@ -48705,7 +48705,7 @@ Encoding::
 ....
 
 Description::
-Loads 2 segments of 16-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 16 bits.
+Loads 2 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 16 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48734,7 +48734,7 @@ Included in::
 == vl2re32.v
 
 Synopsis::
-Vector load 2 elements of 32 bits with register stride
+Vector load 2 whole registers (EEW=32)
 
 Base::
 
@@ -48756,7 +48756,7 @@ Encoding::
 ....
 
 Description::
-Loads 2 segments of 32-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 32 bits.
+Loads 2 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 32 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48785,7 +48785,7 @@ Included in::
 == vl2re64.v
 
 Synopsis::
-Vector load 2 elements of 64 bits with register stride
+Vector load 2 whole registers (EEW=64)
 
 Base::
 
@@ -48807,7 +48807,7 @@ Encoding::
 ....
 
 Description::
-Loads 2 segments of 64-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 64 bits.
+Loads 2 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 64 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48836,7 +48836,7 @@ Included in::
 == vl2re8.v
 
 Synopsis::
-Vector load 2 elements of 8 bits with register stride
+Vector load 2 whole registers (EEW=8)
 
 Base::
 
@@ -48858,7 +48858,7 @@ Encoding::
 ....
 
 Description::
-Loads 2 segments of 8-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 8 bits.
+Loads 2 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 8 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48887,7 +48887,7 @@ Included in::
 == vl4re16.v
 
 Synopsis::
-Vector load 4 elements of 16 bits with register stride
+Vector load 4 whole registers (EEW=16)
 
 Base::
 
@@ -48909,7 +48909,7 @@ Encoding::
 ....
 
 Description::
-Loads 4 segments of 16-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 16 bits.
+Loads 4 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 16 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48938,7 +48938,7 @@ Included in::
 == vl4re32.v
 
 Synopsis::
-Vector load 4 elements of 32 bits with register stride
+Vector load 4 whole registers (EEW=32)
 
 Base::
 
@@ -48960,7 +48960,7 @@ Encoding::
 ....
 
 Description::
-Loads 4 segments of 32-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 32 bits.
+Loads 4 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 32 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -48989,7 +48989,7 @@ Included in::
 == vl4re64.v
 
 Synopsis::
-Vector load 4 elements of 64 bits with register stride
+Vector load 4 whole registers (EEW=64)
 
 Base::
 
@@ -49011,7 +49011,7 @@ Encoding::
 ....
 
 Description::
-Loads 4 segments of 64-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 64 bits.
+Loads 4 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 64 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -49040,7 +49040,7 @@ Included in::
 == vl4re8.v
 
 Synopsis::
-Vector load 4 elements of 8 bits with register stride
+Vector load 4 whole registers (EEW=8)
 
 Base::
 
@@ -49062,7 +49062,7 @@ Encoding::
 ....
 
 Description::
-Loads 4 segments of 8-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 8 bits.
+Loads 4 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 8 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -49091,7 +49091,7 @@ Included in::
 == vl8re16.v
 
 Synopsis::
-Vector load 8 elements of 16 bits with register stride
+Vector load 8 whole registers (EEW=16)
 
 Base::
 
@@ -49113,7 +49113,7 @@ Encoding::
 ....
 
 Description::
-Loads 8 segments of 16-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 16 bits.
+Loads 8 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 16 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -49142,7 +49142,7 @@ Included in::
 == vl8re32.v
 
 Synopsis::
-Vector load 8 elements of 32 bits with register stride
+Vector load 8 whole registers (EEW=32)
 
 Base::
 
@@ -49164,7 +49164,7 @@ Encoding::
 ....
 
 Description::
-Loads 8 segments of 32-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 32 bits.
+Loads 8 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 32 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -49193,7 +49193,7 @@ Included in::
 == vl8re64.v
 
 Synopsis::
-Vector load 8 elements of 64 bits with register stride
+Vector load 8 whole registers (EEW=64)
 
 Base::
 
@@ -49215,7 +49215,7 @@ Encoding::
 ....
 
 Description::
-Loads 8 segments of 64-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 64 bits.
+Loads 8 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 64 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -49244,7 +49244,7 @@ Included in::
 == vl8re8.v
 
 Synopsis::
-Vector load 8 elements of 8 bits with register stride
+Vector load 8 whole registers (EEW=8)
 
 Base::
 
@@ -49266,7 +49266,7 @@ Encoding::
 ....
 
 Description::
-Loads 8 segments of 8-bit elements from memory starting at address in xs1 register with stride in xs2, using vector mask vm, and stores results in vector register vd. The effective element width is 8 bits.
+Loads 8 whole vector registers from memory starting at the address in xs1, into the register group starting at vd. This is a unit-stride, unmasked operation -- there is no stride or mask operand. The effective element width is 8 bits, used only to determine the required alignment of vd.
 
 
 Decode Variables::
@@ -64535,7 +64535,7 @@ Included in::
 == vs1r.v
 
 Synopsis::
-Vector store 1 element with register stride
+Vector store 1 whole register
 
 Base::
 
@@ -64557,7 +64557,7 @@ Encoding::
 ....
 
 Description::
-Stores 1 segment of elements from vector register vs2 to memory starting at address in xs1 register with stride in xs2, using vector mask vm. The effective element width is determined by SEW setting.
+Stores 1 whole vector register, starting at vs3, to memory starting at the address in xs1. This is a unit-stride, unmasked operation -- there is no stride or mask operand, and the operation does not depend on SEW.
 
 
 Decode Variables::
@@ -64586,7 +64586,7 @@ Included in::
 == vs2r.v
 
 Synopsis::
-Vector store 2 elements
+Vector store 2 whole registers
 
 Base::
 
@@ -64608,7 +64608,7 @@ Encoding::
 ....
 
 Description::
-Stores 2 elements from vector register vs2 to memory starting at address in xs1 register, using vector mask vm. This operation stores elements with register stride.
+Stores 2 whole vector registers, starting at vs3, to memory starting at the address in xs1. This is a unit-stride, unmasked operation -- there is no stride or mask operand, and the operation does not depend on SEW.
 
 
 Decode Variables::
@@ -64637,7 +64637,7 @@ Included in::
 == vs4r.v
 
 Synopsis::
-Vector store 4 elements
+Vector store 4 whole registers
 
 Base::
 
@@ -64659,7 +64659,7 @@ Encoding::
 ....
 
 Description::
-Stores 4 elements from vector register vs2 to memory starting at address in xs1 register, using vector mask vm. This operation stores elements with register stride.
+Stores 4 whole vector registers, starting at vs3, to memory starting at the address in xs1. This is a unit-stride, unmasked operation -- there is no stride or mask operand, and the operation does not depend on SEW.
 
 
 Decode Variables::
@@ -64688,7 +64688,7 @@ Included in::
 == vs8r.v
 
 Synopsis::
-Vector store 8 elements with register stride
+Vector store 8 whole registers
 
 Base::
 
@@ -64710,7 +64710,7 @@ Encoding::
 ....
 
 Description::
-Stores 8 segments of elements from vector register vs2 to memory starting at address in xs1 register with stride in xs2, using vector mask vm. The effective element width is determined by SEW setting.
+Stores 8 whole vector registers, starting at vs3, to memory starting at the address in xs1. This is a unit-stride, unmasked operation -- there is no stride or mask operand, and the operation does not depend on SEW.
 
 
 Decode Variables::
