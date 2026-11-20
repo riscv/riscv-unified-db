@@ -207,6 +207,33 @@ fields:
         # SXL != [1, 2] is not defined (3 reserved for RV128, but that isn't ratified)
         return CSR[mstatus].SXL;
       } else {
+        if (implemented?(ExtensionName::Smnpm)) {
+          if (($array_size(SXLEN) > 1) && (csr_value.SXL == $bits(XRegWidth::XLEN32))) {
+            # Selecting XLEN=32 for S-mode clears its pointer masking setting
+            CSR[menvcfg].PMM = 0;
+          }
+        }
+        if (implemented?(ExtensionName::Ssnpm)) {
+          if (implemented?(ExtensionName::H)) {
+            if (($array_size(SXLEN) > 1) && (csr_value.SXL == $bits(XRegWidth::XLEN32))) {
+              # S-mode at XLEN=32 forces VS-mode and VU-mode to XLEN=32
+              CSR[henvcfg].PMM = 0;
+              CSR[hstatus].HUPMM = 0;
+            }
+          }
+        }
+        if (implemented?(ExtensionName::H)) {
+          if (($array_size(SXLEN) > 1) && ($array_size(VSXLEN) > 1) &&
+              (CSR[mstatus].SXL == $bits(XRegWidth::XLEN32)) &&
+              (csr_value.SXL == $bits(XRegWidth::XLEN64))) {
+            # Widening HSXLEN from 32 to 64 widens a mutable VSXL to 64. VSXLEN
+            # then widens from 32 too, which widens a mutable vsstatus.UXL.
+            CSR[hstatus].VSXL = $bits(XRegWidth::XLEN64);
+            if ($array_size(VUXLEN) > 1) {
+              CSR[vsstatus].UXL = $bits(XRegWidth::XLEN64);
+            }
+          }
+        }
         return csr_value.SXL;
       }
 
@@ -257,6 +284,21 @@ fields:
         # UXL != [1, 2] is not defined (3 reserved for RV128, but that isn't ratified)
         return CSR[mstatus].UXL;
       } else {
+        # Selecting XLEN=32 for U-mode clears its pointer masking setting.
+        # mstatus is only written outside a virtual mode, so senvcfg holds
+        # the U-mode setting here.
+        if (implemented?(ExtensionName::Ssnpm)) {
+          if (($array_size(UXLEN) > 1) && (csr_value.UXL == $bits(XRegWidth::XLEN32))) {
+            CSR[senvcfg].PMM = 0;
+          }
+        }
+        if (implemented?(ExtensionName::Smnpm)) {
+          if (!implemented?(ExtensionName::S)) {
+            if (($array_size(UXLEN) > 1) && (csr_value.UXL == $bits(XRegWidth::XLEN32))) {
+              CSR[menvcfg].PMM = 0;
+            }
+          }
+        }
         return csr_value.UXL;
       }
 

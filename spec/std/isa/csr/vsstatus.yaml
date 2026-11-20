@@ -44,22 +44,50 @@ fields:
   UXL:
     location: 33-32
     definedBy:
-      xlen: 64
+      allOf:
+        - xlen: 64
+        - param:
+            name: VSXLEN
+            includes: 64
     description: |
       *VU-mode XLEN*
 
-      Sets the effective XLEN for VU-mode (0 = 32-bit, 1 = 64-bit, 2 = 128-bit).
+      Sets the effective XLEN for VU-mode (1 = 32-bit, 2 = 64-bit, 3 = 128-bit).
+      When VSXLEN is changed from 32 to 64 and VUXLEN is not fixed, UXL gets the
+      value 2 (VU-mode XLEN=64).
 
       [when,"VUXLEN == 32"]
-      Since the hart only supports VUXLEN==32, this is hardwired to 0.
+      Since the hart only supports VUXLEN==32, this is hardwired to 1.
 
       [when,"VUXLEN == 64"]
-      Since the hart only supports VUXLEN==64, this is hardwired to 1.
+      Since the hart only supports VUXLEN==64, this is hardwired to 2.
 
     type(): |
       return ($array_size(VUXLEN) > 1) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
-      return ($array_size(VUXLEN) > 1) ? UNDEFINED_LEGAL : VUXLEN[0];
+      if ($array_size(VUXLEN) > 1) {
+        return UNDEFINED_LEGAL;
+      } else if (VUXLEN[0] == 32) {
+        return $bits(XRegWidth::XLEN32);
+      } else {
+        return $bits(XRegWidth::XLEN64);
+      }
+    sw_write(csr_value): |
+      if ($array_size(VUXLEN) == 1) {
+        # VUXLEN is fixed, so UXL keeps its value
+        return CSR[vsstatus].UXL;
+      }
+      if (implemented?(ExtensionName::Ssnpm)) {
+        if (csr_value.UXL == $bits(XRegWidth::XLEN32)) {
+          # Selecting XLEN=32 for VU-mode clears its pointer masking settings
+          CSR[hstatus].HUPMM = 0;
+          if (virtual_mode?()) {
+            # In VS-mode, senvcfg holds the guest setting for VU-mode
+            CSR[senvcfg].PMM = 0;
+          }
+        }
+      }
+      return csr_value.UXL;
   SPELP:
     location: 23
     long_name: VS-mode Previous Expected Landing Pad state

@@ -10,8 +10,9 @@ description: |
   The `PMLEN` values supported by the `Ssnpm` pointer masking facility
   for the next privilege mode below S-mode (U-mode, and VS-/VU-modes if
   the H extension is present), selected via the `PMM` field in
-  `senvcfg`. `PMLEN` is the number of high-order bits of an address
-  that are masked.
+  `senvcfg` (and, with the H extension, the `PMM` field in `henvcfg`
+  and the `HUPMM` field in `hstatus`). `PMLEN` is the number of
+  high-order bits of an address that are masked.
 
   Options:
 

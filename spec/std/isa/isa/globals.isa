@@ -257,6 +257,7 @@ function set_mode_no_refresh {
     if (new_mode != current_mode) {
       notify_mode_change(new_mode, current_mode);
       current_mode = new_mode;
+      clear_shared_pointer_masking();
     }
   }
 }
@@ -270,6 +271,7 @@ function set_mode {
     if (new_mode != current_mode) {
       notify_mode_change(new_mode, current_mode);
       current_mode = new_mode;
+      clear_shared_pointer_masking();
       refresh_pending_interrupts();
     }
   }
@@ -1022,6 +1024,182 @@ function virtual_mode? {
   }
   body {
     return (mode() == PrivilegeMode::VS) || (mode() == PrivilegeMode::VU);
+  }
+}
+
+function pointer_masking_s_xlen32? {
+  returns Boolean
+  description {
+    Returns true when S-mode currently runs with XLEN=32. A fixed SXLEN is
+    taken from its parameter; `mstatus.SXL` is only read when SXLEN is
+    mutable. The other pointer masking XLEN helpers call this one, so it
+    must not call them.
+  }
+  body {
+    if (MXLEN == 32) {
+      return true;
+    } else {
+      if (implemented?(ExtensionName::S)) {
+        if ($array_size(SXLEN) == 1) {
+          return SXLEN[0] == 32;
+        }
+        return CSR[mstatus].SXL == $bits(XRegWidth::XLEN32);
+      }
+      return false;
+    }
+  }
+}
+
+function pointer_masking_xlen32? {
+  returns Boolean
+  arguments PrivilegeMode mode
+  description {
+    Returns true when privilege mode `mode` currently runs with XLEN=32, as the
+    pointer masking XLEN rules need it. A narrower parent mode forces its
+    children: S-mode at XLEN=32 forces U-mode, VS-mode and VU-mode to XLEN=32,
+    and VS-mode at XLEN=32 forces VU-mode to XLEN=32. A fixed XLEN is taken
+    from its parameter; the XL field is only read when that XLEN is mutable.
+  }
+  body {
+    if (MXLEN == 32) {
+      return true;
+    } else {
+      Boolean s32 = pointer_masking_s_xlen32?();
+      if (mode == PrivilegeMode::M) {
+        return false;
+      } else if (mode == PrivilegeMode::S) {
+        return s32;
+      } else if (mode == PrivilegeMode::U) {
+        if (s32) {
+          return true;
+        }
+        if (implemented?(ExtensionName::U)) {
+          if ($array_size(UXLEN) == 1) {
+            return UXLEN[0] == 32;
+          }
+          return CSR[mstatus].UXL == $bits(XRegWidth::XLEN32);
+        }
+        return false;
+      }
+      if (implemented?(ExtensionName::H)) {
+        if (mode == PrivilegeMode::VS) {
+          if (s32) {
+            return true;
+          }
+          if ($array_size(VSXLEN) == 1) {
+            return VSXLEN[0] == 32;
+          }
+          return CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32);
+        }
+        return pointer_masking_vu_xlen32?(CSR[hstatus].VSXL, CSR[vsstatus].UXL);
+      }
+      return false;
+    }
+  }
+}
+
+function pointer_masking_vu_xlen32? {
+  returns Boolean
+  arguments Bits<2> vsxl, Bits<2> uxl
+  description {
+    Returns true when VU-mode runs with XLEN=32, taking `vsxl` as the value of
+    `hstatus.VSXL` and `uxl` as the value of `vsstatus.UXL`. A write to
+    `hstatus` passes the values it leaves, so that HUPMM is checked against
+    the same write.
+  }
+  body {
+    if (MXLEN == 32) {
+      return true;
+    } else {
+      if (pointer_masking_s_xlen32?()) {
+        return true;
+      }
+      if (implemented?(ExtensionName::H)) {
+        if ($array_size(VSXLEN) == 1) {
+          if (VSXLEN[0] == 32) {
+            return true;
+          }
+        } else if (vsxl == $bits(XRegWidth::XLEN32)) {
+          return true;
+        }
+        if ($array_size(VUXLEN) == 1) {
+          return VUXLEN[0] == 32;
+        }
+        return uxl == $bits(XRegWidth::XLEN32);
+      }
+      return false;
+    }
+  }
+}
+
+function vsstatus_uxl_after_vsxl_write {
+  returns Bits<2>
+  arguments Bits<2> new_vsxl
+  description {
+    Returns the value `vsstatus.UXL` holds after `hstatus.VSXL` changes to
+    `new_vsxl`. When VSXLEN widens from 32 to 64 and UXL is not restricted to
+    a single value, UXL gets the widest supported width, XLEN=64.
+  }
+  body {
+    if (MXLEN == 32) {
+      return new_vsxl;
+    } else {
+      if (($array_size(VUXLEN) > 1) &&
+          (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32)) &&
+          (new_vsxl == $bits(XRegWidth::XLEN64))) {
+        return $bits(XRegWidth::XLEN64);
+      }
+      return CSR[vsstatus].UXL;
+    }
+  }
+}
+
+function vsxl_after_write {
+  returns Bits<2>
+  arguments Bits<2> value
+  description {
+    Returns the value `hstatus.VSXL` holds after software writes `value` to
+    it. VSXL keeps its value when VSXLEN is fixed, and when `value` is
+    reserved, selects XLEN=128, or selects a wider XLEN than HS-mode.
+  }
+  body {
+    if (MXLEN == 32) {
+      return value;
+    } else {
+      if ($array_size(VSXLEN) == 1) {
+        return CSR[hstatus].VSXL;
+      }
+      if ((value != $bits(XRegWidth::XLEN32)) && (value != $bits(XRegWidth::XLEN64))) {
+        return CSR[hstatus].VSXL;
+      }
+      if (value > CSR[mstatus].SXL) {
+        return CSR[hstatus].VSXL;
+      }
+      return value;
+    }
+  }
+}
+
+function clear_shared_pointer_masking {
+  description {
+    Called after every privilege mode change. `senvcfg` is shared: it controls
+    VU-mode in a virtual mode and U-mode otherwise. When the mode it controls
+    after the change runs with XLEN=32, `senvcfg.PMM` is cleared, even though
+    no XL field was written (for example on entry to an RV32 guest, or on a
+    return from a guest to a host whose U-mode runs with XLEN=32).
+  }
+  body {
+    if (implemented?(ExtensionName::Ssnpm)) {
+      PrivilegeMode controlled_mode = PrivilegeMode::U;
+      if (implemented?(ExtensionName::H)) {
+        if (virtual_mode?()) {
+          controlled_mode = PrivilegeMode::VU;
+        }
+      }
+      if (pointer_masking_xlen32?(controlled_mode)) {
+        CSR[senvcfg].PMM = 0;
+      }
+    }
   }
 }
 
