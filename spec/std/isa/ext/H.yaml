@@ -13,9 +13,93 @@ versions:
     state: ratified
     ratification_date: 2019-12
 requirements:
-  extension:
-    name: S
-    version: ">= 1.12.0"
+  allOf:
+    - extension:
+        name: S
+        version: ">= 1.12.0"
+    - extension:
+        name: I
+    - if:
+        param:
+          name: SXLEN
+          includes: 32
+      then:
+        extension:
+          name: Sv32
+    - if:
+        param:
+          name: SXLEN
+          includes: 64
+      then:
+        extension:
+          name: Sv39
+    # TODO: The following is an attempt to gauge if CSR `mtval` is read-write.
+    #       It is arguably difficult to maintain, but it is also too complex
+    #       for the "eqntott" solver, resulting in "too many inputs" errors.
+    #       For now, then, "mtval" is always considered read-write.
+    #- anyOf:
+    #    - param:
+    #        anyOf:
+    #          - name: REPORT_VA_IN_MTVAL_ON_BREAKPOINT
+    #            equal: true
+    #          - name: REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION
+    #            equal: true
+    #          - name: REPORT_VA_IN_MTVAL_ON_LOAD_MISALIGNED
+    #            equal: true
+    #          - name: REPORT_VA_IN_MTVAL_ON_STORE_AMO_MISALIGNED
+    #            equal: true
+    #          - name: REPORT_VA_IN_MTVAL_ON_INSTRUCTION_MISALIGNED
+    #            equal: true
+    #          - name: REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT
+    #            equal: true
+    #          - name: REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT
+    #            equal: true
+    #          - name: REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT
+    #            equal: true
+    #          - name: REPORT_VA_IN_MTVAL_ON_LOAD_PAGE_FAULT
+    #            equal: true
+    #          - name: REPORT_VA_IN_MTVAL_ON_STORE_AMO_PAGE_FAULT
+    #            equal: true
+    #          - name: REPORT_VA_IN_MTVAL_ON_INSTRUCTION_PAGE_FAULT
+    #            equal: true
+    #    - allOf:
+    #        - extension:
+    #            name: Zicfilp
+    #        - param:
+    #            name: REPORT_CAUSE_IN_MTVAL_ON_LANDING_PAD_SOFTWARE_CHECK
+    #            equal: true
+    #    - allOf:
+    #        - extension:
+    #            name: Zicfiss
+    #        - param:
+    #            name: REPORT_CAUSE_IN_MTVAL_ON_SHADOW_STACK_SOFTWARE_CHECK
+    #            equal: true
+    #    - allOf:
+    #        - extension:
+    #            name: Sdtrig
+    #        - param:
+    #            name: SDTRIG_MCONTROL6_SUPPORTED_TRIGGERS
+    #            includes: true
+    #        - param:
+    #            anyOf:
+    #              - name: SDTRIG_MCONTROL6_EXECUTE_WRITABLE
+    #                equal: true
+    #              - name: SDTRIG_MCONTROL6_LOAD_WRITABLE
+    #                equal: true
+    #              - name: SDTRIG_MCONTROL6_STORE_WRITABLE
+    #                equal: true
+    #        - param:
+    #            anyOf:
+    #              - name: SDTRIG_M_WRITABLE
+    #                equal: true
+    #              - name: SDTRIG_S_WRITABLE
+    #                equal: true
+    #              - name: SDTRIG_U_WRITABLE
+    #                equal: true
+    #              - name: SDTRIG_VS_WRITABLE
+    #                equal: true
+    #              - name: SDTRIG_VU_WRITABLE
+    #                equal: true
 
 description: |
   This chapter describes the RISC-V hypervisor extension, which
