@@ -6,9 +6,11 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vslidedown.vx
-long_name: "Vector slide down with scalar"
+long_name: "Vector slide down by scalar offset"
 description: |
-  Slides elements in vector register vs2 down by 1 position, inserting scalar register xs1 at the top, and stores results in vector register vd, using vector mask vm.
+  Slides elements in vector register vs2 down by the unsigned offset in scalar register xs1, so that
+  vd[i] = vs2[i+offset], and stores results in vector register vd, using vector mask vm. Source
+  elements at or beyond VLMAX read as zero; no scalar value is inserted.
 definedBy:
   extension:
     name: Zvl32b

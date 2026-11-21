@@ -6,9 +6,11 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vslidedown.vi
-long_name: "Vector slide down with immediate"
+long_name: "Vector slide down by immediate offset"
 description: |
-  Slides elements in vector register vs2 down by 1 position, inserting immediate value at the top, and stores results in vector register vd, using vector mask vm.
+  Slides elements in vector register vs2 down by the 5-bit unsigned immediate imm (zero-extended),
+  so that vd[i] = vs2[i+imm], and stores results in vector register vd, using vector mask vm. Source
+  elements at or beyond VLMAX read as zero; no scalar value is inserted.
 definedBy:
   extension:
     name: Zvl32b

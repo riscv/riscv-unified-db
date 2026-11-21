@@ -65941,7 +65941,7 @@ Included in::
 == vslidedown.vi
 
 Synopsis::
-Vector slide down with immediate
+Vector slide down by immediate offset
 
 Base::
 
@@ -65963,7 +65963,9 @@ Encoding::
 ....
 
 Description::
-Slides elements in vector register vs2 down by 1 position, inserting immediate value at the top, and stores results in vector register vd, using vector mask vm.
+Slides elements in vector register vs2 down by the 5-bit unsigned immediate imm (zero-extended),
+so that vd[i] = vs2[i+imm], and stores results in vector register vd, using vector mask vm. Source
+elements at or beyond VLMAX read as zero; no scalar value is inserted.
 
 
 Decode Variables::
@@ -65994,7 +65996,7 @@ Included in::
 == vslidedown.vx
 
 Synopsis::
-Vector slide down with scalar
+Vector slide down by scalar offset
 
 Base::
 
@@ -66016,7 +66018,9 @@ Encoding::
 ....
 
 Description::
-Slides elements in vector register vs2 down by 1 position, inserting scalar register xs1 at the top, and stores results in vector register vd, using vector mask vm.
+Slides elements in vector register vs2 down by the unsigned offset in scalar register xs1, so that
+vd[i] = vs2[i+offset], and stores results in vector register vd, using vector mask vm. Source
+elements at or beyond VLMAX read as zero; no scalar value is inserted.
 
 
 Decode Variables::
@@ -66047,7 +66051,7 @@ Included in::
 == vslideup.vi
 
 Synopsis::
-Vector slide up with immediate
+Vector slide up by immediate offset
 
 Base::
 
@@ -66069,7 +66073,9 @@ Encoding::
 ....
 
 Description::
-Slides elements in vector register vs2 up by 1 position, inserting immediate value at the bottom, and stores results in vector register vd, using vector mask vm.
+Slides elements in vector register vs2 up by the 5-bit unsigned immediate imm (zero-extended), so
+that vd[i+imm] = vs2[i], and stores results in vector register vd, using vector mask vm.
+Destination elements below the offset are not written; no scalar value is inserted.
 
 
 Decode Variables::
@@ -66100,7 +66106,7 @@ Included in::
 == vslideup.vx
 
 Synopsis::
-Vector slide up with scalar
+Vector slide up by scalar offset
 
 Base::
 
@@ -66122,7 +66128,9 @@ Encoding::
 ....
 
 Description::
-Slides elements in vector register vs2 up by 1 position, inserting scalar register xs1 at the bottom, and stores results in vector register vd, using vector mask vm.
+Slides elements in vector register vs2 up by the unsigned offset in scalar register xs1, so that
+vd[i+offset] = vs2[i], and stores results in vector register vd, using vector mask vm. Destination
+elements below the offset are not written; no scalar value is inserted.
 
 
 Decode Variables::
