@@ -7571,7 +7571,7 @@ module Idl
 
         @memo.width = width
       when /^([0-9]*)(s?)$/
-        signed = ::Regexp.last_match(3)
+        signed = ::Regexp.last_match(2)
 
         width = signed == "s" ? value(symtab).bit_length + 1 : value(symtab).bit_length
         width = 1 if width.zero? # happens when the literal is '0'

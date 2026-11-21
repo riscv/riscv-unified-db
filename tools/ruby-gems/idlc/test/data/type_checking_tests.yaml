@@ -108,7 +108,7 @@ primitive_types_bits:
     idl: "-13s"
     expected_type:
       kind: bits
-      width: 4 # 4 bits for signed -13 (13s is the literal, then negated)
+      width: 5 # 5 bits for signed -13 (13s needs 4 bits, signed needs +1)
       signed: true
     should_pass: true
 
