@@ -215,6 +215,20 @@ fields:
         name: Smcdeleg
     type: RW
     reset_value: UNDEFINED_LEGAL
+  DTE:
+    location: 59
+    long_name: Double Trap Enable
+    description: |
+      Enables the Ssdbltrp extension for privilege modes less than M.
+
+      When `DTE` is 0, the implementation behaves as though Ssdbltrp is not
+      implemented, and `sstatus.SDT`, `vsstatus.SDT`, and `henvcfg.DTE` are
+      read-only zero.
+    definedBy:
+      extension:
+        name: Ssdbltrp
+    type: RW
+    reset_value: UNDEFINED_LEGAL
   CBZE:
     location: 7
     description: |

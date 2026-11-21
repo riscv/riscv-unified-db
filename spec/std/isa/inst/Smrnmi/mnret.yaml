@@ -38,6 +38,24 @@ operation(): |
         CSR[mstatush].MDT = 1'b0;
       }
     }
+    if (implemented?(ExtensionName::Ssdbltrp)) {
+      # The new privilege mode is not M here. If it is U, VS, or VU, clear
+      # sstatus.SDT. If it is VU, also clear vsstatus.SDT.
+      Bits<1> mnpv = 0;
+      if (implemented?(ExtensionName::H)) {
+        mnpv = CSR[mnstatus].MNPV;
+      }
+      if (CSR[mnstatus].MNPP == 2'b00 || mnpv == 1'b1) {
+        # The spec clears sstatus.SDT. UDB models sstatus as an alias of mstatus,
+        # so writing mstatus.SDT clears sstatus.SDT.
+        CSR[mstatus].SDT = 1'b0;
+      }
+      if (implemented?(ExtensionName::H)) {
+        if (CSR[mnstatus].MNPP == 2'b00 && mnpv == 1'b1) {
+          CSR[vsstatus].SDT = 1'b0;
+        }
+      }
+    }
   }
   CSR[mnstatus].NMIE = 1'b1;
   if (CSR[mnstatus].MNPP == 2'b00) {
