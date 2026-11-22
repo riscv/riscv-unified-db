@@ -39129,6 +39129,40 @@ h! `MemoryOperation`
 |===
 
 
+[#udb-function-clear_shared_pointer_masking]
+=== clear_shared_pointer_masking
+Called after every privilege mode change. `senvcfg` is shared: it controls
+VU-mode in a virtual mode and U-mode otherwise. When the mode it controls
+after the change runs with XLEN=32, `senvcfg.PMM` is cleared, even though
+no XL field was written (for example on entry to an RV32 guest, or on a
+return from a guest to a host whose U-mode runs with XLEN=32).
+  
+
+[cols="1,4"]
+|===
+h| Return Type h| `void`
+h| Arguments
+a|
+
+None
+
+|===
+
+[source,idl,subs="specialchars,macros"]
+----
+if pass:[(]xref:#udb-function-implemented?[implemented?]pass:[(]ExtensionName::Ssnpm)) {
+  PrivilegeMode controlled_mode = PrivilegeMode::U;
+  if pass:[(]xref:#udb-function-implemented?[implemented?]pass:[(]ExtensionName::H)) {
+    if pass:[(]xref:#udb-function-virtual_mode?[virtual_mode?]pass:[(])) {
+      controlled_mode = PrivilegeMode::VU;
+    }
+  }
+  if pass:[(]xref:#udb-function-pointer_masking_xlen32?[pointer_masking_xlen32?]pass:[(]controlled_mode)) {
+    CSR[xref:#udb-csr-senvcfg[senvcfg]].xref:#udb-csrfield-senvcfg-PMM[PMM] = 0;
+  }
+}
+----
+
 [#udb-function-creg2reg]
 === creg2reg
 Maps a C register index (_e.g._, `rs1'` in the specification) to an X register index. From the
@@ -40813,6 +40847,7 @@ h! `PrivilegeMode`
 if pass:[(]new_mode != current_mode) {
   xref:#udb-function-notify_mode_change[notify_mode_change]pass:[(]new_mode, current_mode);
   current_mode = new_mode;
+  xref:#udb-function-clear_shared_pointer_masking[clear_shared_pointer_masking]pass:[(]);
   xref:#udb-function-refresh_pending_interrupts[refresh_pending_interrupts]pass:[(]);
 }
 ----
