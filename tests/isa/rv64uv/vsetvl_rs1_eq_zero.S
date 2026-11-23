@@ -66,6 +66,39 @@ RVTEST_CODE_BEGIN
     srli x5, x5, __riscv_xlen - 1; \
   )
 
+  # rd != x0, rs1 == x0: SEW=8, LMUL=1/2, VLMAX = 128/8/2 = 8
+  TEST_CASE(7, x5, 0x8, \
+    li x4, 0x07; \
+    vsetvl x5, x0, x4; \
+  )
+
+  # rd != x0, rs1 == x0: SEW=8, LMUL=1/4, VLMAX = 128/8/4 = 4
+  TEST_CASE(8, x5, 0x4, \
+    li x4, 0x06; \
+    vsetvl x5, x0, x4; \
+  )
+
+  # rd == x0, rs1 == x0 keeps vl: set vl=5 with SEW=8, LMUL=1/2, then
+  # change to SEW=16, LMUL=1. Both have VLMAX = 8.
+  TEST_CASE(9, x5, 0x5, \
+    li x2, 0x5; \
+    li x4, 0x07; \
+    vsetvl x6, x2, x4; \
+    li x4, 0x08; \
+    vsetvl x0, x0, x4; \
+    csrr x5, vl; \
+  )
+
+  # and writes the new vtype without setting vtype.vill
+  TEST_CASE(10, x5, 0x08, \
+    li x2, 0x5; \
+    li x4, 0x07; \
+    vsetvl x6, x2, x4; \
+    li x4, 0x08; \
+    vsetvl x0, x0, x4; \
+    csrr x5, vtype; \
+  )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END

@@ -41,6 +41,15 @@ RVTEST_CODE_BEGIN
     vsetvl x5, x2, x4; \
   )
 
+# tests for VLEN=128bits, AVL >= 2*VLMAX
+
+  # SEW=8, LMUL=1/2, VLMAX=8
+  TEST_CASE(5, x5, 0x8, \
+    li x2, 0x20; \
+    li x4, 0x07; \
+    vsetvl x5, x2, x4; \
+  )
+
   TEST_PASSFAIL
 
 RVTEST_CODE_END
