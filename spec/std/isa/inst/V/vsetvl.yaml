@@ -77,18 +77,29 @@ operation(): |
     } else if (xs1 == 0) {
       # rs1 == x0, rd == x0: keep existing vl.
       # A change of VLMAX is reserved, and so is vill being set beforehand.
-      if (old_vill || (vlmax != old_vlmax)) {
+      # "never" keeps the new vtype and the existing vl.
+      Boolean set_vill = false;
+      if (old_vill) {
         if (RESERVED_VSET_X0X0_VILL_SET == "always") {
-          CSR[vtype].VILL = 1;
-          CSR[vtype].VMA = 0;
-          CSR[vtype].VTA = 0;
-          CSR[vtype].VSEW = 0;
-          CSR[vtype].VLMUL = 0;
-          CSR[vl].VALUE = 0;
+          set_vill = true;
         } else if (RESERVED_VSET_X0X0_VILL_SET == "custom") {
-          unpredictable("vset{i}vl{i} with rs1 = x0 and rd = x0 changed VLMAX, or vill was set beforehand");
+          unpredictable("vset{i}vl{i} with rs1 = x0 and rd = x0 while vill was set");
         }
-        # "never": keep the new vtype and the existing vl
+      }
+      if (vlmax != old_vlmax) {
+        if (RESERVED_VSET_X0X0_VLMAX_CHANGE == "always") {
+          set_vill = true;
+        } else if (RESERVED_VSET_X0X0_VLMAX_CHANGE == "custom") {
+          unpredictable("vset{i}vl{i} with rs1 = x0 and rd = x0 changed VLMAX");
+        }
+      }
+      if (set_vill) {
+        CSR[vtype].VILL = 1;
+        CSR[vtype].VMA = 0;
+        CSR[vtype].VTA = 0;
+        CSR[vtype].VSEW = 0;
+        CSR[vtype].VLMUL = 0;
+        CSR[vl].VALUE = 0;
       }
     } else if (avl <= vlmax) {
       # Normal stripmining: AVL <= VLMAX
