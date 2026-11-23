@@ -25,11 +25,11 @@ RVTEST_CODE_BEGIN
   )
 
   TEST_CASE(3, x2, 0x2, \
-    vsetivli x2, 0x2, 0x23; \
+    vsetivli x2, 0x2, 0x01; \
   )
 
   TEST_CASE(4, x2, 0x2, \
-    vsetivli x2, 0x2, 0xeb; \
+    vsetivli x2, 0x2, 0xc7; \
   )
 
   TEST_PASSFAIL

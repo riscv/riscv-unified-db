@@ -28,8 +28,16 @@ access:
   vu: always
 data_independent_timing: false
 operation(): |
-  # Save old vector state for ratio comparison (needed for xs1==0 && xd==0 case)
+  # Save old VLMAX and vill for the xs1==0 && xd==0 case
+  Boolean old_vill = CSR[vtype].VILL == 1;
   VectorState old_state = vector_state();
+  XReg vlen = VLEN;
+  XReg old_vlmax;
+  if (old_state.lmul_type == VectorLmulType::Multiply) {
+    old_vlmax = (vlen << old_state.log2_lmul) >> old_state.log2_sew;
+  } else {
+    old_vlmax = (vlen >> old_state.log2_lmul) >> old_state.log2_sew;
+  }
 
   XReg new_vtype = X[xs2];
   if ((new_vtype[xlen() - 1] == 1'b1) # software is setting the illegal bit
@@ -53,8 +61,12 @@ operation(): |
     CSR[vtype].VLMUL = new_vtype[2:0];
 
     VectorState state = vector_state();
-    XReg vlen = VLEN;
-    XReg vlmax = (vlen << state.log2_lmul) >> state.log2_sew;
+    XReg vlmax;
+    if (state.lmul_type == VectorLmulType::Multiply) {
+      vlmax = (vlen << state.log2_lmul) >> state.log2_sew;
+    } else {
+      vlmax = (vlen >> state.log2_lmul) >> state.log2_sew;
+    }
     XReg avl = X[xs1];
     XReg ceil_avl_over_two = (avl + 1) / 2;
 
@@ -63,19 +75,21 @@ operation(): |
       # rs1 == x0, rd != x0: set vl to VLMAX
       CSR[vl].VALUE = vlmax;
     } else if (xs1 == 0) {
-      # rs1 == x0, rd == x0: keep existing vl, but check LMUL/SEW ratio
-      XReg old_ratio = old_state.log2_sew - old_state.log2_lmul;
-      XReg new_ratio = state.log2_sew - state.log2_lmul;
-      if (new_ratio != old_ratio) {
-        # Ratio changed - set vill and clear vl
-        CSR[vtype].VILL = 1;
-        CSR[vtype].VMA = 0;
-        CSR[vtype].VTA = 0;
-        CSR[vtype].VSEW = 0;
-        CSR[vtype].VLMUL = 0;
-        CSR[vl].VALUE = 0;
+      # rs1 == x0, rd == x0: keep existing vl.
+      # A change of VLMAX is reserved, and so is vill being set beforehand.
+      if (old_vill || (vlmax != old_vlmax)) {
+        if (RESERVED_VSET_X0X0_VILL_SET == "always") {
+          CSR[vtype].VILL = 1;
+          CSR[vtype].VMA = 0;
+          CSR[vtype].VTA = 0;
+          CSR[vtype].VSEW = 0;
+          CSR[vtype].VLMUL = 0;
+          CSR[vl].VALUE = 0;
+        } else if (RESERVED_VSET_X0X0_VILL_SET == "custom") {
+          unpredictable("vset{i}vl{i} with rs1 = x0 and rd = x0 changed VLMAX, or vill was set beforehand");
+        }
+        # "never": keep the new vtype and the existing vl
       }
-      # else: keep vl unchanged
     } else if (avl <= vlmax) {
       # Normal stripmining: AVL <= VLMAX
       CSR[vl].VALUE = avl;
