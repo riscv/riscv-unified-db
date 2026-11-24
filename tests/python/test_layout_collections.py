@@ -51,14 +51,13 @@ def test_job_inputs_and_collection_are_immutable_snapshots() -> None:
 
 
 @pytest.mark.parametrize("path", ["../outside", "/outside", r"bad\path", "bad:path", "bad\npath"])
-def test_collection_rejects_unsafe_source_output_and_resource_roots(path: str) -> None:
+def test_collection_rejects_unsafe_source_and_output_roots(path: str) -> None:
     job = LayoutJob(PurePosixPath("test.layout"), PurePosixPath("test.yaml"), {})
-    for field in ("source_root", "output_root", "resource_root"):
+    for field in ("source_root", "output_root"):
         arguments = {
             "name": "test",
             "source_root": PurePosixPath("."),
             "output_root": PurePosixPath("out"),
-            "resource_root": PurePosixPath("resources"),
             "jobs": (job,),
         }
         arguments[field] = PurePosixPath(path)
@@ -117,14 +116,14 @@ def test_explicit_source_root_never_falls_back_to_resources(tmp_path: Path) -> N
     assert not (tmp_path / "outputs").exists()
 
 
-def test_unbundled_collection_requires_explicit_sources(tmp_path: Path) -> None:
+def test_collection_without_sources_reports_missing_data(tmp_path: Path) -> None:
     collection = LayoutCollection(
         "custom",
         PurePosixPath("templates"),
         PurePosixPath("generated"),
         (LayoutJob(PurePosixPath("test.layout"), PurePosixPath("test.yaml"), {}),),
     )
-    with pytest.raises(LayoutError, match="no sources or bundled layout resources"):
+    with pytest.raises(LayoutError, match="bundled layout source does not exist"):
         layout_plan(tmp_path, collections=(collection,))
 
 
@@ -146,13 +145,13 @@ def test_separate_source_root_cannot_be_overwritten_through_a_different_logical_
     assert template.read_text() == "# copyright\nname: custom\n"
 
 
-def test_custom_collection_can_use_arbitrary_package_resource_root(
+def test_custom_collection_falls_back_to_data_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from udb import layouts
 
     resources = tmp_path / "resources"
-    template = resources / "vendor/data/test.layout"
+    template = resources / "input/templates/test.layout"
     template.parent.mkdir(parents=True)
     template.write_text("# copyright\nname: {{ name }}\n", encoding="utf-8")
     monkeypatch.setattr(layouts, "package_data_root", lambda: resources)
@@ -161,7 +160,6 @@ def test_custom_collection_can_use_arbitrary_package_resource_root(
         PurePosixPath("input/templates"),
         PurePosixPath("output/csrs"),
         (LayoutJob(PurePosixPath("test.layout"), PurePosixPath("test.yaml"), {"name": "custom"}),),
-        resource_root=PurePosixPath("vendor/data"),
     )
     output_root = tmp_path / "output"
     assert generate_layouts(output_root, collections=(collection,)) == (
@@ -205,5 +203,5 @@ def test_direct_job_cannot_escape_package_resources(tmp_path: Path) -> None:
     job = LayoutJob(PurePosixPath("custom/test.layout"), PurePosixPath("out.yaml"), {})
     with pytest.raises(LayoutError, match="unsafe layout path"):
         render_job(job, tmp_path, repository_sources=False, resource=PurePosixPath("../escape"))
-    with pytest.raises(LayoutError, match="no bundled layout resource mapping"):
+    with pytest.raises(LayoutError, match="bundled layout source does not exist"):
         render_job(job, tmp_path, repository_sources=False)

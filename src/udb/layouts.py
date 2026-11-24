@@ -690,11 +690,7 @@ def _layout_text(
         if not repository_source.resolve().is_relative_to(root.resolve()):
             raise LayoutError(f"layout source escapes source root: {repository_source}")
         return _read_layout_text(repository_source, repository_source)
-    if resource is None:
-        if not source.is_relative_to(PurePosixPath("spec/std/isa")):
-            raise LayoutError(f"{source}: no bundled layout resource mapping")
-        resource = PurePosixPath("layouts") / source.relative_to("spec/std/isa")
-    resource = _relative_path(resource)
+    resource = _relative_path(source if resource is None else resource)
     try:
         bundled = package_data_root().joinpath(*resource.parts)
     except metadata.PackageNotFoundError as error:
@@ -736,21 +732,12 @@ def layout_plan(
         if repository_sources and len(present) != len(sources):
             missing = next(source for source in sources if source not in present)
             raise LayoutError(f"repository layout source does not exist: {inputs / missing}")
-        if not repository_sources and collection.resource_root is None:
-            raise LayoutError(f"{collection.name}: no sources or bundled layout resources")
         parsed: dict[PurePosixPath, tuple[object, ...]] = {}
         for job in collection.jobs:
             relative = collection.source_root / job.source
             source = Path(relative.as_posix())
             if relative not in parsed:
-                resource = (
-                    None
-                    if collection.resource_root is None
-                    else collection.resource_root / job.source
-                )
-                template = _layout_text(
-                    inputs, relative, repository_sources=repository_sources, resource=resource
-                )
+                template = _layout_text(inputs, relative, repository_sources=repository_sources)
                 if repository_sources:
                     input_paths.add(inputs / relative)
                 parsed[relative] = _parse(template, source)

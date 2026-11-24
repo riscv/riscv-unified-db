@@ -140,7 +140,7 @@ def test_qc_bundled_resources_generate_without_any_repository_source(
 ) -> None:
     resources = tmp_path / "installed-data"
     for relative in {job.source for job in QC.jobs}:
-        destination = resources / QC.resource_root / relative
+        destination = resources / QC.source_root / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / QC.source_root / relative, destination)
     monkeypatch.setattr(layouts, "package_data_root", lambda: resources)
@@ -156,7 +156,7 @@ def test_qc_bundled_resources_generate_without_any_repository_source(
             )
             == ORACLE["outputs"][output.path.name]["accepted"].encode()
         )
-    resource = resources / QC.resource_root / QC.jobs[0].source
+    resource = resources / QC.source_root / QC.jobs[0].source
     resource.write_bytes(b"\xff")
     with pytest.raises(LayoutError, match="not valid UTF-8"):
         layout_plan(output_root, collections=(QC,))

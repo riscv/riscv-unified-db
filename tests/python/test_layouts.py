@@ -135,7 +135,7 @@ def test_packaged_layout_reports_invalid_utf8(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     package_root = tmp_path / "package"
-    resource = package_root / "layouts/test/bad.layout"
+    resource = package_root / "spec/std/isa/test/bad.layout"
     resource.parent.mkdir(parents=True)
     resource.write_bytes(b"\xff")
     monkeypatch.setattr(layouts, "package_data_root", lambda: package_root)

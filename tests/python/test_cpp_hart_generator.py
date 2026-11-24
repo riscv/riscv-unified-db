@@ -5,7 +5,6 @@ import hashlib
 import json
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -24,7 +23,7 @@ from udb.cpp_hart.catalog import Catalog
 from udb.cpp_hart.context import Context
 from udb.cpp_hart.csrs import _reset_order
 from udb.cpp_hart.generator import _unavailable, build_type
-from udb.cpp_hart.resources import package_mapping, renode_repl, standalone_cmake
+from udb.cpp_hart.resources import renode_repl, standalone_cmake
 from udb.idl_csr_environment import _CsrFieldAdapter
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -238,46 +237,6 @@ def test_renode_example_is_bound_without_checkout_paths(plan):
         renode_repl(b'configFile: "cfgs/@UDB_CONFIG@.json"\n', "rv64")
 
 
-def test_package_mapping_does_not_duplicate_static_sources():
-    mapping = package_mapping(ROOT)
-    assert ROOT / "src/udb/cpp_hart/runtime/cpp/include/udb/bits.hpp" in mapping
-    assert all(
-        str(destination).startswith("udb/_data/cpp_hart/")
-        or str(destination) == "udb/cpp_hart/NOTICE"
-        for destination in mapping.values()
-    )
-    assert len(set(mapping.values())) == len(mapping)
-
-
-def test_asset_manifest_isolated_from_runtime_dependencies():
-    script = """
-import importlib.util
-from pathlib import Path
-import sys
-root = Path(sys.argv[1])
-spec = importlib.util.spec_from_file_location("cpp_assets", root / "src/udb/cpp_hart/asset_manifest.py")
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
-mapping = module.package_mapping(root)
-test_root = root / "src/udb/cpp_hart/runtime/cpp/test"
-expected_tests = {
-    path for path in test_root.iterdir()
-    if path.is_file() and path.suffix in {".cmake", ".cpp", ".hpp"}
-}
-assert expected_tests <= mapping.keys()
-assert test_root / "bits-tests.cmake" in mapping
-assert test_root / "bits_property.hpp" in mapping
-assert len(mapping) == len(tuple(module.resource_entries(root))) + 1
-"""
-    result = subprocess.run(
-        [sys.executable, "-S", "-c", script, str(ROOT)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
-
-
 def test_runtime_source_alias_is_rejected_before_writes(architecture, tmp_path):
     for _, content, _, origin in RuntimeResources.from_path(ROOT).files():
         target = tmp_path / origin
@@ -291,17 +250,24 @@ def test_runtime_source_alias_is_rejected_before_writes(architecture, tmp_path):
     assert license_file.read_bytes() == original
 
 
-def test_bundled_runtime_assets_are_independent_of_checkout(tmp_path, monkeypatch):
+def test_bundled_runtime_uses_checkout_in_tree():
+    original = list(RuntimeResources.from_path(ROOT).files())
+    assert list(RuntimeResources.bundled().files()) == original
+
+
+def test_bundled_runtime_without_tests_is_independent_of_checkout(tmp_path, monkeypatch):
     from udb.cpp_hart import resources
 
     data = tmp_path / "_data"
-    for source, destination in package_mapping(ROOT).items():
-        if str(destination).startswith("udb/_data/"):
-            target = tmp_path / destination.relative_to("udb")
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(source.read_bytes())
+    original = {}
+    for name, content, _, origin in RuntimeResources.from_path(ROOT).files():
+        if str(name).startswith("test/") or str(origin) in resources.TEST_SUPPORT:
+            continue
+        original[name] = content
+        target = data / origin
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
     monkeypatch.setattr(resources, "package_data_root", lambda: data)
-    original = {name: content for name, content, _, _ in RuntimeResources.from_path(ROOT).files()}
     copied = {name: content for name, content, _, _ in RuntimeResources.bundled().files()}
     assert copied == original
 

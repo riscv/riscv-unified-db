@@ -76,11 +76,6 @@ SLOW_TESTS = {
     },
 }
 
-PACKAGE_FILES = {
-    "tests/python/test_distribution.py",
-    "tests/python/test_qc_layout_packaging.py",
-}
-
 IDL_CONFIG_TEST = "tests/python/test_idl_architecture_real.py"
 IDL_CONFIGURATIONS = ("_", "rv32", "rv64", "qc_iu")
 
@@ -112,8 +107,6 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         original_name = getattr(item, "originalname", item.name.split("[", 1)[0])
         if original_name in SLOW_TESTS.get(relative, ()):
             item.add_marker(pytest.mark.slow)
-        if relative in PACKAGE_FILES:
-            item.add_marker(pytest.mark.package)
         for marker in item.iter_markers("needs_tool"):
             tool = str(marker.args[0])
             if shutil.which(tool) is not None:

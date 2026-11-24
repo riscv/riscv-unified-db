@@ -249,15 +249,15 @@ class Database:
 
     @classmethod
     def bundled(cls) -> Self:
-        """Open the standard ISA and schemas bundled in the installed package."""
+        """Open the standard ISA and schemas from the checkout or the installed wheel."""
         try:
             data_root = package_data_root()
         except metadata.PackageNotFoundError as error:
             raise DataError("The installed udb distribution could not be located") from error
-        isa_root = data_root.joinpath("isa")
+        isa_root = data_root.joinpath("spec", "std", "isa")
         if not isa_root.is_dir():
             raise DataError(f"Bundled ISA data directory is missing: {isa_root}")
-        schemas_root = data_root.joinpath("schemas")
+        schemas_root = data_root.joinpath("spec", "schemas")
         return cls(isa_root, schemas_root=schemas_root if schemas_root.is_dir() else None)
 
     @classmethod

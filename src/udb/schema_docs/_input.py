@@ -108,7 +108,7 @@ class SchemaDocsProjectionWarning(UserWarning):
 
 def snapshot(store: SchemaStore | None) -> dict[str, dict[str, Any]]:
     if store is None:
-        store = SchemaStore(package_data_root().joinpath("schemas"))
+        store = SchemaStore(package_data_root().joinpath("spec", "schemas"))
     published = store.resolved_schemas(base_url="https://schemas.udb.invalid")
     schemas = {}
     for path, schema in published.items():

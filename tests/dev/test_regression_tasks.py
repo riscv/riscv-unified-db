@@ -105,7 +105,7 @@ def test_python_test_layers_are_discoverable_and_use_uv() -> None:
     assert "test:python" not in _discovered_tasks()
 
     package = definitions["test:package"]["run"]
-    assert package == "uv run python -m tools.dev.package test"
+    assert package == "uv run python -m tools.dev.package"
 
 
 def test_slow_and_all_aggregates_cover_each_layer_once() -> None:

@@ -61,9 +61,6 @@ def test_step9_task_tree_is_discoverable() -> None:
         "artifact:reuse-manifest",
         "artifact:resolved-unconfigured",
         "build:package",
-        "build:wheel",
-        "build:sdist",
-        "package:check",
         "release:package",
         "release:schemas",
     }
@@ -132,11 +129,11 @@ def test_author_rvtest_creates_both_widths_and_refuses_overwrite(tmp_path: Path)
 
 
 def test_package_and_release_command_contracts(tmp_path: Path) -> None:
-    command = package.build_command(tmp_path, wheel_only=True)
-    assert command[-1] == "--wheel"
-    assert command[:3] == [os.sys.executable, "-m", "build"]
-    with pytest.raises(DevError, match="mutually exclusive"):
-        package.build_command(tmp_path, wheel_only=True, sdist_only=True)
+    wheel = tmp_path / "udb.whl"
+    command = package.smoke_command("uv", wheel)
+    assert command[:4] == ["uv", "run", "--isolated", "--no-project"]
+    assert command[command.index("--with") + 1] == str(wheel)
+    assert package.smoke_environment()["PATH"] == ""
     with pytest.raises(DevError, match="requires --repository"):
         release.package_command(None)
     named = release.package_command("testpypi", ["dist/example.whl"])

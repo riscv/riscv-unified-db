@@ -239,8 +239,8 @@ uv run python -m pytest -m slow \
 '''
 
 ["test:package"]
-description = "Build and test wheel and source distribution offline"
-run = "uv run python -m tools.dev.package test"
+description = "Build the sdist and wheel, then smoke-test the installed wheel"
+run = "uv run python -m tools.dev.package"
 
 ["check:all"]
 description = "Run every check exercised by continuous integration"
@@ -411,28 +411,8 @@ description = "Resolve the unconfigured architecture for deployment"
 run = "uv run udb resolve -o gen/resolved_spec/_"
 
 ["build:package"]
-description = "Build both wheel and source distribution"
-usage = '''
-flag "-o --output <output>" help="Artifact directory" default="dist"
-flag "--wheel-only" help="Build only a wheel"
-flag "--sdist-only" help="Build only a source distribution"
-'''
-run = "uv run python -m tools.dev.package build"
-
-["build:wheel"]
-description = "Build the Python wheel"
-usage = 'flag "-o --output <output>" help="Artifact directory" default="dist"'
-run = "uv run python -m tools.dev.package build --wheel-only"
-
-["build:sdist"]
-description = "Build the Python source distribution"
-usage = 'flag "-o --output <output>" help="Artifact directory" default="dist"'
-run = "uv run python -m tools.dev.package build --sdist-only"
-
-["package:check"]
-description = "Check installed wheel and optionally a wheel rebuilt from the sdist"
-usage = 'flag "--rebuild-sdist" help="Also rebuild, install, and check the sdist wheel"'
-run = "uv run python -m tools.dev.package check"
+description = "Build the sdist and wheel into dist/ (pass uv build options after --)"
+run = "uv build"
 
 ["release:package"]
 description = "Publish built Python artifacts to an explicit repository"

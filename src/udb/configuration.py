@@ -98,7 +98,7 @@ class Configuration:
                 for item in implemented
             ]
         try:
-            store = schema_store or SchemaStore(package_data_root().joinpath("schemas"))
+            store = schema_store or SchemaStore(package_data_root().joinpath("spec", "schemas"))
             store.validate(copied, source=sources)
         except DataError as error:
             raise ConfigurationError(str(error)) from error
@@ -197,7 +197,7 @@ class Configuration:
         if name not in ("_", "rv32", "rv64"):
             raise ConfigurationError(f"Unknown bundled configuration {name!r}")
         return cls.from_yaml(
-            package_data_root().joinpath("configs", f"{name}.yaml").read_text(encoding="utf-8"),
+            package_data_root().joinpath("cfgs", f"{name}.yaml").read_text(encoding="utf-8"),
             source=f"configs/{name}.yaml",
         )
 

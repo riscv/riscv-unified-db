@@ -38,20 +38,28 @@ def command(*arguments: str) -> subprocess.CompletedProcess[str]:
 def check_resources() -> None:
     package = files("udb")
     required = (
-        "_data/isa/ext/Zvkg.yaml",
-        "_data/schemas/inst_schema.json",
-        "_data/layouts/inst/Zaamo/amoadd.SIZE.AQRL.layout",
-        "_data/custom_layouts/qc_iu/csr/Xqci/qc.mclicipN.layout",
-        "_data/cpp_hart/runtime/CMakeLists.txt",
-        "_data/cpp_hart/runtime/cpp/include/udb/bits.hpp",
+        "_data/spec/std/isa/ext/Zvkg.yaml",
+        "_data/spec/schemas/inst_schema.json",
+        "_data/spec/std/isa/inst/Zaamo/amoadd.SIZE.AQRL.layout",
+        "_data/spec/custom/isa/qc_iu/csr/Xqci/qc.mclicipN.layout",
+        "_data/cfgs/rv32.yaml",
+        "_data/src/udb/cpp_hart/runtime/CMakeLists.txt",
+        "_data/src/udb/cpp_hart/runtime/cpp/include/udb/bits.hpp",
         "extension_docs/templates/header.adoc",
         "extension_docs/assets/fonts/JetBrainsMono-Regular.ttf",
     )
     assert all(package.joinpath(*Path(path).parts).is_file() for path in required)
+    excluded = (
+        "cpp_hart/runtime",
+        "_data/src/udb/cpp_hart/runtime/cpp/test",
+        "_data/tests",
+        "_data/cfgs/rv64-riscv-tests.yaml",
+    )
+    assert not any(package.joinpath(*Path(path).parts).exists() for path in excluded)
 
 
 def check_api() -> None:
-    assert Path(udb.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+    assert "site-packages" in Path(udb.__file__).resolve().parts
     assert shutil.which("git") is None
     assert shutil.which("ruby") is None
     database = udb.Database.bundled()
@@ -69,7 +77,7 @@ def check_qc_layout(root: Path) -> None:
     assert tuple(map(str, generated)) == ("spec/custom/isa/qc_iu/csr/Xqci/qc.mclicip0.yaml",)
     output = root / generated[0]
     packaged = files("udb").joinpath(
-        "_data", "custom_isa", "qc_iu", "csr", "Xqci", "qc.mclicip0.yaml"
+        "_data", "spec", "custom", "isa", "qc_iu", "csr", "Xqci", "qc.mclicip0.yaml"
     )
     assert output.read_bytes() == packaged.read_bytes()
 
@@ -146,6 +154,7 @@ def check_cli(root: Path, full_config: Path) -> None:
     assert manifest["configurations"] == ["rv32"]
     assert (cpp_root / "include/udb/cfgs/rv32/hart.hxx").is_file()
     assert (cpp_root / "include/udb/bits.hpp").is_file()
+    assert not (cpp_root / "test").exists()
 
 
 def main() -> None:
@@ -153,10 +162,11 @@ def main() -> None:
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--full-config", required=True, type=Path)
     arguments = parser.parse_args()
-    arguments.root.mkdir(parents=True)
+    root = arguments.root.resolve()
+    root.mkdir(parents=True)
     check_resources()
     check_api()
-    check_cli(arguments.root, arguments.full_config.resolve())
+    check_cli(root, arguments.full_config.resolve())
     print("installed package smoke passed")
 
 

@@ -248,7 +248,7 @@ jobs:
         uses: ./.github/actions/mise-setup
         with:
           python-version: '3.14'
-      - name: Build and test wheel and source distribution offline
+      - name: Build sdist and wheel and smoke-test the wheel
         run: mise run test:package
 
   cpp-hart:

@@ -342,8 +342,8 @@ generate_layouts(Path("generated"), collections=(vendor,), source_root=Path("ven
 
 Collection job paths are relative to the collection's logical source/output
 roots. `source_root=` chooses the physical input tree and the first positional
-root chooses the physical output tree. An optional collection `resource_root`
-is relative to packaged `udb/_data`; it is never a checkout lookup. Job inputs
+root chooses the physical output tree. Sources missing from the input tree are read
+from the same path in the data root (see below). Job inputs
 are recursively immutable snapshots. Plans record template and recipe-code
 dependencies, reject duplicate ownership/source aliases, and write only their
 owned outputs.
@@ -382,18 +382,19 @@ solver. There is intentionally no configured-prose CLI. The former restricted ER
 only for the immutable migration oracle; live architecture sources and production consumers use
 native syntax. See the [configured-prose contract](stage5-configured-prose.md).
 
-The wheel contains the standard ISA YAML, IDL, referenced AsciiDoc sources, authoring layouts, and
-their JSON schemas. The bundled layouts let the authoring command populate an explicit output root
-without reading templates from a repository checkout. Code that needs direct access to those
-resources can use `importlib.resources`:
+Bundled data is read from one data root, at repository-relative paths such as `spec/std/isa`,
+`spec/schemas`, `spec/custom/isa/qc_iu`, `cfgs`, and `src/udb/cpp_hart/runtime`. In a checkout,
+including an editable install, the data root is the repository, so edits take effect immediately.
+In an installed wheel, the data root is `udb/_data`, which holds a copy of the same paths. The wheel
+contains the standard ISA YAML, IDL, AsciiDoc sources, authoring layouts, JSON schemas, the `qc_iu`
+custom extension, the generic configurations, and the C++ runtime without its native tests. Code
+that needs direct access to those resources can use `udb.resources.package_data_root()`:
 
 ```python
-from importlib.resources import files
+from udb.resources import package_data_root
 
-isa_data = files("udb") / "_data" / "isa"
-schemas = files("udb") / "_data" / "schemas"
-layouts = files("udb") / "_data" / "layouts"
-qc_layouts = files("udb") / "_data" / "custom_layouts" / "qc_iu"
+isa_data = package_data_root() / "spec" / "std" / "isa"
+schemas = package_data_root() / "spec" / "schemas"
 ```
 
 The Python source code is licensed under BSD-3-Clause-Clear. The bundled database snapshot contains
@@ -739,7 +740,8 @@ generator.generate(Path("generated-hart"))
 input hashes and unavailable instruction-operation contexts before writing.
 Multiple configurations share one output tree when `build_name` is supplied.
 `RuntimeResources.from_path(ROOT)` selects an explicit checkout/resource root;
-the default reads the installed package's declared C/C++/GDB/Renode assets.
+the default reads the declared C/C++/GDB/Renode assets from the data root. Native unit tests
+are included only when the root contains them, as a checkout does.
 Generation itself does not invoke Ruby, Git, CMake, a compiler, a formatter,
 dependency installation or the network.
 

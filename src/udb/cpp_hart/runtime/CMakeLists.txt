@@ -93,6 +93,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cli11_proj)
 
+# Native unit tests are present in a checkout, not in a wheel.
+if(EXISTS "${CMAKE_SOURCE_DIR}/test/bits-tests.cmake")
+  set(UDB_BUILD_TESTS ON)
+else()
+  set(UDB_BUILD_TESTS OFF)
+endif()
+
+if(UDB_BUILD_TESTS)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
@@ -100,6 +108,7 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(Catch2)
+endif()
 
 # nlohmann_json is header-only; fetched here so its headers are available to
 # hart (transitively needed by nlohmann_json_schema_validator headers).
@@ -236,6 +245,8 @@ add_dependencies(iss elfutils_libelf)
 
 ## TESTS
 
+if(UDB_BUILD_TESTS)
+
 add_executable(test_bits_directed
   ${CMAKE_SOURCE_DIR}/test/test_bits_directed.cpp
 )
@@ -301,3 +312,5 @@ catch_discover_tests(test_softfloat_fp)
 
 # catch_discover_tests(test_version)
 # catch_discover_tests(test_csr)
+
+endif()

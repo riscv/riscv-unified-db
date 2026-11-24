@@ -64,13 +64,15 @@ class LayoutJob:
 
 @dataclass(frozen=True)
 class LayoutCollection:
-    """Recipes relative to explicit logical roots, with optional bundled resources."""
+    """Recipes relative to explicit logical roots.
+
+    Sources missing from the input tree are read from the same path in the data root.
+    """
 
     name: str
     source_root: PurePosixPath
     output_root: PurePosixPath
     jobs: tuple[LayoutJob, ...]
-    resource_root: PurePosixPath | None = None
     dependencies: tuple[PurePosixPath, ...] = (
         PurePosixPath("src/udb/layouts.py"),
         PurePosixPath("src/udb/layout_collections.py"),
@@ -81,8 +83,6 @@ class LayoutCollection:
             raise LayoutError(f"invalid layout collection name: {self.name!r}")
         object.__setattr__(self, "source_root", _relative_path(self.source_root, root=True))
         object.__setattr__(self, "output_root", _relative_path(self.output_root, root=True))
-        if self.resource_root is not None:
-            object.__setattr__(self, "resource_root", _relative_path(self.resource_root, root=True))
         jobs = tuple(self.jobs)
         if not jobs or any(not isinstance(job, LayoutJob) for job in jobs):
             raise LayoutError(f"{self.name}: layout collection requires LayoutJob recipes")
@@ -114,7 +114,6 @@ def get_layout_collection(name: str) -> LayoutCollection:
             source_root=prefix,
             output_root=prefix,
             jobs=jobs,
-            resource_root=PurePosixPath("layouts"),
             dependencies=(PurePosixPath("src/udb/layouts.py"),),
         )
     if name != "qc_iu":
@@ -148,5 +147,4 @@ def get_layout_collection(name: str) -> LayoutCollection:
         source_root=prefix,
         output_root=prefix,
         jobs=tuple(jobs),
-        resource_root=PurePosixPath("custom_layouts/qc_iu"),
     )

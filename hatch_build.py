@@ -1,111 +1,49 @@
 # SPDX-FileCopyrightText: 2026 Contributors to the RISCV UnifiedDB <https://github.com/riscv/riscv-unified-db>
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-"""Build the standalone wheel with read-only ISA and authoring resources."""
+"""Add repository data to the sdist and to standard wheels.
+
+The sdist keeps the repository paths. The wheel puts them under ``udb/_data``.
+Editable installs get no copy; they read the checkout directly.
+"""
 
 from __future__ import annotations
 
-import hashlib
-import importlib.util
-import json
-from pathlib import Path, PurePosixPath
+from typing import Any
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
-_ISA_SUFFIXES = frozenset({".adoc", ".idl", ".isa", ".layout", ".yaml"})
-_SCHEMA_SUFFIXES = frozenset({".json", ".yaml"})
-
-
-def _files_with_suffixes(root: Path, suffixes: frozenset[str]) -> list[Path]:
-    if not root.is_dir():
-        msg = f"required package data directory is missing: {root}"
-        raise RuntimeError(msg)
-    return sorted(path for path in root.rglob("*") if path.is_file() and path.suffix in suffixes)
-
-
-def package_data(source_root: Path) -> dict[Path, PurePosixPath]:
-    """Return source-to-wheel mappings for the packageable raw data snapshot."""
-    isa_root = source_root / "spec" / "std" / "isa"
-    schema_root = source_root / "spec" / "schemas"
-    isa_files = _files_with_suffixes(isa_root, _ISA_SUFFIXES)
-    schema_files = _files_with_suffixes(schema_root, _SCHEMA_SUFFIXES)
-
-    mappings: dict[Path, PurePosixPath] = {}
-    for path in isa_files:
-        data_kind = "layouts" if path.suffix == ".layout" else "isa"
-        mappings[path] = (
-            PurePosixPath(f"udb/_data/{data_kind}") / path.relative_to(isa_root).as_posix()
-        )
-    for path in schema_files:
-        mappings[path] = (
-            PurePosixPath("udb/_data/schemas") / path.relative_to(schema_root).as_posix()
-        )
-    for name in ("_", "rv32", "rv64"):
-        path = source_root / "cfgs" / f"{name}.yaml"
-        if not path.is_file():
-            raise RuntimeError(f"required generic configuration is missing: {path}")
-        mappings[path] = PurePosixPath("udb/_data/configs") / path.name
-    cpp_spec = importlib.util.spec_from_file_location(
-        "_udb_cpp_hart_assets", source_root / "src/udb/cpp_hart/asset_manifest.py"
-    )
-    if cpp_spec is None or cpp_spec.loader is None:
-        raise RuntimeError("C++ runtime resource manifest could not be loaded")
-    cpp_assets = importlib.util.module_from_spec(cpp_spec)
-    cpp_spec.loader.exec_module(cpp_assets)
-    mappings.update(cpp_assets.package_mapping(source_root))
-    qc_root = source_root / "spec/custom/isa/qc_iu"
-    for stem, count in (
-        ("mclicip", 8),
-        ("mclicie", 8),
-        ("mclicilvl", 32),
-        ("mwpstartaddr", 4),
-        ("mwpendaddr", 4),
-    ):
-        names = [
-            f"qc.{stem}N.layout",
-            *(
-                f"qc.{stem}{number:02}.yaml" if stem == "mclicilvl" else f"qc.{stem}{number}.yaml"
-                for number in range(count)
-            ),
-        ]
-        for name in names:
-            relative = PurePosixPath("csr/Xqci") / name
-            path = qc_root / relative
-            if not path.is_file():
-                raise RuntimeError(f"required QC layout data is missing: {path}")
-            kind = "custom_layouts" if path.suffix == ".layout" else "custom_isa"
-            mappings[path] = PurePosixPath(f"udb/_data/{kind}/qc_iu") / relative
-    resources = source_root / "src/udb/extension_docs"
-    manifest_path = resources / "assets/manifest.json"
-    entries = json.loads(manifest_path.read_text(encoding="utf-8"))
-    declared = [("assets/manifest.json", None)]
-    declared += [("assets/" + entry["path"], entry["sha256"]) for entry in entries]
-    declared += [("templates/" + name, None) for name in ("header.adoc", "conventions.adoc")]
-    for name, expected in declared:
-        relative = PurePosixPath(name)
-        if relative.is_absolute() or ".." in relative.parts:
-            raise RuntimeError(f"unsafe extension-document resource: {name}")
-        path = resources / name
-        if path.is_symlink() or not path.is_file():
-            raise RuntimeError(f"missing/nonregular extension-document resource: {path}")
-        if expected and hashlib.sha256(path.read_bytes()).hexdigest() != expected:
-            raise RuntimeError(f"extension-document resource integrity failed: {path}")
-        mappings[path] = PurePosixPath("udb/extension_docs") / relative
-    return mappings
+# Repository-relative files and directories. The wheel keeps the same relative paths.
+DATA_PATHS = (
+    "spec/std/isa",
+    "spec/schemas",
+    "spec/custom/isa/qc_iu",
+    "cfgs/_.yaml",
+    "cfgs/rv32.yaml",
+    "cfgs/rv64.yaml",
+    "src/udb/cpp_hart/runtime/CMakeLists.txt",
+    "src/udb/cpp_hart/runtime/c",
+    "src/udb/cpp_hart/runtime/cpp/include",
+    "src/udb/cpp_hart/runtime/cpp/src",
+    "src/udb/cpp_hart/runtime/gdb",
+    "src/udb/cpp_hart/runtime/renode",
+    ".toolchain/check_cxx.cmake",
+    ".toolchain/.build-elfutils.sh",
+    "LICENSE-BSD-3-Clause-Clear.txt",
+    "LICENSE-CC-BY.txt",
+    "LICENSE-MIT.txt",
+    "LICENSES/BSD-2-Clause.txt",
+    "NOTICE",
+)
 
 
 class CustomBuildHook(BuildHookInterface):
-    """Add repository data to wheels without modifying the source tree."""
-
     PLUGIN_NAME = "custom"
 
-    def initialize(self, version: str, build_data: dict[str, object]) -> None:
-        del version
-        if self.target_name != "wheel":
+    def initialize(self, version: str, build_data: dict[str, Any]) -> None:
+        if version == "editable":
             return
+        prefix = "udb/_data/" if self.target_name == "wheel" else ""
         force_include = build_data.setdefault("force_include", {})
-        if not isinstance(force_include, dict):
-            msg = "Hatch wheel force_include configuration is not a mapping"
-            raise TypeError(msg)
-        for source, destination in package_data(Path(self.root)).items():
-            force_include[str(source)] = destination.as_posix()
+        for path in DATA_PATHS:
+            force_include[path] = prefix + path
