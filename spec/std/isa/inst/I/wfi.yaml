@@ -8,7 +8,7 @@ kind: instruction
 name: wfi
 long_name: Wait for interrupt
 description: |
-  Can causes the processor to enter a low-power state until the next interrupt occurs.
+  Can cause the processor to enter a low-power state until the next interrupt occurs.
 
   <%- if ext?(:H) -%>
   The behavior of `wfi` is affected by the `mstatus.TW`
