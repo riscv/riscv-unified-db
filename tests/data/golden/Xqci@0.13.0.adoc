@@ -35765,9 +35765,9 @@ Bits<5> rd = $encoding[11:7];
 Operation::
 [source,idl,subs="specialchars,macros"]
 ----
-XReg clz = ((xref:#udb-function-xlen[xlen]pass:[(]) - 1) - $signed+++(+++xref:#udb-function-highest_set_bit[highest_set_bit]pass:[(]X[rs1]))) & ~1;
-XReg mnt = (X[rs1] << (clz & ~1));
-XReg exp = (-(clz & ~1));
+XReg clz = ((xref:#udb-function-xlen[xlen]pass:[(]) - 1) - $signed+++(+++xref:#udb-function-highest_set_bit[highest_set_bit]pass:[(]X[rs1]))) & ~MXLEN'1;
+XReg mnt = (X[rs1] << (clz & ~MXLEN'1));
+XReg exp = (-(clz & ~MXLEN'1));
 X[rd] = {mnt[31:8], exp[7:0]};
 ----
 
