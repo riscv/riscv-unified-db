@@ -300,7 +300,7 @@ jobs:
           gem install udb_helpers.gem && \
           gem install udb.gem
       - name: try z3
-        run: ruby -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
+        run: ruby -E UTF-8 -r 'udb' -e "Udb::Z3Loader.ensure_z3_loaded"
   regress-scripts-unit:
     runs-on: ubuntu-latest
     steps:
