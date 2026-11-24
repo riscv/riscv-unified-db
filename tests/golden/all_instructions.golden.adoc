@@ -76794,7 +76794,7 @@ Encoding::
 ....
 
 Description::
-Can causes the processor to enter a low-power state until the next interrupt occurs.
+Can cause the processor to enter a low-power state until the next interrupt occurs.
 
 <%- if ext?(:H) -%>
 The behavior of xref:insts:wfi.adoc#udb:doc:inst:wfi[wfi] is affected by the xref:csrs:mstatus.adoc#udb:doc:csr_field:mstatus:TW[mstatus.TW]
