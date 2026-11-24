@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsm4k.vi
-long_name: Vector SM4 key schedule with immediate
+long_name: Vector SM4 KeyExpansion
 description: |
-  Performs SM4 key schedule operation on vector register vs2 using immediate value as round constant, storing results in vector register vd according to mask vm. This is used in SM4 block cipher key expansion.
+  Performs four rounds of SM4 key expansion. Four round keys are read as a four-element group from vs2, and the next four round keys are written to vd. The round group number, 0-7, comes from imm[2:0] and selects which group of four round keys is generated; imm[4:3] are ignored. For example, imm=1 generates round keys 4, 5, 6, and 7.
 definedBy:
   extension:
     name: Zvksed
