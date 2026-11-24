@@ -236,7 +236,7 @@ sw_read(): |
     (CSR[misa].I `<< 8) |
     (CSR[misa].H `<< 7) |
     (CSR[misa].F `<< 5) |
-    (CSR[misa].E `<< 4) |
+    ((CSR[misa].I ^ 1) `<< 4) | # E reads as complement of I
     (CSR[misa].D `<< 3) |
     (CSR[misa].C `<< 2) |
     (CSR[misa].B `<< 1) |

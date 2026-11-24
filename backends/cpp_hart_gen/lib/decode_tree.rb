@@ -240,7 +240,25 @@ class DecodeGen
   def e_xreg_decode_variables(inst, xlen)
     return [] unless e_possible?
 
-    inst.encoding(xlen).decode_variables.select { |dv| ["xd", "xs1", "xs2"].include?(dv.name) }
+    used = operation_ids(inst)
+    inst.encoding(xlen).decode_variables.select do |dv|
+      ["xd", "xs1", "xs2"].include?(dv.name) && used.include?(dv.name)
+    end
+  end
+
+  # @return [Set<String>] identifiers referenced in the operation of inst
+  def operation_ids(inst)
+    @operation_ids ||= {}
+    @operation_ids[inst.name] ||= begin
+      ids = Set.new
+      stack = [inst.operation_ast].compact
+      until stack.empty?
+        node = stack.pop
+        ids << node.name if node.is_a?(Idl::IdAst)
+        stack.concat(node.children)
+      end
+      ids
+    end
   end
 
   # @return [Boolean] whether or not the instruction in node is a base of HINTs
