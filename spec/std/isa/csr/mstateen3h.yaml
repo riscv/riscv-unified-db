@@ -23,15 +23,15 @@ definedBy:
     - extension:
         name: Smstateen
 fields:
-  SE0:
+  SE3:
     long_name: hstateen3, hstateen3h, and sstateen3 access control
     location: 31
-    alias: mstateen3.SE0
+    alias: mstateen3.SE3
     sw_write(csr_value): |
-      CSR[mstateen3].SE0 = csr_value.SE0;
-      return csr_value.SE0;
+      CSR[mstateen3].SE3 = csr_value.SE3;
+      return csr_value.SE3;
     description: |
-      The SE0 bit in `mstateen3h` controls access to the `hstateen3`, `hstateen3h`, and the `sstateen3` CSRs.
+      The SE3 bit in `mstateen3h` controls access to the `hstateen3`, `hstateen3h`, and the `sstateen3` CSRs.
     type: RW
     reset_value: 0
 sw_read(): return $bits(CSR[mstateen3])[63:32];
