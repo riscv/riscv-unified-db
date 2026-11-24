@@ -698,7 +698,7 @@ Encoding::
 
 Description::
 Uses the two 64-bit source registers to represent the entire AES state, and produces _half_ of the next
-round output, applying the Inverse ShiftRows, SubBytes and MixColumns steps.
+round output, applying the ShiftRows, SubBytes and MixColumns steps.
 
 
 Decode Variables::
@@ -21687,7 +21687,7 @@ Encoding::
 ....
 
 Description::
-The xref:insts:flh.adoc#udb:doc:inst:flh[flh] instruction loads a half-precision floating-point value from memory at address _xs1_ + _imm_ into floating-point register _xd_.
+The xref:insts:flh.adoc#udb:doc:inst:flh[flh] instruction loads a half-precision floating-point value from memory at address _xs1_ + _imm_ into floating-point register _fd_.
 
 xref:insts:flh.adoc#udb:doc:inst:flh[flh] does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
 
@@ -21951,12 +21951,10 @@ Encoding::
 ....
 
 Description::
-The xref:insts:flq.adoc#udb:doc:inst:flq[flq] is the new variant of LOAD-FP, encoded with a new value for the `funct3`.
+The xref:insts:flq.adoc#udb:doc:inst:flq[flq] instruction loads a quad-precision floating-point value from memory at address `xs1` + `imm` into floating-point register `fd`.
+It does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
 
-xref:insts:flq.adoc#udb:doc:inst:flq[flq] is only guaranteed to execute atomically if the effective address is naturally aligned XLEN=128.
-
-xref:insts:flq.adoc#udb:doc:inst:flq[flq] does not modify the bits being transferred; in particular, the payloads of non-canonical
-_NaNs_ are preserved.
+xref:insts:flq.adoc#udb:doc:inst:flq[flq] is only guaranteed to execute atomically if the effective address is naturally aligned and XLEN=128.
 
 
 Decode Variables::
@@ -26094,7 +26092,7 @@ Encoding::
 
 Description::
 The xref:insts:fsh.adoc#udb:doc:inst:fsh[fsh] instruction stores a half-precision floating-point value
-from register _xd_ to memory at address _xs1_ + _imm_.
+from floating-point register _fs2_ to memory at address _xs1_ + _imm_.
 
 xref:insts:fsh.adoc#udb:doc:inst:fsh[fsh] does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
 
@@ -26147,12 +26145,10 @@ Encoding::
 ....
 
 Description::
-The xref:insts:fsq.adoc#udb:doc:inst:fsq[fsq] is the new variant of LOAD-FP, encoded with a new value for the `funct3`.
+The xref:insts:fsq.adoc#udb:doc:inst:fsq[fsq] instruction stores a quad-precision floating-point value in `fs2` to memory at address `xs1` + `imm`.
+It does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
 
-xref:insts:fsq.adoc#udb:doc:inst:fsq[fsq] is only guaranteed to execute atomically if the effective address is naturally aligned XLEN=128.
-
-xref:insts:fsq.adoc#udb:doc:inst:fsq[fsq] does not modify the bits being transferred; in particular, the payloads of non-canonical
-_NaNs_ are preserved.
+xref:insts:fsq.adoc#udb:doc:inst:fsq[fsq] is only guaranteed to execute atomically if the effective address is naturally aligned and XLEN=128.
 
 
 Decode Variables::
