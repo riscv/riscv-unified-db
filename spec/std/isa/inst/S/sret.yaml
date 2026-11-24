@@ -132,7 +132,7 @@ operation(): |
     CSR[mstatus].SIE = CSR[mstatus].SPIE;
     CSR[mstatus].SPIE = 1;
     CSR[mstatus].SPP = 2'b00;
-    $pc = $bits(CSR[sepc]);
+    $pc = CSR[sepc].sw_read();
   } else if (implemented?(ExtensionName::H)) {
     if (CSR[mstatus].TSR == 1'b1) {
       raise (ExceptionCode::IllegalInstruction, mode(), $encoding);
@@ -140,7 +140,7 @@ operation(): |
     CSR[vsstatus].SPP = 0;
     CSR[vsstatus].SIE = CSR[vsstatus].SPIE;
     CSR[vsstatus].SPIE = 1;
-    $pc = $bits(CSR[vsepc]);
+    $pc = CSR[vsepc].sw_read();
   } else {
     unreachable();
   }

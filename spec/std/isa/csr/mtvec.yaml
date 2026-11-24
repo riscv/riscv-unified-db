@@ -23,14 +23,30 @@ fields:
       Bits [MXLEN-1:2] of the exception vector physical address for any trap taken in M-mode.
 
       The implementation physical memory map may resitrict which values are legal in this field.
+
+      The address must be aligned to `MTVEC_BASE_ALIGNMENT_DIRECT` bytes when `mtvec.MODE` is Direct,
+      and to `MTVEC_BASE_ALIGNMENT_VECTORED` bytes when `mtvec.MODE` is Vectored.
+      A write that does not meet the alignment for the new mode is illegal, and follows `MTVEC_ILLEGAL_WRITE_BEHAVIOR`.
     type(): |
       return MTVEC_ACCESS == "ro" ? CsrFieldType::RO : CsrFieldType::RWR;
     sw_write(csr_value): |
-      # Base spec says that BASE must be 4-byte aligned, which will always be the case
-      # implementations may put further constraints on BASE when MODE != Direct
-      # If that is the case, stvec should have an override for the implementation
-
-      if ($array_includes?(MTVEC_MODES, csr_value.MODE)) {
+      # BASE always holds a 4-byte aligned address. The alignment parameter of
+      # the new MODE can require more.
+      Bits<64> alignment = 4;
+      if (MTVEC_ACCESS == "rw") {
+        # The alignment parameters are only defined when mtvec is writable
+        if ($array_includes?(MTVEC_MODES, 0)) {
+          if (csr_value.MODE == 0) {
+            alignment = MTVEC_BASE_ALIGNMENT_DIRECT;
+          }
+        }
+        if ($array_includes?(MTVEC_MODES, 1)) {
+          if (csr_value.MODE == 1) {
+            alignment = MTVEC_BASE_ALIGNMENT_VECTORED;
+          }
+        }
+      }
+      if ($array_includes?(MTVEC_MODES, csr_value.MODE) && (({csr_value.BASE, 2'b00} & (alignment - 1)) == 0)) {
         return csr_value.BASE;
       }
       if (MTVEC_ILLEGAL_WRITE_BEHAVIOR == "retain") {
@@ -57,7 +73,23 @@ fields:
 
       return ($array_size(MTVEC_MODES) == 1) ? CsrFieldType::RO : CsrFieldType::RWR;
     sw_write(csr_value): |
-      if ($array_includes?(MTVEC_MODES, csr_value.MODE)) {
+      # The write is illegal as a whole if BASE does not meet the alignment of
+      # the new MODE, so MODE is only updated when BASE is also legal.
+      Bits<64> alignment = 4;
+      if (MTVEC_ACCESS == "rw") {
+        # The alignment parameters are only defined when mtvec is writable
+        if ($array_includes?(MTVEC_MODES, 0)) {
+          if (csr_value.MODE == 0) {
+            alignment = MTVEC_BASE_ALIGNMENT_DIRECT;
+          }
+        }
+        if ($array_includes?(MTVEC_MODES, 1)) {
+          if (csr_value.MODE == 1) {
+            alignment = MTVEC_BASE_ALIGNMENT_VECTORED;
+          }
+        }
+      }
+      if ($array_includes?(MTVEC_MODES, csr_value.MODE) && (({csr_value.BASE, 2'b00} & (alignment - 1)) == 0)) {
         return csr_value.MODE;
       }
       if (MTVEC_ILLEGAL_WRITE_BEHAVIOR == "retain") {

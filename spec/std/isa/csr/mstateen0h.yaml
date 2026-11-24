@@ -54,7 +54,9 @@ fields:
     location: 28
     definedBy:
       extension:
-        name: Sscsrind
+        anyOf:
+          - name: Smcsrind
+          - name: Sscsrind
     alias: mstateen0.CSRIND
     sw_write(csr_value): |
       CSR[mstateen0].CSRIND = csr_value.CSRIND;

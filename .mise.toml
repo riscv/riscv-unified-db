@@ -79,4 +79,3 @@ remove_legacy_hook post-checkout
 experimental = true                            # Needed for deps feature
 idiomatic_version_file_enable_tools = ["node"]
 ruby.compile = false
-ruby.default_packages_file = ".default-gems"

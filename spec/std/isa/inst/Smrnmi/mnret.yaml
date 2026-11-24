@@ -48,4 +48,4 @@ operation(): |
     set_mode(PrivilegeMode::M);
   }
   CSR[mnstatus].MNPP = implemented?(ExtensionName::U) ? 2'b00 : 2'b11;
-  $pc = $bits(CSR[mnepc]);
+  $pc = CSR[mnepc].sw_read();
