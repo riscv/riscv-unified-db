@@ -155,7 +155,7 @@ module Udb
         when ExtensionTerm
           (term.is_a?(Extension) || term.is_a?(ExtensionVersion) || term.is_a?(ExtensionRequirement)) && (term.name == t.name)
         when ParameterTerm
-          (term.is_a?(Parameter) || term.is_a?(ParameterWithValue)) && (term.name == t.name)
+          (term.is_a?(Parameter) || term.is_a?(ParameterWithValue)) && t.parameter_names.include?(term.name)
         else
           false
         end
@@ -204,10 +204,10 @@ module Udb
     def param_terms(expand:)
       if expand
         @expanded_param_terms ||=
-          to_logic_tree(expand:).terms.grep(ParameterTerm).map { |term| @cfg_arch.param(term.name) }
+          to_logic_tree(expand:).terms.grep(ParameterTerm).flat_map(&:parameter_names).uniq.map { |name| @cfg_arch.param(name) }
       else
         @unexpanded_param_terms ||=
-          to_logic_tree(expand:).terms.grep(ParameterTerm).map { |term| @cfg_arch.param(term.name) }
+          to_logic_tree(expand:).terms.grep(ParameterTerm).flat_map(&:parameter_names).uniq.map { |name| @cfg_arch.param(name) }
       end
     end
 
@@ -579,29 +579,31 @@ module Udb
 
         touched_terms.add(term)
 
-        p = @cfg_arch.param(term.name)
-        if p.nil?
-          Udb.logger.error "While expanding:"
-          Udb.logger.error
-          Udb.logger.error
-          Udb.logger.error to_logic_tree(expand: false)
-          Udb.logger.error
-          Udb.logger.error
-          Udb.logger.error "Parameter #{term.name} is not defined"
-        end
-        param = T.must(p)
-        unless param.requirements_condition.empty?
-          clause =
-            LogicNode.new(
-              LogicNodeType::If,
-              [
-                LogicNode.new(LogicNodeType::Term, [term]),
-                param.requirements_condition.to_logic_tree(expand: false)
-              ]
-            )
+        term.parameter_names.each do |parameter_name|
+          p = @cfg_arch.param(parameter_name)
+          if p.nil?
+            Udb.logger.error "While expanding:"
+            Udb.logger.error
+            Udb.logger.error
+            Udb.logger.error to_logic_tree(expand: false)
+            Udb.logger.error
+            Udb.logger.error
+            Udb.logger.error "Parameter #{parameter_name} is not defined"
+          end
+          param = T.must(p)
+          unless param.requirements_condition.empty?
+            clause =
+              LogicNode.new(
+                LogicNodeType::If,
+                [
+                  LogicNode.new(LogicNodeType::Term, [term]),
+                  param.requirements_condition.to_logic_tree(expand: false)
+                ]
+              )
 
-          expansion_clauses << clause
-          expand_term_requirements(clause, expansion_clauses, touched_terms)
+            expansion_clauses << clause
+            expand_term_requirements(clause, expansion_clauses, touched_terms)
+          end
         end
       end
     end

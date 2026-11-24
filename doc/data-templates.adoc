@@ -318,6 +318,32 @@ schema:
     type: integer
 ----
 
+=== Comparing integer parameters
+
+An IDL requirement can compare two scalar integer parameters, including when their
+values are not yet known in a partially configured architecture:
+
+[source,yaml]
+----
+requirements:
+  idl(): |
+    implemented?(ExtensionName::Sdtrig) -> SDTRIG_MAX_CHAIN_LENGTH <= SDTRIG_NUM_TRIGGERS;
+----
+
+The corresponding YAML condition uses a parameter reference for the right operand:
+
+[source,yaml]
+----
+param:
+  name: SDTRIG_MAX_CHAIN_LENGTH
+  lessThanOrEqual:
+    param: SDTRIG_NUM_TRIGGERS
+----
+
+Parameter references support `equal`, `notEqual`, `lessThan`, `greaterThan`,
+`lessThanOrEqual`, and `greaterThanOrEqual`. Arithmetic expressions, array operands,
+and bit slices are not supported as symbolic operands.
+
 == Validation
 
 === Schema Validation

@@ -261,6 +261,45 @@ class TestConditions < Minitest::Test
     assert_equal SatisfiedResult::No, tree.eval_cb(cb)
   end
 
+  def test_symbolic_integer_parameter_comparisons
+    arch = $db_cfg_arch
+    refute_nil arch
+    lhs_name = "SDTRIG_MAX_CHAIN_LENGTH"
+    rhs_name = "SDTRIG_NUM_TRIGGERS"
+    max = (1 << 64) - 1
+    pairs = [[1, 1], [1, 2], [2, 1], [1 << 63, (1 << 63) + 1], [max, max], [max, 1]]
+
+    { "==" => "equal", "!=" => "notEqual", "<" => "lessThan", ">" => "greaterThan",
+      "<=" => "lessThanOrEqual", ">=" => "greaterThanOrEqual" }.each do |op, key|
+      condition = Condition.new({ "idl()" => "-> #{lhs_name} #{op} #{rhs_name};" }, arch)
+      expected = { "param" => { "name" => lhs_name, key => { "param" => rhs_name } } }
+      assert_equal expected, condition.to_h
+      assert_equal [lhs_name, rhs_name].sort, condition.param_terms(expand: false).map(&:name).sort
+      roundtrip = Condition.new(expected, arch)
+      assert_includes roundtrip.to_idl(arch), rhs_name
+
+      term = ParameterTerm.new(expected.fetch("param"))
+      assert_equal SatisfiedResult::Maybe, term.partial_eval({ lhs_name => 1 })
+      assert_equal SatisfiedResult::Maybe, term.partial_eval({ rhs_name => 1 })
+
+      pairs.each do |lhs, rhs|
+        expected_value = lhs.public_send(op, rhs)
+        values = { lhs_name => lhs, rhs_name => rhs }
+        assert_equal expected_value ? SatisfiedResult::Yes : SatisfiedResult::No, term.partial_eval(values)
+
+        solver = Z3Solver.new
+        solver.assert condition.to_logic_tree(expand: false).to_z3(arch, solver)
+        values.each { |name, value| solver.assert solver.param(name, arch.param(name).schema.to_h) == value }
+        assert_equal expected_value, solver.satisfiable?, "#{lhs} #{op} #{rhs}"
+
+        solver = Z3Solver.new
+        solver.assert term.negate.to_z3(solver, arch)
+        values.each { |name, value| solver.assert solver.param(name, arch.param(name).schema.to_h) == value }
+        assert_equal !expected_value, solver.satisfiable?, "negated #{lhs} #{op} #{rhs}"
+      end
+    end
+  end
+
   def test_requirements_with_single_unconditional_implication
     req_str = <<~COND
       name: A

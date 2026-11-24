@@ -225,6 +225,17 @@ module Idl
             }
           end
           value_else(value_result) do
+            lhs_param = symtab.param(lhs.name)
+            rhs_param = rhs.is_a?(IdAst) ? symtab.param(rhs.name) : nil
+            if !lhs_param.nil? && !rhs_param.nil? &&
+                lhs_param.idl_type.kind == :bits && rhs_param.idl_type.kind == :bits
+              return {
+                "param" => {
+                  "name" => lhs.name,
+                  OP_TO_KEY.fetch(@op) => { "param" => rhs_param.name }
+                }
+              }
+            end
             raise <<~MSG
               Comparison value (#{rhs.text_value}) must be compile-time evaluatable in #{text_value}
                 While evaluating value of #{AstNode.value_error_ast.text_value}:

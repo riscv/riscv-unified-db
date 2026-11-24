@@ -569,6 +569,9 @@
                       "items": {
                         "type": "boolean"
                       }
+                    },
+                    {
+                      "$ref": "#/$defs/integer_parameter_reference"
                     }
                   ]
                 },
@@ -616,20 +619,51 @@
                     },
                     {
                       "type": "boolean"
+                    },
+                    {
+                      "$ref": "#/$defs/integer_parameter_reference"
                     }
                   ]
                 },
                 "greaterThan": {
-                  "type": "integer"
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "$ref": "#/$defs/integer_parameter_reference"
+                    }
+                  ]
                 },
                 "lessThan": {
-                  "type": "integer"
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "$ref": "#/$defs/integer_parameter_reference"
+                    }
+                  ]
                 },
                 "greaterThanOrEqual": {
-                  "type": "integer"
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "$ref": "#/$defs/integer_parameter_reference"
+                    }
+                  ]
                 },
                 "lessThanOrEqual": {
-                  "type": "integer"
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "$ref": "#/$defs/integer_parameter_reference"
+                    }
+                  ]
                 },
                 "includes": {
                   "oneOf": [
@@ -889,6 +923,17 @@
         288230376151711744, 576460752303423488, 1152921504606846976,
         2305843009213693952, 4611686018427387904, 9223372036854775808
       ]
+    },
+    "integer_parameter_reference": {
+      "description": "The value of another integer parameter, which may remain unknown in a partial configuration.",
+      "type": "object",
+      "required": ["param"],
+      "additionalProperties": false,
+      "properties": {
+        "param": {
+          "$ref": "#/$defs/param_name"
+        }
+      }
     }
   }
 }

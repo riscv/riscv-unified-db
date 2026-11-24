@@ -319,7 +319,7 @@ module Udb
       end
     end
 
-    ValueType = T.type_alias { T.any(Integer, String, T::Boolean, T::Array[T.any(Integer, String, T::Boolean)]) }
+    ValueType = T.type_alias { T.any(Integer, String, T::Boolean, T::Array[T.any(Integer, String, T::Boolean)], T::Hash[String, String]) }
 
     sig { params(yaml: T::Hash[String, T.untyped]).void }
     def initialize(yaml)
@@ -349,6 +349,18 @@ module Udb
     def comparison_value
       @yaml.fetch(comparison_type.serialize)
     end
+
+    sig { returns(T.nilable(String)) }
+    def rhs_parameter_name
+      value = comparison_value
+      value.is_a?(Hash) ? value.fetch("param") : nil
+    end
+
+    sig { returns(T::Array[String]) }
+    def parameter_names = [name, rhs_parameter_name].compact.uniq
+
+    sig { returns(String) }
+    def comparison_text = rhs_parameter_name || comparison_value.to_s
 
     # return a negated version of self, or nil if no simple negation exists
     sig { returns(T.nilable(ParameterTerm)) }
@@ -431,19 +443,28 @@ module Udb
         msb, lsb = @yaml.fetch("range").split("-").map(&:to_i)
         e = T.cast(e, Z3ParameterTerm).extract(msb, lsb)
       end
+      value = T.let(@yaml.fetch(t.serialize), T.untyped)
+      if (rhs_name = rhs_parameter_name)
+        rhs_param = T.must(cfg_arch.param(rhs_name))
+        unless !array_comparison? && !@yaml.key?("range") &&
+            T.must(cfg_arch.param(name)).schema.to_h["type"] == "integer" && rhs_param.schema.to_h["type"] == "integer"
+          raise "Parameter comparisons require integer operands"
+        end
+        value = T.cast(solver.param(rhs_name, rhs_param.schema.to_h).term, Z3::BitvecExpr)
+      end
       case t
       when ParameterComparisonType::Equal
-        e == @yaml["equal"]
+        e == value
       when ParameterComparisonType::NotEqual
-        e != @yaml["notEqual"]
+        e != value
       when ParameterComparisonType::LessThan
-        T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) < @yaml["lessThan"]
+        T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) < value
       when ParameterComparisonType::GreaterThan
-        T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) > @yaml["greaterThan"]
+        T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) > value
       when ParameterComparisonType::LessThanOrEqual
-        T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) <= @yaml["lessThanOrEqual"]
+        T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) <= value
       when ParameterComparisonType::GreaterThanOrEqual
-        T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) >= @yaml["greaterThanOrEqual"]
+        T.cast(e, T.any(Z3ParameterTerm, Z3::BitvecExpr, Z3::IntExpr)) >= value
       when ParameterComparisonType::Includes
         T.cast(e, Z3ParameterTerm).has_value?(@yaml["includes"])
       when ParameterComparisonType::OneOf
@@ -484,6 +505,12 @@ module Udb
 
     sig { params(param_values: T::Hash[String, T.untyped]).returns(SatisfiedResult) }
     def _eval(param_values)
+      if (rhs_name = rhs_parameter_name)
+        return SatisfiedResult::Maybe if param_values[rhs_name].nil?
+
+        resolved = @yaml.merge(comparison_type.serialize => param_values.fetch(rhs_name))
+        return ParameterTerm.new(resolved)._eval(param_values)
+      end
       val = param_values[name]
 
       # don't have the value, so can't say either way
@@ -565,26 +592,26 @@ module Udb
       case t
       when ParameterComparisonType::Equal
         if comparison_value.is_a?(String)
-          "(#{param_to_s}==\"#{comparison_value}\")"
+          "(#{param_to_s}==\"#{comparison_text}\")"
         else
-          "(#{param_to_s}==#{comparison_value})"
+          "(#{param_to_s}==#{comparison_text})"
         end
       when ParameterComparisonType::NotEqual
         if comparison_value.is_a?(String)
-          "(#{param_to_s}!=\"#{comparison_value}\")"
+          "(#{param_to_s}!=\"#{comparison_text}\")"
         else
-          "(#{param_to_s}!=#{comparison_value})"
+          "(#{param_to_s}!=#{comparison_text})"
         end
       when ParameterComparisonType::LessThan
-        "(#{param_to_s}<#{comparison_value})"
+        "(#{param_to_s}<#{comparison_text})"
       when ParameterComparisonType::GreaterThan
-        "(#{param_to_s}>#{comparison_value})"
+        "(#{param_to_s}>#{comparison_text})"
       when ParameterComparisonType::LessThanOrEqual
-        "(#{param_to_s}<=#{comparison_value})"
+        "(#{param_to_s}<=#{comparison_text})"
       when ParameterComparisonType::GreaterThanOrEqual
-        "(#{param_to_s}>=#{comparison_value})"
+        "(#{param_to_s}>=#{comparison_text})"
       when ParameterComparisonType::Includes
-        "$array_includes?(#{param_to_s}, #{comparison_value})"
+        "$array_includes?(#{param_to_s}, #{comparison_text})"
       when ParameterComparisonType::OneOf
         # construct XOR out of AND and OR
         # e.g.,
@@ -610,19 +637,19 @@ module Udb
       type = comparison_type
       case type
       when ParameterTerm::ParameterComparisonType::Equal
-        "`#{padoc}` == #{comparison_value}"
+        "`#{padoc}` == #{comparison_text}"
       when ParameterTerm::ParameterComparisonType::NotEqual
-        "`#{padoc}` != #{comparison_value}"
+        "`#{padoc}` != #{comparison_text}"
       when ParameterTerm::ParameterComparisonType::LessThan
-        "`#{padoc}` < #{comparison_value}"
+        "`#{padoc}` < #{comparison_text}"
       when ParameterTerm::ParameterComparisonType::GreaterThan
-        "`#{padoc}` > #{comparison_value}"
+        "`#{padoc}` > #{comparison_text}"
       when ParameterTerm::ParameterComparisonType::LessThanOrEqual
-        "`#{padoc}` <= #{comparison_value}"
+        "`#{padoc}` <= #{comparison_text}"
       when ParameterTerm::ParameterComparisonType::GreaterThanOrEqual
-        "`#{padoc}` >= #{comparison_value}"
+        "`#{padoc}` >= #{comparison_text}"
       when ParameterTerm::ParameterComparisonType::Includes
-        "#{comparison_value} in `#{padoc}`"
+        "#{comparison_text} in `#{padoc}`"
       when ParameterTerm::ParameterComparisonType::OneOf
         "`#{padoc}` in [#{@yaml["oneOf"].join(", ")}]"
       else
@@ -657,42 +684,42 @@ module Udb
       if i.nil?
         case t
         when ParameterComparisonType::Equal
-          "Paremeter #{@name} equals #{comparison_value}"
+          "Paremeter #{@name} equals #{comparison_text}"
         when ParameterComparisonType::NotEqual
-          "Paremeter #{@name} does not equal #{comparison_value}"
+          "Paremeter #{@name} does not equal #{comparison_text}"
         when ParameterComparisonType::LessThan
-          "Paremeter #{@name} is less than #{comparison_value}"
+          "Paremeter #{@name} is less than #{comparison_text}"
         when ParameterComparisonType::GreaterThan
-          "Paremeter #{@name} is greater than #{comparison_value}"
+          "Paremeter #{@name} is greater than #{comparison_text}"
         when ParameterComparisonType::LessThanOrEqual
-          "Paremeter #{@name} is less than or equal to #{comparison_value}"
+          "Paremeter #{@name} is less than or equal to #{comparison_text}"
         when ParameterComparisonType::GreaterThanOrEqual
-          "Paremeter #{@name} is greater than or equal to #{comparison_value}"
+          "Paremeter #{@name} is greater than or equal to #{comparison_text}"
         when ParameterComparisonType::Includes
-          "Paremeter #{@name} (an array) includes the value #{comparison_value}"
+          "Paremeter #{@name} (an array) includes the value #{comparison_text}"
         when ParameterComparisonType::OneOf
-          "Paremeter #{@name} is one of the following values: #{comparison_value}"
+          "Paremeter #{@name} is one of the following values: #{comparison_text}"
         else
           T.absurd(t)
         end
       else
         case t
         when ParameterComparisonType::Equal
-          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} equals #{comparison_value}"
+          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} equals #{comparison_text}"
         when ParameterComparisonType::NotEqual
-          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} does not equal #{comparison_value}"
+          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} does not equal #{comparison_text}"
         when ParameterComparisonType::LessThan
-          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} is less than #{comparison_value}"
+          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} is less than #{comparison_text}"
         when ParameterComparisonType::GreaterThan
-          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} is greater than #{comparison_value}"
+          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} is greater than #{comparison_text}"
         when ParameterComparisonType::LessThanOrEqual
-          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} is less than or equal to #{comparison_value}"
+          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} is less than or equal to #{comparison_text}"
         when ParameterComparisonType::GreaterThanOrEqual
-          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} is greater than or equal to #{comparison_value}"
+          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} is greater than or equal to #{comparison_text}"
         when ParameterComparisonType::Includes
           raise "Cannot occur"
         when ParameterComparisonType::OneOf
-          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} equals on of the following values: #{comparison_value}"
+          "The #{i.to_words(ordinal: true, remove_hyphen: true)} element of paremeter #{@name} equals on of the following values: #{comparison_text}"
         else
           T.absurd(t)
         end
@@ -711,6 +738,7 @@ module Udb
     sig { params(other_param: ParameterTerm).returns(T.nilable(LogicNode)) }
     def relation_to(other_param)
       return nil unless name == other_param.name
+      return nil unless rhs_parameter_name.nil? && other_param.rhs_parameter_name.nil?
 
       self_implies_other =
         LogicNode.new(LogicNodeType::If, [LogicNode.new(LogicNodeType::Term, [self]), LogicNode.new(LogicNodeType::Term, [other_param])])

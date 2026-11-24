@@ -857,7 +857,7 @@ module Udb
       @term.has_value?(val)
     end
 
-    sig { params(val: T.any(Integer, String, T::Boolean, T::Array[Integer], T::Array[String], T::Array[T::Boolean])).returns(Z3::BoolExpr) }
+    sig { params(val: T.any(Integer, String, T::Boolean, T::Array[Integer], T::Array[String], T::Array[T::Boolean], Z3::BitvecExpr)).returns(Z3::BoolExpr) }
     def ==(val)
       case val
       when String
@@ -870,7 +870,7 @@ module Udb
       end
     end
 
-    sig { params(val: T.any(Integer, String, T::Boolean, T::Array[Integer], T::Array[String], T::Array[T::Boolean])).returns(Z3::BoolExpr) }
+    sig { params(val: T.any(Integer, String, T::Boolean, T::Array[Integer], T::Array[String], T::Array[T::Boolean], Z3::BitvecExpr)).returns(Z3::BoolExpr) }
     def !=(val)
       case val
       when String
@@ -882,22 +882,22 @@ module Udb
       end
     end
 
-    sig { params(val: Integer).returns(Z3::BoolExpr) }
+    sig { params(val: T.any(Integer, Z3::BitvecExpr)).returns(Z3::BoolExpr) }
     def <=(val)
       T.cast(@term, Z3::BitvecExpr).unsigned_le(val)
     end
 
-    sig { params(val: Integer).returns(Z3::BoolExpr) }
+    sig { params(val: T.any(Integer, Z3::BitvecExpr)).returns(Z3::BoolExpr) }
     def <(val)
       T.cast(@term, Z3::BitvecExpr).unsigned_lt(val)
     end
 
-    sig { params(val: Integer).returns(Z3::BoolExpr) }
+    sig { params(val: T.any(Integer, Z3::BitvecExpr)).returns(Z3::BoolExpr) }
     def >=(val)
       T.cast(@term, Z3::BitvecExpr).unsigned_ge(val)
     end
 
-    sig { params(val: Integer).returns(Z3::BoolExpr) }
+    sig { params(val: T.any(Integer, Z3::BitvecExpr)).returns(Z3::BoolExpr) }
     def >(val)
       T.cast(@term, Z3::BitvecExpr).unsigned_gt(val)
     end
