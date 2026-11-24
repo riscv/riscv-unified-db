@@ -112,7 +112,7 @@ module Udb
             return true if unconfigured?
 
             if fully_configured?
-              ext?(:S) && (param_values["SXLEN"].size > 1)
+              ext?(:S) && param_values.key?("SXLEN") && (param_values["SXLEN"].size > 1)
             elsif partially_configured?
               return false if prohibited_ext?(:S)
 
@@ -130,7 +130,7 @@ module Udb
             return true if unconfigured?
 
             if fully_configured?
-              ext?(:U) && (param_values["UXLEN"].size > 1)
+              ext?(:U) && param_values.key?("UXLEN") && (param_values["UXLEN"].size > 1)
             elsif partially_configured?
               return true unless ext?(:U) # if U is not known to be implemented, we can't say anything about it
 
@@ -146,7 +146,7 @@ module Udb
             return true if unconfigured?
 
             if fully_configured?
-              ext?(:H) && (param_values["VSXLEN"].size > 1)
+              ext?(:H) && param_values.key?("VSXLEN") && (param_values["VSXLEN"].size > 1)
             elsif partially_configured?
               return true unless ext?(:H) # if H is not known to be implemented, we can't say anything about it
 
@@ -162,7 +162,7 @@ module Udb
             return true if unconfigured?
 
             if fully_configured?
-              ext?(:H) && (param_values["VUXLEN"].size > 1)
+              ext?(:H) && param_values.key?("VUXLEN") && (param_values["VUXLEN"].size > 1)
             elsif partially_configured?
               return true unless ext?(:H) # if H is not known to be implemented, we can't say anything about it
 

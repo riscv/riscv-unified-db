@@ -547,6 +547,28 @@ class TestCfgArch < Minitest::Test
     end
   end
 
+  def test_full_config_missing_xlen_params_are_reported
+    # A fully configured config that implements S, U and H but leaves out their
+    # *XLEN parameters should report them as missing instead of crashing
+    data = YAML.load_file(Udb.repo_root / "cfgs" / "example_rv64_with_overlay.yaml")
+    missing = %w[SXLEN UXLEN VSXLEN VUXLEN]
+    missing.each { |param| data["params"].delete(param) }
+    data["name"] = "rv64-missing-xlen"
+
+    Tempfile.create(%w/cfg .yaml/) do |f|
+      f.write YAML.dump(data)
+      f.flush
+
+      cfg_arch = @resolver.cfg_arch_for(Pathname.new f.path)
+      result = cfg_arch.valid?
+
+      refute result.valid
+      missing.each do |param|
+        assert_includes result.reasons, "Parameter is required but missing: '#{param}'"
+      end
+    end
+  end
+
   def test_partial_config_parameter_defined_by_reports_failing_conjuncts
     # rv32-bad2 config has CACHE_BLOCK_SIZE but no Zicbom/Zicbop/Zicboz — verify failing_conjuncts format
     cfg = <<~CFG
