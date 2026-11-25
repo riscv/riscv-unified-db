@@ -7,6 +7,7 @@ rv64uv_sc_tests = vadd.vv vle8 \
     vsetvl \
     vsetvli_vl_lt_vlmax \
     vsetvli_rs1_eq_zero \
+    vsetvl_rs1_eq_zero \
     vmv_v_i
 
 rv64uv_p_tests = $(addprefix rv64uv-p-, $(rv64uv_sc_tests))

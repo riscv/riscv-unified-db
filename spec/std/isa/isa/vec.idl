@@ -52,3 +52,19 @@ function vector_state {
     return state;
   }
 }
+
+function vector_vlmax {
+  returns XReg
+  arguments VectorState state
+  description {
+    Return VLMAX = LMUL * VLEN / SEW for the given vector state
+  }
+  body {
+    XReg vlen = VLEN;
+    if (state.lmul_type == VectorLmulType::Multiply) {
+      return (vlen << state.log2_lmul) >> state.log2_sew;
+    } else {
+      return (vlen >> state.log2_lmul) >> state.log2_sew;
+    }
+  }
+}

@@ -40,6 +40,7 @@ operation(): |
     CSR[vtype].VTA = 0;
     CSR[vtype].VSEW = 0;
     CSR[vtype].VLMUL = 0;
+    CSR[vl].VALUE = 0;
   } else {
     # valid, do the write
     CSR[vtype].VILL = 0;
@@ -47,25 +48,23 @@ operation(): |
     CSR[vtype].VTA = new_vtype[6];
     CSR[vtype].VSEW = new_vtype[5:3];
     CSR[vtype].VLMUL = new_vtype[2:0];
-  }
 
-  VectorState state = vector_state();
-  XReg vlen = VLEN;
-  XReg vlmax = (vlen << state.log2_lmul) >> state.log2_sew;
-  XReg AVL = uimm;
-  XReg CEIL_AVL_OVER_TWO = (AVL + 1) / 2;
-  if (AVL <= vlmax) {
-    CSR[vl].VALUE = AVL;
-  } else if (AVL < 2 * vlmax) {
-    if (RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX == "ceil(AVL/2)") {
-      CSR[vl].VALUE = CEIL_AVL_OVER_TWO;
-    } else if (RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX == "VLMAX") {
-      CSR[vl].VALUE = vlmax;
+    XReg vlmax = vector_vlmax(vector_state());
+    XReg AVL = uimm;
+    XReg CEIL_AVL_OVER_TWO = (AVL + 1) / 2;
+    if (AVL <= vlmax) {
+      CSR[vl].VALUE = AVL;
+    } else if (AVL < 2 * vlmax) {
+      if (RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX == "ceil(AVL/2)") {
+        CSR[vl].VALUE = CEIL_AVL_OVER_TWO;
+      } else if (RVV_VL_WHEN_AVL_LT_DOUBLE_VLMAX == "VLMAX") {
+        CSR[vl].VALUE = vlmax;
+      } else {
+        unpredictable("Implementations may choose a custom value for vl in the case AVL < (2*VLMAX), so long as ceil(AVL/2) <= vl <= VLMAX");
+      }
     } else {
-      unpredictable("Implementations may choose a custom value for vl in the case AVL < (2*VLMAX), so long as ceil(AVL/2) <= vl <= VLMAX");
+      CSR[vl].VALUE = vlmax;
     }
-  } else {
-    CSR[vl].VALUE = vlmax;
   }
 
   X[xd] = CSR[vl].VALUE;
