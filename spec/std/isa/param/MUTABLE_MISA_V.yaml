@@ -10,6 +10,11 @@ description: Indicates whether or not the `V` extension can be disabled with the
 long_name: "`misa.V` mutability"
 schema:
   type: boolean
+requirements:
+  idl(): MUTABLE_MISA_D -> MUTABLE_MISA_V;
+  reason:
+    If D can be disabled, then V must also be disabled since V cannot exist
+    without D (and thus there is no option for MUTABLE_MISA_V).
 definedBy:
   extension:
     allOf:
