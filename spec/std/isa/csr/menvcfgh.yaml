@@ -69,3 +69,14 @@ fields:
         name: Smcdeleg
     type: RW
     reset_value: UNDEFINED_LEGAL
+  DTE:
+    location: 27
+    alias: menvcfg.DTE
+    long_name: Double Trap Enable
+    description: |
+      Alias of `menvcfg.DTE`.
+    definedBy:
+      extension:
+        name: Ssdbltrp
+    type: RW
+    reset_value: UNDEFINED_LEGAL

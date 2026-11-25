@@ -77,8 +77,18 @@ operation(): |
     }
   }
 
-  # TODO: Ssdbltrp: if new_mode is U, VS, or VU, clear sstatus.SDT; if new_mode
-  # is VU, also clear vsstatus.SDT. UDB does not yet define the SDT fields.
+  if (implemented?(ExtensionName::Ssdbltrp)) {
+    if (new_mode == PrivilegeMode::U || new_mode == PrivilegeMode::VS || new_mode == PrivilegeMode::VU) {
+      # The spec clears sstatus.SDT. UDB models sstatus as an alias of mstatus,
+      # so writing mstatus.SDT clears sstatus.SDT.
+      CSR[mstatus].SDT = 1'b0;
+    }
+    if (implemented?(ExtensionName::H)) {
+      if (new_mode == PrivilegeMode::VU) {
+        CSR[vsstatus].SDT = 1'b0;
+      }
+    }
+  }
 
   if (implemented?(ExtensionName::Zicfilp)) {
     # TODO: set ELP to dcsr.PELP if xLPE is enabled for new_mode, otherwise to
