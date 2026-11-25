@@ -30,7 +30,9 @@ module Udb
       "VS" => "CSR[hstatus].VSXL",
       "VU" => "CSR[vsstatus].UXL"
     }.freeze
-    XLEN_TO_ENCODING = { 32 => 0, 64 => 1 }.freeze
+    # XL fields (misa.MXL, mstatus.SXL/UXL, hstatus.VSXL, vsstatus.UXL) all use
+    # the misa.MXL encoding: 1 = XLEN 32, 2 = XLEN 64
+    XLEN_TO_ENCODING = { 32 => 1, 64 => 2 }.freeze
     # Add all methods in this module to this type of database object.
     include HasFields
 

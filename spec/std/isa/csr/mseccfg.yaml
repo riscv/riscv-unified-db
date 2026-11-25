@@ -140,3 +140,42 @@ fields:
       return SSEED_READ_ONLY_ZERO ? CsrFieldType::RO : CsrFieldType::RW;
     reset_value(): |
       return SSEED_READ_ONLY_ZERO ? 0 : UNDEFINED_LEGAL;
+  PMM:
+    location: 33-32
+    description: |
+      *Pointer Masking Mode*
+
+      Enables or disables pointer masking for M-mode.
+
+      [separator="!",%autowidth]
+      !===
+      ! Value ! Description
+
+      ! 00 ! Pointer masking is disabled (PMLEN = 0)
+      ! 01 ! _Reserved_
+      ! 10 ! Pointer masking is enabled with PMLEN = XLEN - 57 (PMLEN = 7 on RV64)
+      ! 11 ! Pointer masking is enabled with PMLEN = XLEN - 48 (PMLEN = 16 on RV64)
+      !===
+
+      `PMM` is a WARL field. The supported PMLEN values are given by
+      `SUPPORTED_PMLEN_SMMPM`. A write of the reserved encoding, or of an
+      encoding whose PMLEN is not supported, leaves `PMM` unchanged.
+
+      If Smmpm is not implemented, `PMM` is read-only zero.
+      `PMM` is read-only zero for RV32.
+    definedBy:
+      extension:
+        name: Smmpm
+    type(): |
+      return ($array_size(SUPPORTED_PMLEN_SMMPM) == 1) ? CsrFieldType::RO : CsrFieldType::RWR;
+    reset_value(): |
+      return ($array_size(SUPPORTED_PMLEN_SMMPM) == 1) ? 0 : UNDEFINED_LEGAL;
+    sw_write(csr_value): |
+      if ((csr_value.PMM == 0) ||
+          ((csr_value.PMM == 2) && $array_includes?(SUPPORTED_PMLEN_SMMPM, 7)) ||
+          ((csr_value.PMM == 3) && $array_includes?(SUPPORTED_PMLEN_SMMPM, 16))) {
+        return csr_value.PMM;
+      }
+      # 01 is reserved, and an unsupported PMLEN is an illegal write:
+      # both leave PMM unchanged
+      return CSR[mseccfg].PMM;

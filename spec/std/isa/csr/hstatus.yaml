@@ -20,6 +20,81 @@ definedBy:
   extension:
     name: H
 fields:
+  HUPMM:
+    long_name: Hypervisor U-mode Pointer Masking Mode
+    location: 49-48
+    definedBy:
+      allOf:
+        - xlen: 64
+        - extension:
+            name: Ssnpm
+    description: |
+      Enables or disables pointer masking for `HLV.*` and `HSV.*` instructions
+      executed in U-mode when their explicit memory access is performed as
+      though in VU-mode. It uses the same encodings as `henvcfg.PMM`.
+
+      [separator="!",%autowidth]
+      !===
+      ! Value ! Description
+
+      ! 00 ! Pointer masking is disabled (PMLEN = 0)
+      ! 01 ! _Reserved_
+      ! 10 ! Pointer masking is enabled with PMLEN = XLEN - 57 (PMLEN = 7 on RV64)
+      ! 11 ! Pointer masking is enabled with PMLEN = XLEN - 48 (PMLEN = 16 on RV64)
+      !===
+
+      In HS- and M-modes, pointer masking for these instructions is controlled
+      by `senvcfg.PMM` when their access is performed as though in VU-mode, and
+      by `henvcfg.PMM` when it is performed as though in VS-mode.
+
+      `HUPMM` is a WARL field. The supported PMLEN values are given by
+      `SUPPORTED_PMLEN_SSNPM`. A write of the reserved encoding, or of an
+      encoding whose PMLEN is not supported, leaves `HUPMM` unchanged.
+      Enabling pointer masking while VU-mode runs with XLEN=32 is also an
+      illegal write that leaves `HUPMM` unchanged, and selecting XLEN=32 for
+      VU-mode (`vsstatus.UXL`, or `hstatus.VSXL` or `mstatus.SXL`, which force
+      VU-mode to XLEN=32) clears `HUPMM`.
+
+      When the Ssnpm extension is not implemented, `HUPMM` is read-only zero.
+      `HUPMM` is read-only zero for RV32, and also when VU-mode can only run
+      with XLEN=32 (HS-mode, VS-mode or VU-mode only supports XLEN=32).
+
+      [NOTE]
+      ====
+      The hypervisor should copy the value written to `senvcfg.PMM` by the guest to
+      `hstatus.HUPMM` before invoking `HLV.*` or `HSV.*` instructions in U-mode.
+      ====
+    type(): |
+      if (($array_size(SUPPORTED_PMLEN_SSNPM) == 1) ||
+          (($array_size(VUXLEN) == 1) && (VUXLEN[0] == 32))) {
+        return CsrFieldType::RO;
+      }
+      return CsrFieldType::RWR;
+    reset_value(): |
+      if (($array_size(SUPPORTED_PMLEN_SSNPM) == 1) ||
+          (($array_size(VUXLEN) == 1) && (VUXLEN[0] == 32))) {
+        return 0;
+      }
+      return UNDEFINED_LEGAL;
+    sw_write(csr_value): |
+      if (csr_value.HUPMM == 0) {
+        return csr_value.HUPMM;
+      }
+      if (((csr_value.HUPMM == 2) && $array_includes?(SUPPORTED_PMLEN_SSNPM, 7)) ||
+          ((csr_value.HUPMM == 3) && $array_includes?(SUPPORTED_PMLEN_SSNPM, 16))) {
+        # Enabling pointer masking while VU-mode runs with XLEN=32 is an
+        # illegal write. VSXL can change in the same write, and widening it
+        # also widens vsstatus.UXL, so check VU-mode against the values this
+        # write leaves.
+        Bits<2> new_vsxl = vsxl_after_write(csr_value.VSXL);
+        if (pointer_masking_vu_xlen32?(new_vsxl, vsstatus_uxl_after_vsxl_write(new_vsxl))) {
+          return CSR[hstatus].HUPMM;
+        }
+        return csr_value.HUPMM;
+      }
+      # 01 is reserved, and an unsupported PMLEN is an illegal write:
+      # both leave HUPMM unchanged
+      return CSR[hstatus].HUPMM;
   VSXL:
     long_name: VS-mode XLen
     location: 33-32
@@ -33,17 +108,19 @@ fields:
           !===
           ! Value ! VSXLEN
 
-          ! 0     ! 32
-          ! 1     ! 64
+          ! 1     ! 32
+          ! 2     ! 64
           !===
+
+          When HSXLEN is changed from 32 to 64, VSXL gets the value 2 (VSXLEN=64).
         when(): return $array_size(VSXLEN) > 1;
 
       - text: |
-          Because the implementation only supports a single VSXLEN == 32, this field is read-only-0.
+          Because the implementation only supports a single VSXLEN == 32, this field is read-only-1.
         when(): return $array_size(VSXLEN) == 1 && $array_includes?(VSXLEN, 32);
 
       - text: |
-          Because the implementation only supports a single VSXLEN == 64, this field is read-only-1.
+          Because the implementation only supports a single VSXLEN == 64, this field is read-only-2.
         when(): return $array_size(VSXLEN) == 1 && $array_includes?(VSXLEN, 64);
 
     type(): |
@@ -54,25 +131,31 @@ fields:
       }
     reset_value(): |
       if ($array_size(VSXLEN) == 1 && VSXLEN[0] == 32) {
-        # immutable, always 0
-        return 0;
+        # immutable, always 1 (XLEN=32)
+        return $bits(XRegWidth::XLEN32);
       } else if ($array_size(VSXLEN) == 1 && VSXLEN[0] == 64) {
-        # immutable, always 1
-        return 1;
+        # immutable, always 2 (XLEN=64)
+        return $bits(XRegWidth::XLEN64);
       } else {
         # mutable, undefined reset state
         return UNDEFINED_LEGAL;
       }
     sw_write(csr_value): |
-      if (CSR[mstatus].SXL < csr_value.VSXL) {
-        # cannot set VSXLEN less than SXLEN
-        return UNDEFINED_LEGAL_DETERMINISTIC;
-      } else if ((csr_value.VSXL & 0b10) != 0) {
-        # MSB of VSXL represents XLEN > 64, which isn't legal
-        return UNDEFINED_LEGAL_DETERMINISTIC;
-      } else {
-        return csr_value.VSXL;
+      # VSXL keeps its value when VSXLEN is fixed, and on a write that is
+      # reserved (0), selects XLEN=128 (3), or is wider than HSXLEN
+      Bits<2> new_vsxl = vsxl_after_write(csr_value.VSXL);
+      # Widening VSXLEN from 32 to 64 widens a mutable vsstatus.UXL to 64
+      if ($array_size(VUXLEN) > 1) {
+        CSR[vsstatus].UXL = vsstatus_uxl_after_vsxl_write(new_vsxl);
       }
+      if (implemented?(ExtensionName::Ssnpm)) {
+        if (($array_size(VSXLEN) > 1) && (new_vsxl == $bits(XRegWidth::XLEN32))) {
+          # VS-mode at XLEN=32 also forces VU-mode to XLEN=32
+          CSR[henvcfg].PMM = 0;
+          CSR[hstatus].HUPMM = 0;
+        }
+      }
+      return new_vsxl;
   HUKTE:
     location: 24
     long_name: Hypervisor UKTE

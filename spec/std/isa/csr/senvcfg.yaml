@@ -20,6 +20,73 @@ definedBy:
         version: ">=1.12"
       - name: U
 fields:
+  PMM:
+    location: 33-32
+    description: |
+      *Pointer Masking Mode*
+
+      Enables or disables pointer masking for the next-lower privilege mode
+      (U/VU).
+
+      [separator="!",%autowidth]
+      !===
+      ! Value ! Description
+
+      ! 00 ! Pointer masking is disabled (PMLEN = 0)
+      ! 01 ! _Reserved_
+      ! 10 ! Pointer masking is enabled with PMLEN = XLEN - 57 (PMLEN = 7 on RV64)
+      ! 11 ! Pointer masking is enabled with PMLEN = XLEN - 48 (PMLEN = 16 on RV64)
+      !===
+
+      `PMM` is a WARL field. The supported PMLEN values are given by
+      `SUPPORTED_PMLEN_SSNPM`. A write of the reserved encoding, or of an
+      encoding whose PMLEN is not supported, leaves `PMM` unchanged.
+      Enabling pointer masking while the controlled mode runs with XLEN=32 is
+      also an illegal write that leaves `PMM` unchanged. The controlled mode is
+      U-mode, or VU-mode for a write made in VS-mode. Selecting XLEN=32 for
+      U-mode (`mstatus.UXL`) clears `PMM`, and so does selecting XLEN=32 for
+      VU-mode from VS-mode. A change of privilege mode that leaves `PMM`
+      controlling a mode with XLEN=32 also clears it, for example entering an
+      RV32 guest, or returning from a guest to a host whose U-mode runs with
+      XLEN=32.
+
+      Changing `senvcfg.PMM` takes effect immediately, without the need to
+      execute an `SFENCE.VMA` instruction.
+
+      If Ssnpm is not implemented, `PMM` is read-only zero.
+      `PMM` is read-only zero for RV32.
+    definedBy:
+      allOf:
+        - xlen: 64
+        - extension:
+            name: Ssnpm
+    type(): |
+      return ($array_size(SUPPORTED_PMLEN_SSNPM) == 1) ? CsrFieldType::RO : CsrFieldType::RWR;
+    reset_value(): |
+      return ($array_size(SUPPORTED_PMLEN_SSNPM) == 1) ? 0 : UNDEFINED_LEGAL;
+    sw_write(csr_value): |
+      if (csr_value.PMM == 0) {
+        return csr_value.PMM;
+      }
+      if (((csr_value.PMM == 2) && $array_includes?(SUPPORTED_PMLEN_SSNPM, 7)) ||
+          ((csr_value.PMM == 3) && $array_includes?(SUPPORTED_PMLEN_SSNPM, 16))) {
+        # Enabling pointer masking while the controlled mode runs with XLEN=32
+        # is an illegal write. In VS-mode, senvcfg holds the guest setting for
+        # VU-mode.
+        PrivilegeMode controlled_mode = PrivilegeMode::U;
+        if (implemented?(ExtensionName::H)) {
+          if (virtual_mode?()) {
+            controlled_mode = PrivilegeMode::VU;
+          }
+        }
+        if (pointer_masking_xlen32?(controlled_mode)) {
+          return CSR[senvcfg].PMM;
+        }
+        return csr_value.PMM;
+      }
+      # 01 is reserved, and an unsupported PMLEN is an illegal write:
+      # both leave PMM unchanged
+      return CSR[senvcfg].PMM;
   CBZE:
     location: 7
     description: |

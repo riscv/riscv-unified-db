@@ -60,9 +60,7 @@ description: |
 
   The definitions of the CBCFE and CBIE fields are furnished by the Zicbom extension.
 
-  The definition of the PMM field will be furnished by the forthcoming
-  Ssnpm extension. Its allocation within `henvcfg` may change prior to the
-  ratification of that extension.
+  The definition of the PMM field is furnished by the Ssnpm extension.
 
   The Zicfilp extension adds the `LPE` field in `henvcfg`. When the `LPE` field
   is set to 1, the Zicfilp extension is enabled in VS-mode. When the `LPE` field
@@ -193,6 +191,65 @@ fields:
       return (implemented?(ExtensionName::Svadu)) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       return (implemented?(ExtensionName::Svadu)) ? UNDEFINED_LEGAL : 0;
+  PMM:
+    location: 33-32
+    description: |
+      *Pointer Masking Mode*
+
+      Enables or disables pointer masking for VS-mode, including `HLV.*` and
+      `HSV.*` accesses performed as though in VS-mode.
+
+      [separator="!",%autowidth]
+      !===
+      ! Value ! Description
+
+      ! 00 ! Pointer masking is disabled (PMLEN = 0)
+      ! 01 ! _Reserved_
+      ! 10 ! Pointer masking is enabled with PMLEN = XLEN - 57 (PMLEN = 7 on RV64)
+      ! 11 ! Pointer masking is enabled with PMLEN = XLEN - 48 (PMLEN = 16 on RV64)
+      !===
+
+      `PMM` is a WARL field. The supported PMLEN values are given by
+      `SUPPORTED_PMLEN_SSNPM`. A write of the reserved encoding, or of an
+      encoding whose PMLEN is not supported, leaves `PMM` unchanged.
+      Enabling pointer masking while VS-mode runs with XLEN=32 is also an
+      illegal write that leaves `PMM` unchanged, and selecting XLEN=32 for
+      VS-mode (`hstatus.VSXL`, or `mstatus.SXL` for HS-mode) clears `PMM`.
+
+      When the Ssnpm extension is not implemented, `PMM` is read-only zero.
+      `PMM` is read-only zero for RV32, and also when VS-mode can only run
+      with XLEN=32 (HS-mode or VS-mode only supports XLEN=32).
+    definedBy:
+      extension:
+        name: Ssnpm
+    type(): |
+      if (($array_size(SUPPORTED_PMLEN_SSNPM) == 1) ||
+          (($array_size(VSXLEN) == 1) && (VSXLEN[0] == 32))) {
+        return CsrFieldType::RO;
+      }
+      return CsrFieldType::RWR;
+    reset_value(): |
+      if (($array_size(SUPPORTED_PMLEN_SSNPM) == 1) ||
+          (($array_size(VSXLEN) == 1) && (VSXLEN[0] == 32))) {
+        return 0;
+      }
+      return UNDEFINED_LEGAL;
+    sw_write(csr_value): |
+      if (csr_value.PMM == 0) {
+        return csr_value.PMM;
+      }
+      if (((csr_value.PMM == 2) && $array_includes?(SUPPORTED_PMLEN_SSNPM, 7)) ||
+          ((csr_value.PMM == 3) && $array_includes?(SUPPORTED_PMLEN_SSNPM, 16))) {
+        # Enabling pointer masking while VS-mode runs with XLEN=32 is an
+        # illegal write
+        if (pointer_masking_xlen32?(PrivilegeMode::VS)) {
+          return CSR[henvcfg].PMM;
+        }
+        return csr_value.PMM;
+      }
+      # 01 is reserved, and an unsupported PMLEN is an illegal write:
+      # both leave PMM unchanged
+      return CSR[henvcfg].PMM;
   CBZE:
     location: 7
     description: |
