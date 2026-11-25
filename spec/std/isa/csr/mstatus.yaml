@@ -189,7 +189,7 @@ fields:
       [when,"SXLEN==64"]
       Since the CPU only supports SXLEN==64, this is hardwired to 2.
 
-      [when,"SXLEN=3264"]
+      [when,"$array_size(SXLEN) > 1"]
       --
       It is not valid to have SXLEN less than UXLEN.
 
@@ -239,7 +239,7 @@ fields:
       Since the CPU only supports UXLEN==64, this is hardwired to 2.
 
 
-      [when,"UXLEN == 3264"]
+      [when,"$array_size(UXLEN) > 1"]
       --
       It is not valid to have SXLEN less than UXLEN.
 
