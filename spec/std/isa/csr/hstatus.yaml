@@ -66,16 +66,12 @@ fields:
       ====
     type(): |
       if (($array_size(SUPPORTED_PMLEN_SSNPM) == 1) ||
-          (($array_size(SXLEN) == 1) && (SXLEN[0] == 32)) ||
-          (($array_size(VSXLEN) == 1) && (VSXLEN[0] == 32)) ||
           (($array_size(VUXLEN) == 1) && (VUXLEN[0] == 32))) {
         return CsrFieldType::RO;
       }
       return CsrFieldType::RWR;
     reset_value(): |
       if (($array_size(SUPPORTED_PMLEN_SSNPM) == 1) ||
-          (($array_size(SXLEN) == 1) && (SXLEN[0] == 32)) ||
-          (($array_size(VSXLEN) == 1) && (VSXLEN[0] == 32)) ||
           (($array_size(VUXLEN) == 1) && (VUXLEN[0] == 32))) {
         return 0;
       }

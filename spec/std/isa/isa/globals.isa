@@ -1137,17 +1137,23 @@ function vsstatus_uxl_after_vsxl_write {
   arguments Bits<2> new_vsxl
   description {
     Returns the value `vsstatus.UXL` holds after `hstatus.VSXL` changes to
-    `new_vsxl`. When VSXLEN widens from 32 to 64 and UXL is not restricted to
-    a single value, UXL gets the widest supported width, XLEN=64.
+    `new_vsxl`, when UXL is not restricted to a single value. When VSXLEN
+    widens from 32 to 64, UXL gets the widest supported width, XLEN=64. When
+    VSXLEN is 32, the UXL field does not exist and VU-mode runs with XLEN=32,
+    so UXL holds the XLEN=32 encoding.
   }
   body {
     if (MXLEN == 32) {
       return new_vsxl;
     } else {
-      if (($array_size(VUXLEN) > 1) &&
-          (CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32)) &&
-          (new_vsxl == $bits(XRegWidth::XLEN64))) {
-        return $bits(XRegWidth::XLEN64);
+      if ($array_size(VUXLEN) > 1) {
+        if (new_vsxl == $bits(XRegWidth::XLEN32)) {
+          return $bits(XRegWidth::XLEN32);
+        }
+        if ((CSR[hstatus].VSXL == $bits(XRegWidth::XLEN32)) &&
+            (new_vsxl == $bits(XRegWidth::XLEN64))) {
+          return $bits(XRegWidth::XLEN64);
+        }
       }
       return CSR[vsstatus].UXL;
     }

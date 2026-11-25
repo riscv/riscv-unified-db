@@ -122,15 +122,15 @@ class TestCsr < Minitest::Test
     csr = make_csr(arch, length: "XLEN", priv_mode: "U")
 
     assert_equal(
-      "(priv_mode() == PrivilegeMode::M && CSR[misa].MXL == 0) || " \
-      "(priv_mode() == PrivilegeMode::S && CSR[mstatus].SXL == 0) || " \
-      "(priv_mode() == PrivilegeMode::U && CSR[mstatus].UXL == 0) || " \
-      "(priv_mode() == PrivilegeMode::VS && CSR[hstatus].VSXL == 0) || " \
-      "(priv_mode() == PrivilegeMode::VU && CSR[vsstatus].UXL == 0)",
+      "(priv_mode() == PrivilegeMode::M && CSR[misa].MXL == 1) || " \
+      "(priv_mode() == PrivilegeMode::S && CSR[mstatus].SXL == 1) || " \
+      "(priv_mode() == PrivilegeMode::U && CSR[mstatus].UXL == 1) || " \
+      "(priv_mode() == PrivilegeMode::VS && CSR[hstatus].VSXL == 1) || " \
+      "(priv_mode() == PrivilegeMode::VU && CSR[vsstatus].UXL == 1)",
       csr.length_cond32
     )
-    assert_includes csr.length_cond64, "CSR[mstatus].UXL == 1"
-    assert_includes csr.length_cond64, "CSR[vsstatus].UXL == 1"
+    assert_includes csr.length_cond64, "CSR[mstatus].UXL == 2"
+    assert_includes csr.length_cond64, "CSR[vsstatus].UXL == 2"
   end
 
   # ...and must name only those modes. An M-mode CSR gets the M disjunct alone.
@@ -138,7 +138,7 @@ class TestCsr < Minitest::Test
     arch = make_cfg_arch(dynamic_modes: %w[M S U VS VU])
     csr = make_csr(arch, length: "XLEN", priv_mode: "M")
 
-    assert_equal "(priv_mode() == PrivilegeMode::M && CSR[misa].MXL == 0)", csr.length_cond32
+    assert_equal "(priv_mode() == PrivilegeMode::M && CSR[misa].MXL == 1)", csr.length_cond32
     refute_includes csr.length_cond32, "SXL"
     refute_includes csr.length_cond32, "VSXL"
   end
@@ -151,8 +151,8 @@ class TestCsr < Minitest::Test
 
     pretty = csr.length_pretty
     refute_includes pretty, "%%", "length_pretty must not leak the substitution placeholder"
-    assert_equal 3, pretty.scan("== 0").size
     assert_equal 3, pretty.scan("== 1").size
+    assert_equal 3, pretty.scan("== 2").size
   end
 
   # The fixed-width lengths name one field and do not consult the mode list.
@@ -160,16 +160,16 @@ class TestCsr < Minitest::Test
     arch = make_cfg_arch(dynamic_modes: %w[M S U VS VU])
 
     mxlen = make_csr(arch, length: "MXLEN", priv_mode: "M")
-    assert_equal "CSR[misa].MXL == 0", mxlen.length_cond32
-    assert_equal "CSR[misa].MXL == 1", mxlen.length_cond64
+    assert_equal "CSR[misa].MXL == 1", mxlen.length_cond32
+    assert_equal "CSR[misa].MXL == 2", mxlen.length_cond64
 
     sxlen = make_csr(arch, length: "SXLEN", priv_mode: "S")
-    assert_equal "CSR[mstatus].SXL == 0", sxlen.length_cond32
-    assert_equal "CSR[mstatus].SXL == 1", sxlen.length_cond64
+    assert_equal "CSR[mstatus].SXL == 1", sxlen.length_cond32
+    assert_equal "CSR[mstatus].SXL == 2", sxlen.length_cond64
 
     vsxlen = make_csr(arch, length: "VSXLEN", priv_mode: "VS")
-    assert_equal "CSR[hstatus].VSXL == 0", vsxlen.length_cond32
-    assert_equal "CSR[hstatus].VSXL == 1", vsxlen.length_cond64
+    assert_equal "CSR[hstatus].VSXL == 1", vsxlen.length_cond32
+    assert_equal "CSR[hstatus].VSXL == 2", vsxlen.length_cond64
   end
 
   # A CSR of fixed integer width has no xlen condition to report.

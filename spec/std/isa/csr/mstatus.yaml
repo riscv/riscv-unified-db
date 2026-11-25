@@ -214,9 +214,13 @@ fields:
           }
         }
         if (implemented?(ExtensionName::Ssnpm)) {
-          if (implemented?(ExtensionName::H)) {
-            if (($array_size(SXLEN) > 1) && (csr_value.SXL == $bits(XRegWidth::XLEN32))) {
-              # S-mode at XLEN=32 forces VS-mode and VU-mode to XLEN=32
+          if (($array_size(SXLEN) > 1) && (csr_value.SXL == $bits(XRegWidth::XLEN32))) {
+            # S-mode at XLEN=32 forces U-mode to XLEN=32. mstatus is only
+            # written outside a virtual mode, so senvcfg holds the U-mode
+            # setting here.
+            CSR[senvcfg].PMM = 0;
+            if (implemented?(ExtensionName::H)) {
+              # S-mode at XLEN=32 also forces VS-mode and VU-mode to XLEN=32
               CSR[henvcfg].PMM = 0;
               CSR[hstatus].HUPMM = 0;
             }
@@ -278,9 +282,14 @@ fields:
       return ($array_size(UXLEN) > 1) ? CsrFieldType::RW : CsrFieldType::RO;
 
     sw_write(csr_value): |
-      if (csr_value.SXL < csr_value.UXL) {
-        return CSR[mstatus].UXL;
-      } else if (csr_value.UXL < 1 || csr_value.UXL > 2) {
+      if (implemented?(ExtensionName::S)) {
+        if (csr_value.SXL < csr_value.UXL) {
+          # UXLEN cannot be wider than SXLEN. Without S-mode, the SXL bits do
+          # not exist, so this check does not apply.
+          return CSR[mstatus].UXL;
+        }
+      }
+      if (csr_value.UXL < 1 || csr_value.UXL > 2) {
         # UXL != [1, 2] is not defined (3 reserved for RV128, but that isn't ratified)
         return CSR[mstatus].UXL;
       } else {

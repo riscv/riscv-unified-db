@@ -54,7 +54,8 @@ fields:
 
       Sets the effective XLEN for VU-mode (1 = 32-bit, 2 = 64-bit, 3 = 128-bit).
       When VSXLEN is changed from 32 to 64 and VUXLEN is not fixed, UXL gets the
-      value 2 (VU-mode XLEN=64).
+      value 2 (VU-mode XLEN=64). When VSXLEN is 32, UXL does not exist and
+      VU-mode runs with XLEN=32.
 
       [when,"VUXLEN == 32"]
       Since the hart only supports VUXLEN==32, this is hardwired to 1.
@@ -75,6 +76,16 @@ fields:
     sw_write(csr_value): |
       if ($array_size(VUXLEN) == 1) {
         # VUXLEN is fixed, so UXL keeps its value
+        return CSR[vsstatus].UXL;
+      }
+      if ((csr_value.UXL != $bits(XRegWidth::XLEN32)) &&
+          (csr_value.UXL != $bits(XRegWidth::XLEN64))) {
+        # 0 is reserved and 3 selects XLEN=128, which is not supported, so
+        # UXL keeps its value
+        return CSR[vsstatus].UXL;
+      }
+      if (csr_value.UXL > CSR[hstatus].VSXL) {
+        # VU-mode cannot run with a wider XLEN than VS-mode
         return CSR[vsstatus].UXL;
       }
       if (implemented?(ExtensionName::Ssnpm)) {

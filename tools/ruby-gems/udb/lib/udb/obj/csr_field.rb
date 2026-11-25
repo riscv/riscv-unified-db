@@ -767,13 +767,13 @@ module Udb
     def location_cond32
       case csr.priv_mode
       when "M", "D"
-        "CSR[misa].MXL == 0"
+        "CSR[misa].MXL == 1"
       when "S"
-        "CSR[mstatus].SXL == 0"
+        "CSR[mstatus].SXL == 1"
       when "VS"
-        "CSR[hstatus].VSXL == 0"
+        "CSR[hstatus].VSXL == 1"
       when "U"
-        "CSR[mstatus].UXL == 0"
+        "CSR[mstatus].UXL == 1"
       else
         raise "Unexpected priv mode #{csr.priv_mode} for #{csr.name}"
       end
@@ -783,13 +783,13 @@ module Udb
     def location_cond64
       case csr.priv_mode
       when "M", "D"
-        "CSR[misa].MXL == 1"
+        "CSR[misa].MXL == 2"
       when "S"
-        "CSR[mstatus].SXL == 1"
+        "CSR[mstatus].SXL == 2"
       when "VS"
-        "CSR[hstatus].VSXL == 1"
+        "CSR[hstatus].VSXL == 2"
       when "U"
-        "CSR[mstatus].UXL == 1"
+        "CSR[mstatus].UXL == 2"
       else
         raise "Unexpected priv mode #{csr.priv_mode} for #{csr.name}"
       end
@@ -822,8 +822,8 @@ module Udb
 
         if effective_xlen.nil?
           <<~LOC
-          * #{derangeify.call(location(32))} when #{condition.sub('%%', '0')}
-          * #{derangeify.call(location(64))} when #{condition.sub('%%', '1')}
+          * #{derangeify.call(location(32))} when #{condition.sub('%%', '1')}
+          * #{derangeify.call(location(64))} when #{condition.sub('%%', '2')}
         LOC
         else
           derangeify.call(location(effective_xlen))
