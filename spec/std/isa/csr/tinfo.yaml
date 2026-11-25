@@ -31,8 +31,15 @@ fields:
       February 2, 2023.
 
       1 (1):: Supports triggers as described in the ratified version 1.0 of this document.
+
+      Implementing mcontrol6 requires that `version` is 1 or higher.
     type: RO
-    reset_value: UNDEFINED_LEGAL
+    reset_value(): |
+      if ($array_includes?(SDTRIG_MCONTROL6_SUPPORTED_TRIGGERS, true)) {
+        return 1;
+      } else {
+        return UNDEFINED_LEGAL;
+      }
   TYPES:
     location: 15-0
     description: |

@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsha2cl.vv
-long_name: Vector SHA-2 compression loop
+long_name: Vector SHA-2 two rounds of compression, low part
 description: |
-  Performs the SHA-2 compression loop operation on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This combines multiple SHA-2 operations for efficient hash computation.
+  Performs two rounds of SHA-2 compression (SHA-256 when SEW=32; SHA-512 when SEW=64, which requires Zvknhb). Two message schedule words from vs1 are processed with the eight words of current state held in vd and vs2 to produce four words of the next state, which are written to vd. `vsha2cl.vv` uses the two least significant message schedule words of the element group in vs1; `vsha2ch.vv` is identical except that it uses the two most significant.
 definedBy:
   extension:
     name: Zvknha

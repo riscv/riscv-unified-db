@@ -8,12 +8,10 @@ kind: instruction
 name: fsq
 long_name: Floating-Point Store Quad-Precision
 description: |
-  The `fsq` is the new variant of LOAD-FP, encoded with a new value for the `funct3`.
+  The `fsq` instruction stores a quad-precision floating-point value in `fs2` to memory at address `xs1` + `imm`.
+  It does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
 
-  `fsq` is only guaranteed to execute atomically if the effective address is naturally aligned XLEN=128.
-
-  `fsq` does not modify the bits being transferred; in particular, the payloads of non-canonical
-  _NaNs_ are preserved.
+  `fsq` is only guaranteed to execute atomically if the effective address is naturally aligned and XLEN=128.
 definedBy:
   extension:
     name: Q

@@ -28,4 +28,4 @@ versions:
     ratification_date: 2023-09
 requirements:
   extension:
-    name: Zvl32b
+    name: Zve32x
