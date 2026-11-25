@@ -823,4 +823,56 @@ class TestCfgArch < Minitest::Test
       end
     end
   end
+
+  # Disabling an extension in misa also disables the extensions that depend on it
+  # (norm:misa_extensions_dependencies), unless the bit being written to 0 is read-only.
+  def test_misa_clears_extensions_that_depend_on_f_and_d
+    eval_sw_write = lambda do |cfg_arch, field_name, value|
+      field = cfg_arch.csr("misa").field(field_name)
+      # a field without sw_write stores the written bit
+      next (value >> field.location(64).first) & 1 unless field.has_custom_sw_write?
+
+      ast = field.pruned_sw_write_ast(64)
+      symtab = field.fill_symtab_for_sw_write(64, ast)
+      symtab.get("csr_value").value = value
+      result = ast.return_value(symtab)
+      symtab.release
+      result
+    end
+
+    data = YAML.load_file(Udb.repo_root / "cfgs" / "example_rv64_with_overlay.yaml")
+    data["implemented_extensions"] << ["Q", "2.2.0"]
+
+    # [mutable misa bits, written value label, expected D, Q, V]
+    cases = [
+      [%w[F D Q V], "all set", [1, 1, 1]],
+      [%w[F D Q V], "F=0", [0, 0, 0]],
+      [%w[F D Q V], "D=0", [0, 0, 0]],
+      # F is read-only, so writing F=0 leaves F set and must not clear D, Q or V
+      [%w[D Q V], "F=0", [1, 1, 1]],
+      [%w[D Q V], "D=0", [0, 0, 0]]
+    ]
+
+    cases.group_by(&:first).each do |mutable, mutable_cases|
+      cfg = Marshal.load(Marshal.dump(data))
+      mutable.each { |ext| cfg["params"]["MUTABLE_MISA_#{ext}"] = true }
+      cfg["name"] = "rv64-misa-mutable-#{mutable.join.downcase}"
+
+      Tempfile.create(%w/cfg .yaml/) do |f|
+        f.write YAML.dump(cfg)
+        f.flush
+
+        cfg_arch = @resolver.cfg_arch_for(Pathname.new f.path)
+        misa = cfg_arch.csr("misa")
+        bit = ->(name) { 1 << misa.field(name).location(64).first }
+        all_set = %w[A C D F H I M Q S U V].sum { |name| bit.call(name) }
+        written = { "all set" => all_set, "F=0" => all_set & ~bit.call("F"), "D=0" => all_set & ~bit.call("D") }
+
+        mutable_cases.each do |_, label, expected|
+          actual = %w[D Q V].map { |name| eval_sw_write.call(cfg_arch, name, written.fetch(label)) }
+          assert_equal expected, actual, "misa D, Q, V after writing #{label} with #{mutable.join(', ')} mutable"
+        end
+      end
+    end
+  end
 end

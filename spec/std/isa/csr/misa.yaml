@@ -70,6 +70,8 @@ fields:
       Writing 0 to this field will cause all double-precision floating point instructions to raise an `IllegalInstruction` exception.
 
       Additionally, the upper 32-bits of the f registers will read as zero.
+
+      Because `D` depends on `F`, writing 0 to `misa.F` also clears this field.
       --
     type(): |
       return (implemented?(ExtensionName::D) && MUTABLE_MISA_D) ? CsrFieldType::RW : CsrFieldType::RO;
@@ -78,6 +80,13 @@ fields:
     definedBy:
       extension:
         name: D
+    sw_write(csr_value): |
+      # D depends on F: disabling F also disables D
+      if (implemented?(ExtensionName::F) && MUTABLE_MISA_F && (csr_value.F == 0)) {
+        return 0;
+      }
+
+      return csr_value.D;
   F:
     location: 5
     description: |
@@ -87,7 +96,7 @@ fields:
       --
       Writing 0 to this field will cause all floating point (single and double precision) instructions to raise an `IllegalInstruction` exception.
 
-      Writing 0 to this field with `misa.D` set will result in UNDEFINED behavior.
+      Writing 0 to this field also clears `misa.D`, `misa.Q`, and `misa.V`, since those extensions depend on `F`.
       --
     type(): |
       return (implemented?(ExtensionName::F) && MUTABLE_MISA_F) ? CsrFieldType::RW : CsrFieldType::RO;
@@ -96,13 +105,6 @@ fields:
     definedBy:
       extension:
         name: F
-    sw_write(csr_value): |
-      if (csr_value.F == 0 && csr_value.D == 1) {
-        return UNDEFINED_LEGAL_DETERMINISTIC;
-      }
-
-      # fall-through; write the intended value
-      return csr_value.F;
   H:
     location: 7
     description: |
@@ -150,6 +152,8 @@ fields:
       [when,"MUTABLE_MISA_Q == true"]
       --
       Writing 0 to this field will cause all quad-precision floating point instructions to raise an `IllegalInstruction` exception.
+
+      Because `Q` depends on `D`, which depends on `F`, writing 0 to `misa.F` or `misa.D` also clears this field.
       --
     type(): |
       return MUTABLE_MISA_Q ? CsrFieldType::RW : CsrFieldType::RO;
@@ -158,11 +162,12 @@ fields:
       extension:
         name: Q
     sw_write(csr_value): |
-      if ((csr_value.F == 0 || csr_value.D == 0) && csr_value.Q == 1) {
-        return UNDEFINED_LEGAL_DETERMINISTIC;
+      # Q depends on D, which depends on F: disabling either also disables Q
+      if ((implemented?(ExtensionName::F) && MUTABLE_MISA_F && (csr_value.F == 0)) ||
+          (implemented?(ExtensionName::D) && MUTABLE_MISA_D && (csr_value.D == 0))) {
+        return 0;
       }
 
-      # fall-through; write the intended value
       return csr_value.Q;
   S:
     location: 18
@@ -198,7 +203,11 @@ fields:
       Indicates support for the `V` (vector) extension.
 
       [when,"MUTABLE_MISA_V == true"]
+      --
       Writing 0 to this field will cause all attempts to execute a vector instruction to raise an `IllegalInstruction` trap.
+
+      Because `V` depends on `F` and `D`, writing 0 to `misa.F` or `misa.D` also clears this field.
+      --
     type(): |
       return (implemented?(ExtensionName::V) && MUTABLE_MISA_V) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -206,6 +215,14 @@ fields:
     definedBy:
       extension:
         name: Zvl32b
+    sw_write(csr_value): |
+      # V depends on F and D: disabling either also disables V
+      if ((implemented?(ExtensionName::F) && MUTABLE_MISA_F && (csr_value.F == 0)) ||
+          (implemented?(ExtensionName::D) && MUTABLE_MISA_D && (csr_value.D == 0))) {
+        return 0;
+      }
+
+      return csr_value.V;
   X:
     location: 23
     description: |
