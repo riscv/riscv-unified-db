@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -20,6 +21,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[2]
 GEN_SCHEMAS_DIR = ROOT / "gen" / "schemas"
 TIMEOUT_SECONDS = 30
+MAX_ATTEMPTS = 5
 
 
 def schema_check_failed(schema_file: Path) -> bool:
@@ -30,16 +32,24 @@ def schema_check_failed(schema_file: Path) -> bool:
         return True
 
     request = Request(published_id, headers={"User-Agent": "riscv-unified-db-schema-check"})
-    try:
-        with urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-            status = response.status
-            remote_content = response.read()
-    except HTTPError as error:
-        status = error.code
-        remote_content = None
-    except (TimeoutError, URLError) as error:
-        print(f"ERROR: Could not reach {published_id}: {error}", file=sys.stderr)
-        return True
+    # GitHub Pages sometimes returns 5xx for uncached URLs, so retry those.
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            with urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+                status = response.status
+                remote_content = response.read()
+        except HTTPError as error:
+            status = error.code
+            remote_content = None
+        except (TimeoutError, URLError) as error:
+            if attempt == MAX_ATTEMPTS:
+                print(f"ERROR: Could not reach {published_id}: {error}", file=sys.stderr)
+                return True
+            status = None
+        if status is not None and status < 500:
+            break
+        if attempt < MAX_ATTEMPTS:
+            time.sleep(2**attempt)
 
     if status == 200:
         if remote_content != schema_file.read_bytes():
