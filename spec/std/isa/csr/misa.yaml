@@ -109,7 +109,11 @@ fields:
       Indicates support for the `H` (hypervisor) extension.
 
       [when,"MUTABLE_MISA_H == true"]
+      --
       Writing 0 to this field will cause all attempts to enter VS- or VU- mode, execute a hypervisor instruction, or access a hypervisor CSR to raise an `IllegalInstruction` fault.
+
+      Because `H` depends on `S`, which depends on `U`, writing 0 to `misa.S` or `misa.U` also clears this field.
+      --
     type(): |
       return (implemented?(ExtensionName::H) && MUTABLE_MISA_H) ? CsrFieldType::RW : CsrFieldType::RO;
     definedBy:
@@ -117,6 +121,14 @@ fields:
         name: H
     reset_value(): |
       return implemented?(ExtensionName::H) ? 1 : 0;
+    sw_write(csr_value): |
+      # H depends on S, which depends on U: disabling either also disables H
+      if ((implemented?(ExtensionName::S) && MUTABLE_MISA_S && (csr_value.S == 0)) ||
+          (implemented?(ExtensionName::U) && MUTABLE_MISA_U && (csr_value.U == 0))) {
+        return 0;
+      }
+
+      return csr_value.H;
   I:
     location: 8
     description: |
@@ -170,7 +182,11 @@ fields:
       Indicates support for the `S` (supervisor mode) extension.
 
       [when,"MUTABLE_MISA_S == true"]
+      --
       Writing 0 to this field will cause all attempts to enter S-mode or access S-mode state to raise an exception.
+
+      Because `S` depends on `U`, writing 0 to `misa.U` also clears this field.
+      --
     type(): |
       return (implemented?(ExtensionName::S) && MUTABLE_MISA_S) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
@@ -178,13 +194,24 @@ fields:
     definedBy:
       extension:
         name: S
+    sw_write(csr_value): |
+      # S depends on U: disabling U also disables S
+      if (implemented?(ExtensionName::U) && MUTABLE_MISA_U && (csr_value.U == 0)) {
+        return 0;
+      }
+
+      return csr_value.S;
   U:
     location: 20
     description: |
       Indicates support for the `U` (user mode) extension.
 
       [when,"MUTABLE_MISA_U == true"]
+      --
       Writing 0 to this field will cause all attempts to enter U-mode to raise an exception.
+
+      Writing 0 to this field also clears `misa.S` and `misa.H`, since those extensions depend on `U`.
+      --
     type(): |
       return (implemented?(ExtensionName::U) && MUTABLE_MISA_U) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |

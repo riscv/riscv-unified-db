@@ -475,6 +475,57 @@ class TestCfgArch < Minitest::Test
       ).sort
   end
 
+  # Disabling U or S in misa also disables the extensions that depend on them
+  # (norm:misa_extensions_dependencies), unless the bit being written to 0 is read-only.
+  def test_misa_clears_extensions_that_depend_on_u_and_s
+    eval_sw_write = lambda do |cfg_arch, field_name, value|
+      field = cfg_arch.csr("misa").field(field_name)
+      # a field without sw_write stores the written bit
+      next (value >> field.location(64).first) & 1 unless field.has_custom_sw_write?
+
+      ast = field.pruned_sw_write_ast(64)
+      symtab = field.fill_symtab_for_sw_write(64, ast)
+      symtab.get("csr_value").value = value
+      result = ast.return_value(symtab)
+      symtab.release
+      result
+    end
+
+    data = YAML.load_file(Udb.repo_root / "cfgs" / "example_rv64_with_overlay.yaml")
+
+    # [mutable misa bits, written value label, expected S, H]
+    cases = [
+      [%w[U S H], "all set", [1, 1]],
+      [%w[U S H], "U=0", [0, 0]],
+      [%w[U S H], "S=0", [0, 0]],
+      # U is read-only, so writing U=0 leaves U set and must not clear S or H
+      [%w[S H], "U=0", [1, 1]],
+      [%w[S H], "S=0", [0, 0]]
+    ]
+
+    cases.group_by(&:first).each do |mutable, mutable_cases|
+      cfg = Marshal.load(Marshal.dump(data))
+      mutable.each { |ext| cfg["params"]["MUTABLE_MISA_#{ext}"] = true }
+      cfg["name"] = "rv64-misa-mutable-#{mutable.join.downcase}"
+
+      Tempfile.create(%w/cfg .yaml/) do |f|
+        f.write YAML.dump(cfg)
+        f.flush
+
+        cfg_arch = @resolver.cfg_arch_for(Pathname.new f.path)
+        misa = cfg_arch.csr("misa")
+        bit = ->(name) { 1 << misa.field(name).location(64).first }
+        all_set = %w[A C D F H I M S U V].sum { |name| bit.call(name) }
+        written = { "all set" => all_set, "U=0" => all_set & ~bit.call("U"), "S=0" => all_set & ~bit.call("S") }
+
+        mutable_cases.each do |_, label, expected|
+          actual = %w[S H].map { |name| eval_sw_write.call(cfg_arch, name, written.fetch(label)) }
+          assert_equal expected, actual, "misa S, H after writing #{label} with #{mutable.join(', ')} mutable"
+        end
+      end
+    end
+  end
+
   def test_xqci
 
     cfg_arch = @resolver.cfg_arch_for("qc_iu")
