@@ -1,0 +1,18 @@
+# Copyright (c) Revathy M. R.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/ext_schema.json
+
+$schema: "ext_schema.json#"
+kind: extension
+name: Smehv
+long_name: Synchronous exception hardware vectoring at Machine level
+description: Synchronous exception hardware vectoring at Machine level
+type: privileged
+versions:
+  - version: "0.20.0"
+    state: development
+    url: https://github.com/riscv/riscv-fast-interrupt/releases/download/v0.20/aclic-v0.20.pdf
+requirements:
+  extension:
+    name: Smijt
