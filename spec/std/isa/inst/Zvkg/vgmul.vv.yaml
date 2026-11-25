@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vgmul.vv
-long_name: Vector Galois field multiply
+long_name: Vector multiply over GHASH Galois-field
 description: |
-  Performs a Galois field multiply operation on vector register vs2 with vector register vs1, storing results in vector register vd according to mask vm. This instruction is used in cryptographic algorithms and error correction codes.
+  Multiplies the 128-bit element groups in vd (multiplier) and vs2 (multiplicand) over GF(2^128^) and writes the product to vd. The multiplication is a carry-less multiply of two 128-bit polynomials modulo the GHASH polynomial x^128^ + x^7^ + x^2^ + x + 1. This is the same as `vghsh.vv` with a zero cipher text block.
 definedBy:
   extension:
     name: Zvkg

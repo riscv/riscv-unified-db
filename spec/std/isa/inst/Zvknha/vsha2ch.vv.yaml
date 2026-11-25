@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vsha2ch.vv
-long_name: Vector SHA-2 choose function
+long_name: Vector SHA-2 two rounds of compression, high part
 description: |
-  Performs the SHA-2 choose function (Ch) on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This is used in SHA-256 and SHA-512 hash computations.
+  Performs two rounds of SHA-2 compression (SHA-256 when SEW=32; SHA-512 when SEW=64, which requires Zvknhb). Two message schedule words from vs1 are processed with the eight words of current state held in vd and vs2 to produce four words of the next state, which are written to vd. `vsha2ch.vv` uses the two most significant message schedule words of the element group in vs1; `vsha2cl.vv` is identical except that it uses the two least significant.
 definedBy:
   extension:
     name: Zvknha

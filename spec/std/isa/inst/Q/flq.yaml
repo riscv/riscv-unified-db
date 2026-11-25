@@ -8,12 +8,10 @@ kind: instruction
 name: flq
 long_name: Floating-Point Load Quad-Precision
 description: |
-  The `flq` is the new variant of LOAD-FP, encoded with a new value for the `funct3`.
+  The `flq` instruction loads a quad-precision floating-point value from memory at address `xs1` + `imm` into floating-point register `fd`.
+  It does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
 
-  `flq` is only guaranteed to execute atomically if the effective address is naturally aligned XLEN=128.
-
-  `flq` does not modify the bits being transferred; in particular, the payloads of non-canonical
-  _NaNs_ are preserved.
+  `flq` is only guaranteed to execute atomically if the effective address is naturally aligned and XLEN=128.
 
 definedBy:
   extension:
