@@ -43,6 +43,28 @@ class TestCfgArch < Minitest::Test
     FileUtils.rm_rf @gen_dir
   end
 
+  def test_parameter_schema_tuple_constraints
+    %w[COUNTINHIBIT_EN HPM_COUNTER_EN].each do |name|
+      schema_path = Udb.repo_root / "spec" / "std" / "isa" / "param" / "#{name}.yaml"
+      schema = Udb::Schema.new(YAML.load_file(schema_path).fetch("schema"))
+      valid_value = Array.new(32, true)
+      reserved_indices = name == "COUNTINHIBIT_EN" ? [1] : [0, 1, 2]
+      reserved_indices.each { |index| valid_value[index] = false }
+      assert schema.validate(valid_value, udb_resolver: @resolver), name
+
+      reserved_indices.each do |index|
+        invalid_value = valid_value.dup
+        invalid_value[index] = true
+        refute schema.validate(invalid_value, udb_resolver: @resolver), "#{name}[#{index}] must be false"
+      end
+      refute schema.validate(valid_value + [true], udb_resolver: @resolver), "#{name} must have 32 entries"
+
+      invalid_value = valid_value.dup
+      invalid_value[31] = "true" # string (not boolean)
+      refute schema.validate(invalid_value, udb_resolver: @resolver), "#{name} additional entries must be booleans"
+    end
+  end
+
   def test_invalid_partial_config
     cfg = <<~CFG
       $schema: config_schema.json#
