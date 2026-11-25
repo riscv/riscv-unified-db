@@ -37,6 +37,13 @@ schema:
       0x100000,
       0x200000,
     ]
+requirements:
+  idl(): |
+    implemented?(ExtensionName::Zve32x) -> ELEN >= 32;
+    implemented?(ExtensionName::Zve64x) -> ELEN >= 64;
+  reason: |
+    Zve32x supports EEW of 8, 16 and 32, and Zve64x (required by V) also supports EEW of 64,
+    so ELEN, the widest supported element, is at least 32 or 64.
 definedBy:
   extension:
     name: Zvl32b
