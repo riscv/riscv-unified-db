@@ -13,15 +13,22 @@ description: |
   portion of a vector register relative to the widest supported SEW.
   In general, implementations must support LMUL >= SEW_MIN/ELEN, where
   SEW_MIN is the narrowest supported SEW and ELEN is the widest SEW.
+  In the standard extensions, SEW_MIN=8.
 long_name: TODO
 schema:
   type: integer
   enum: [8, 16, 32, 64]
   default: 8
-#    requirements:
-#      idl(): |
-#        -> SEW_MIN <= ELEN;
-#      reason: SEW_MIN <= ELEN
+requirements:
+  idl(): |
+    (implemented?(ExtensionName::Zvl32b) && SEW_MIN == 16) -> ELEN >= 16;
+    (implemented?(ExtensionName::Zvl32b) && SEW_MIN == 32) -> ELEN >= 32;
+    (implemented?(ExtensionName::Zvl32b) && SEW_MIN == 64) -> ELEN >= 64;
+    implemented?(ExtensionName::Zve32x) -> SEW_MIN == 8;
+  reason: |
+    SEW_MIN is the narrowest supported SEW and ELEN is the widest, so SEW_MIN cannot exceed ELEN.
+    "In the standard extensions, SEW~MIN~=8": V and every Zve* extension (all of which require
+    Zve32x) support EEW of 8.
 definedBy:
   extension:
     name: Zvl32b

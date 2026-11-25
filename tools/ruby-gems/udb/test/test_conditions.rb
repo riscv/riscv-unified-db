@@ -261,6 +261,31 @@ class TestConditions < Minitest::Test
     assert_equal SatisfiedResult::No, tree.eval_cb(cb)
   end
 
+  def test_sew_min_limits_for_unconfigured_vectors
+    arch = $db_cfg_arch
+    refute_nil arch
+    requirements = arch.param("SEW_MIN").requirements_condition
+
+    [8, 16, 32, 64].product([8, 16, 32, 64, 128]).each do |sew, elen|
+      values = Condition.new({ "allOf" => [
+        { "extension" => { "name" => "Zvl32b" } },
+        { "not" => { "extension" => { "name" => "Zve32x" } } },
+        { "param" => { "name" => "SEW_MIN", "equal" => sew } },
+        { "param" => { "name" => "ELEN", "equal" => elen } }
+      ] }, arch)
+      assert_equal sew <= elen, (requirements & values).satisfiable?, "SEW_MIN=#{sew}, ELEN=#{elen}"
+    end
+
+    [8, 16, 32, 64].each do |sew|
+      values = Condition.new({ "allOf" => [
+        { "extension" => { "name" => "Zve32x" } },
+        { "param" => { "name" => "SEW_MIN", "equal" => sew } },
+        { "param" => { "name" => "ELEN", "equal" => 64 } }
+      ] }, arch)
+      assert_equal sew == 8, (requirements & values).satisfiable?, "Zve32x with SEW_MIN=#{sew}"
+    end
+  end
+
   def test_requirements_with_single_unconditional_implication
     req_str = <<~COND
       name: A
