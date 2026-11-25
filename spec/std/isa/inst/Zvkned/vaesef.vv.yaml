@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vaesef.vv
-long_name: Vector AES encryption final round
+long_name: Vector AES final-round encryption
 description: |
-  Performs the final round of AES encryption on vector register vs2 using vector register vs1, storing results in vector register vd according to mask vm. This combines the shift rows, sub bytes, and add round key operations.
+  Performs a final-round AES block cipher encryption. The SubBytes and ShiftRows steps are applied to each round state element group from vd, and the result is XORed with the round key in the corresponding element group in vs2. The new round state is written to vd.
 definedBy:
   extension:
     name: Zvkned

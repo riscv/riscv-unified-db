@@ -9,7 +9,7 @@ name: fsh
 long_name: Half-precision floating-point store
 description: |
   The `fsh` instruction stores a half-precision floating-point value
-  from register _xd_ to memory at address _xs1_ + _imm_.
+  from floating-point register _fs2_ to memory at address _xs1_ + _imm_.
 
   `fsh` does not modify the bits being transferred; in particular, the payloads of non-canonical NaNs are preserved.
 

@@ -37,7 +37,7 @@ Gem::Specification.new do |s|
   s.add_dependency "concurrent-ruby"
   s.add_dependency "idlc", "= 0.1.8"
   s.add_dependency "json_schemer"
-  s.add_dependency "numbers_and_words"
+  s.add_dependency "numbers_and_words", "< 1.2" # 1.2.0 fails to load with a non-UTF-8 default encoding
   s.add_dependency "ostruct"
   s.add_dependency "pastel"
   s.add_dependency "rubyzip"

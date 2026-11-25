@@ -6,9 +6,9 @@
 $schema: "inst_schema.json#"
 kind: instruction
 name: vbrev8.v
-long_name: Vector byte reverse within elements
+long_name: Vector reverse bits in bytes
 description: |
-  Reverses the byte order within each element of vector register vs2, storing results in vector register vd according to mask vm. Similar to vrev8.v but with different encoding.
+  Reverses the order of the bits within each byte of each element of vector register vs2, storing results in vector register vd according to mask vm.
 definedBy:
   extension:
     name: Zvkb
