@@ -39,4 +39,4 @@ operation(): |
   XReg shamt = X[xs2][4:0];
 
   XReg unextended_result = (xs1_word >> shamt) | (xs1_word << (32 - shamt));
-  X[xd] = {{32{unextended_result[31]}}, unextended_result};
+  X[xd] = sext(unextended_result[31:0], 32);
