@@ -30,4 +30,4 @@ access:
   vu: always
 operation(): |
   XReg index = X[xs2] & (xlen() - 1);
-  X[xd] = X[xs1] ^ (1 << index);
+  X[xd] = X[xs1] ^ (MXLEN'1 << index);

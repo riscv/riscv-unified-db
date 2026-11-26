@@ -34,4 +34,5 @@ access:
   vs: always
   vu: always
 operation(): |
-  X[xd] = X[xs1][31:0] << shamt;
+  XReg xs1_word = X[xs1][31:0];
+  X[xd] = xs1_word << shamt;
