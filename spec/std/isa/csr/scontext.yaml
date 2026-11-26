@@ -40,8 +40,10 @@ fields:
       RV32 and 32 bits on RV64.
     reset_value: 0
     sw_write(csr_value): |
-      # check if mstateen0 or hstateen0 is clear
-      if (implemented?(ExtensionName::Smstateen) && ((CSR[mstateen0].CONTEXT != 0) || (CSR[hstateen0].CONTEXT != 0))) {
+      # below M-mode, access requires mstateen0.CONTEXT (and hstateen0.CONTEXT in VS-mode)
+      if (implemented?(ExtensionName::Smstateen) &&
+          ((mode() != PrivilegeMode::M && CSR[mstateen0].CONTEXT == 1'b0) ||
+           (mode() == PrivilegeMode::VS && CSR[hstateen0].CONTEXT == 1'b0))) {
         unimplemented_csr($encoding);
       }
 
@@ -49,8 +51,10 @@ fields:
       Bits<32> scontext_value = csr_value.DATA & ((32'1 << DBG_SCONTEXT_WIDTH) - 1);
       return scontext_value;
 sw_read(): |
-  # check if mstateen0 or hstateen0 is clear
-  if (implemented?(ExtensionName::Smstateen) && ((CSR[mstateen0].CONTEXT != 0) || (CSR[hstateen0].CONTEXT != 0))) {
+  # below M-mode, access requires mstateen0.CONTEXT (and hstateen0.CONTEXT in VS-mode)
+  if (implemented?(ExtensionName::Smstateen) &&
+      ((mode() != PrivilegeMode::M && CSR[mstateen0].CONTEXT == 1'b0) ||
+       (mode() == PrivilegeMode::VS && CSR[hstateen0].CONTEXT == 1'b0))) {
     unimplemented_csr($encoding);
   }
   return $bits(CSR[scontext]);
