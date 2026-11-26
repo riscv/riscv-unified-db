@@ -29,8 +29,8 @@ access:
   vs: always
   vu: always
 pseudoinstructions:
-  - when: imm == 0
-    to: j xd
+  - when: xd == 0
+    to: j imm
   - when: xd == x1
     to: jal imm
 operation(): |
