@@ -37,7 +37,7 @@ fields:
        * VS-mode timer interrupts will not be generated
 
       When `menvcfg.STCE` is one and `henvcfg.STCE` is zero:
-       * Accessing `stimecmp` in VS-mode or VU-mode (really `vstimecmp`) raises a VirtualInterrupt exception
+       * Accessing `stimecmp` in VS-mode or VU-mode (really `vstimecmp`) raises a VirtualInstruction exception
        * `hip.VSTIP` reverts to its defined behavior as if Sstc is not implemented.
        * VS-mode timer interrupts will not be generated
 
@@ -45,7 +45,7 @@ fields:
       extension:
         name: Sstc
     type(): |
-      return (implemented?(ExtensionName::Sstc)) ? CsrFieldType::RO : CsrFieldType::RW;
+      return (implemented?(ExtensionName::Sstc)) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       return (implemented?(ExtensionName::Sstc)) ? UNDEFINED_LEGAL : 0;
   PBMTE:
@@ -88,7 +88,7 @@ fields:
       extension:
         name: Svpbmt
     type(): |
-      return (implemented?(ExtensionName::Svpbmt)) ? CsrFieldType::RO : CsrFieldType::RW;
+      return (implemented?(ExtensionName::Svpbmt)) ? CsrFieldType::RW : CsrFieldType::RO;
     reset_value(): |
       return (implemented?(ExtensionName::Svpbmt)) ? UNDEFINED_LEGAL : 0;
   ADUE:
