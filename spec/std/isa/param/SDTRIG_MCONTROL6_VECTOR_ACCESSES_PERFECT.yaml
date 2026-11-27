@@ -1,0 +1,42 @@
+# Copyright (c) 2026 10xEngineers
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+# yaml-language-server: $schema=../../../schemas/param_schema.json
+
+$schema: param_schema.json#
+kind: parameter
+name: SDTRIG_MCONTROL6_VECTOR_ACCESSES_PERFECT
+description: |
+  Indicates whether the Trigger Module can perfectly evaluate vector loads and stores
+  for mcontrol6 load and store triggers.
+
+  Debug spec 1.0, mcontrol6.uncertainen = 0: "This trigger will only match if the
+  hardware can perfectly evaluate it."
+
+  If true, the Trigger Module can perfectly evaluate every vector load and store, on both
+  address and data, so triggers with uncertainen = 0 match them as usual.
+  If false, the Trigger Module cannot perfectly evaluate every vector load and store, and
+  triggers with uncertainen = 0 do not match the ones it cannot evaluate.
+
+  This parameter has no effect on triggers with uncertainen = 1.
+long_name: Whether the Trigger Module perfectly evaluates vector accesses
+schema:
+  type: boolean
+definedBy:
+  allOf:
+    - extension:
+        name: Sdtrig
+    - extension:
+        name: Zve32x
+    - param:
+        name: SDTRIG_MCONTROL6_SUPPORTED_TRIGGERS
+        includes: true
+        reason: Only relevant if at least one trigger supports mcontrol6.
+    - param:
+        anyOf:
+          - name: SDTRIG_MCONTROL6_LOAD_WRITABLE
+            equal: true
+            reason: Only relevant if mcontrol6 triggers can match on loads or stores.
+          - name: SDTRIG_MCONTROL6_STORE_WRITABLE
+            equal: true
+            reason: Only relevant if mcontrol6 triggers can match on loads or stores.
