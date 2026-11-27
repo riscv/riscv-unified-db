@@ -37,7 +37,7 @@ fields:
        * VS-mode timer interrupts will not be generated
 
       When `menvcfg.STCE` is one and `henvcfg.STCE` is zero:
-       * Accessing `stimecmp` in VS-mode or VU-mode (really `vstimecmp`) raises a VirtualInterrupt exception
+       * Accessing `stimecmp` in VS-mode or VU-mode (really `vstimecmp`) raises a VirtualInstruction exception
        * `hip.VSTIP` reverts to its defined behavior as if Sstc is not implemented.
        * VS-mode timer interrupts will not be generated
 
