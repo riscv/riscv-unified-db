@@ -227,7 +227,7 @@ fields:
       in U-mode
       <% end %>.
 
-        * `0`: The instruction raises an illegal instruction or virtual instruction exception
+        * `0`: The instruction raises an illegal instruction exception in all modes less privileged than M
         * `1`: The instruction is executed
 
     definedBy:
@@ -248,7 +248,7 @@ fields:
       in U-mode
       <% end %>.
 
-        * `0`: The instruction raises an illegal instruction or virtual instruction exception
+        * `0`: The instruction raises an illegal instruction exception in all modes less privileged than M
         * `1`: The instruction is executed
 
     definedBy:
@@ -268,7 +268,7 @@ fields:
       in U-mode
       <% end %>.
 
-        * `00`: The instruction raises an illegal instruction or virtual instruction exception
+        * `00`: The instruction raises an illegal instruction exception in all modes less privileged than M
         * `01`: The instruction is executed and performs a flush operation
         * `10`: _Reserved_
         * `11`: The instruction is executed and performs an invalidate operation
