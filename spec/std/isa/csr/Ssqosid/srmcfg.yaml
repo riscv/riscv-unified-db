@@ -65,7 +65,7 @@ fields:
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
       if (implemented?(ExtensionName::Smstateen)) {
-        if (mode() < PrivilegeMode::M && CSR[mstateen0].SRMCFG == 0) {
+        if (mode() != PrivilegeMode::M && CSR[mstateen0].SRMCFG == 0) {
           raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
         }
         if (virtual_mode?() && CSR[mstateen0].SRMCFG == 1) {
@@ -87,7 +87,7 @@ fields:
     reset_value: UNDEFINED_LEGAL
     sw_write(csr_value): |
       if (implemented?(ExtensionName::Smstateen)) {
-        if (mode() < PrivilegeMode::M && CSR[mstateen0].SRMCFG == 0) {
+        if (mode() != PrivilegeMode::M && CSR[mstateen0].SRMCFG == 0) {
           raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
         }
         if (virtual_mode?() && CSR[mstateen0].SRMCFG == 1) {
@@ -102,7 +102,7 @@ fields:
 
 sw_read(): |
   if (implemented?(ExtensionName::Smstateen)) {
-    if (mode() < PrivilegeMode::M && CSR[mstateen0].SRMCFG == 0) {
+    if (mode() != PrivilegeMode::M && CSR[mstateen0].SRMCFG == 0) {
       raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
     }
     if (virtual_mode?() && CSR[mstateen0].SRMCFG == 1) {
@@ -113,4 +113,4 @@ sw_read(): |
       raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
     }
   }
-  return $bits(CSR[mstateen0]);
+  return $bits(CSR[srmcfg]);
