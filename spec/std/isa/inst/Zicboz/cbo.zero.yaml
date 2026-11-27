@@ -59,7 +59,7 @@ access_detail: |
   4+^.>h! `cbo.zero` Instruction Behavior
   .^h! S-mode .^h! U-mode .^h! VS-mode .^h! VU-mode
 
-  ! 0 ! - ! - ! `Illegal Instruction` ! `Illegal Instruction` ! `Virtual Instruction` ! `Virtual Instruction`
+  ! 0 ! - ! - ! `Illegal Instruction` ! `Illegal Instruction` ! `Illegal Instruction` ! `Illegal Instruction`
   ! 1 ! 0 ! 0 ! executes  ! `Illegal Instruction` ! `Virtual Instruction` ! `Virtual Instruction`
   ! 1 ! 1 ! 0 ! executes ! executes ! `Virtual Instruction` ! `Virtual Instruction`
   ! 1 ! 0 ! 1 ! executes ! `Illegal Instruction` ! executes ! `Virtual Instruction`
@@ -71,14 +71,9 @@ operation(): |
 
   if (CSR[misa].S == 1) {
     if (CSR[menvcfg].CBZE == 0) {
-      # menvcfg.CBZE=0: all non-M modes trap
-      if (mode() == PrivilegeMode::S || mode() == PrivilegeMode::U) {
+      # menvcfg.CBZE=0: all non-M modes, including VS and VU, raise IllegalInstruction
+      if (mode() != PrivilegeMode::M) {
         raise(ExceptionCode::IllegalInstruction, mode(), $encoding);
-      }
-      if (CSR[misa].H == 1) {
-        if (mode() == PrivilegeMode::VS || mode() == PrivilegeMode::VU) {
-          raise(ExceptionCode::VirtualInstruction, mode(), $encoding);
-        }
       }
     } else {
       # menvcfg.CBZE=1: check lower-level envcfg bits
